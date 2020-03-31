@@ -88,7 +88,7 @@ class Permissions(db.Model):
 class LoginInfo(db.Model):
     __tablename__ = 'login_info'
     id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(300), nullable=False)
+    token = db.Column(db.String(500), nullable=False)
     login_time = db.Column(db.Integer, nullable=False)
     platform = db.Column(db.String(20), nullable=False)
     login_ip = db.Column(db.String(64))

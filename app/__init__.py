@@ -23,7 +23,7 @@ redis_db = redis.Redis(host='localhost', port=6379, db=7, decode_responses=True)
 
 db = SQLAlchemy()
 scheduler = APScheduler()
-default_api = Api(title='Infinicalc API', version='v0.1', base_url='/api', contact='chjz1226@gmail.com')
+default_api = Api(title='Infinicalc API', version='v0.1', prefix='/api', contact='chjz1226@gmail.com')
 
 # 用于处理订单建议书的队列
 work_q = queue.Queue(maxsize=100)
@@ -69,5 +69,11 @@ def create_app(config_name):
 
     from .mall import mall as mall_blueprint
     app.register_blueprint(mall_blueprint)
+
+    from .menus import menus as menus_blueprint
+    app.register_blueprint(menus_blueprint)
+
+    from .permissions import permissions as permissions_blueprint
+    app.register_blueprint(permissions_blueprint)
 
     return app

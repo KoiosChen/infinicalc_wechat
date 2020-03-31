@@ -35,9 +35,24 @@ bind_role_parser.add_argument('role_id', required=True, type=list, location='jso
 return_json = users_ns.model('ReturnRegister', return_dict)
 
 
-@users_ns.route('/register')
-class Register(Resource):
-    @users_ns.doc('A description of what this function does')
+@users_ns.route('')
+class QueryUsers(Resource):
+    @users_ns.marshal_with(return_json)
+    @permission_required("app.users.users_api.users_info")
+    def get(self, info):
+        """
+        获取用户信息
+        :return: json
+        """
+        user = info['user']
+        return_user = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'login_time': info['login_info'].login_time
+        }
+        return success_return(return_user, "请求成功")
+
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
     def post(self):
@@ -100,67 +115,35 @@ class Logout(Resource):
         return result
 
 
-@users_ns.route('/bind_role')
+@users_ns.route('/<int:user_id>/roles')
 @users_ns.expect(head_parser)
-class BindRole(Resource):
+class UserRole(Resource):
     @users_ns.doc(body=bind_role_parser)
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.bind_role")
-    def post(self, info):
+    def post(self, **kwargs):
         """
         指定用户添加角色
         """
         args = bind_role_parser.parse_args()
-        user_id = args.get('user_id')
-        # 如果没有传入user_id参数，那么就是操作自身role
-        user = info['user'] if not user_id else Users.query.get(user_id)
+        user = kwargs.get('user_id')
+        old_roles = [r.name for r in user.roles]
         roles = args['role_id']
-        for role in roles:
-            role_ = Roles.query.get(role)
+        to_add_roles = set(roles) - set(old_roles)
+        to_delete_roles = set(old_roles) - set(roles)
+
+        for roleid in to_add_roles:
+            role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{role} is not exist')
-            user.roles.append(role_)
-        return success_return(message='绑定成功')
+                return false_return(message=f'{roleid} is not exist')
+            if role_ not in user.roles:
+                user.roles.append(role_)
 
-
-@users_ns.route('/unbind_role')
-@users_ns.expect(head_parser)
-class UnBindRole(Resource):
-    @users_ns.doc(body=bind_role_parser)
-    @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.unbind_role")
-    def post(self, info):
-        """
-        指定用户删除角色
-        """
-        args = bind_role_parser.parse_args()
-        user_id = args.get('user_id')
-        # 如果没有传入user_id参数，那么就是操作自身role
-        user = info['user'] if not user_id else Users.query.get(user_id)
-        roles = args['role_id']
-        for role in roles:
-            role_ = Roles.query.get(role)
+        for roleid in to_delete_roles:
+            role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{role} is not exist')
-            user.roles.remove(role_)
-        return success_return(message='解绑成功')
-
-
-@users_ns.route('/users')
-@users_ns.expect(head_parser)
-class UsersInfo(Resource):
-    @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.users_info")
-    def get(self, info):
-        """
-        获取用户信息
-        :return: json
-        """
-        user = info['user']
-        return_user = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'login_time': info['login_info'].login_time
-        }
-        return success_return(return_user, "请求成功")
+                return false_return(message=f'{roleid} is not exist')
+            if role_ in user.roles:
+                user.roles.remove(role_)
+                
+        return success_return(message='修改角色成功')
