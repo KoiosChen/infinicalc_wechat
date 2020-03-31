@@ -21,6 +21,9 @@
     <expand />
     <select />
   </component>
+  <component name="DjangoConsoleOptions" custom-start-script="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)">
+    <option name="myCustomStartScript" value="import sys; print('Python %s on %s' % (sys.version, sys.platform))&#10;import django; print('Django %s' % django.get_version())&#10;sys.path.extend([WORKING_DIR_AND_PYTHON_PATHS])&#10;if 'setup' in dir(django): django.setup()&#10;import django_manage_shell; django_manage_shell.run(PROJECT_ROOT)" />
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -126,7 +129,14 @@
       <option name="project" value="LOCAL" />
       <updated>1585498355849</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="delete migrations">
+      <created>1585614595519</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1585614595519</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -146,10 +156,11 @@
       <screen x="0" y="23" width="1680" height="976" />
     </state>
     <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1585498719323">
-      <screen x="0" y="0" width="1680" height="1050" />
+    <state x="481" y="41" key="CommitChangelistDialog2" timestamp="1585614595367">
+      <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1585498719323" />
+    <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585614595367" />
     <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -198,10 +209,11 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="239" height="539" key="HiddenNamespacesPopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585409088690" />
-    <state x="683" y="40" key="SettingsEditor" timestamp="1585227162819">
-      <screen x="0" y="0" width="1680" height="1050" />
+    <state x="781" y="41" key="SettingsEditor" timestamp="1585614617267">
+      <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="683" y="40" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585227162819" />
+    <state x="781" y="41" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1585614617267" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2" timestamp="1585614540017">
       <screen x="0" y="0" width="1920" height="1080" />
