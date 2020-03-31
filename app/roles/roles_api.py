@@ -1,7 +1,7 @@
 from flask import jsonify, request
 from flask_restplus import Resource, fields, reqparse
 from ..models import Users, Roles, Menu, Permissions, role_menu
-from . import users
+from . import roles
 from app.auth import auths
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
@@ -16,6 +16,9 @@ role_add_parser = reqparse.RequestParser()
 role_add_parser.add_argument('name', required=True, help='新的角色名称', location='json')
 role_add_parser.add_argument('menus', required=True, type=list, help='该角色可用的权限ID，list。例如，[1,3,4,5]', location='json')
 
+role_change_parser = reqparse.RequestParser()
+role_change_parser.add_argument('name', required=True, help='新的角色名称')
+
 role_bind_menu_parser = reqparse.RequestParser()
 role_bind_menu_parser.add_argument('menus', required=True, type=list,
                                    help='该角色可用的权限ID，list。例如，[1,3,4,5]，从/roles/query_menus获取',
@@ -25,8 +28,7 @@ role_delete_parser = reqparse.RequestParser()
 role_delete_parser.add_argument('role_id', required=True, help='要删除的角色ID(Roles.id)')
 
 role_change_parser = reqparse.RequestParser()
-role_change_parser.add_argument('name', help='修改角色名称(Roles.name)')
-role_change_parser.add_argument('menus', help='修改的菜单ID，dict前到list。{"add": [1,2], "delete": [3]}')
+role_change_parser.add_argument('name', required=True, help='修改角色名称(Roles.name)')
 
 query_menu_parser = reqparse.RequestParser()
 query_menu_parser.add_argument('role_id', help='要查询的角色ID(Roles.id)， 若此字段为空，则返回所有')
@@ -46,7 +48,7 @@ def get_roles(role_id=None):
         tmp = dict()
         for f in role_field:
             if f == 'menus':
-                tmp[f] = [m.name for m in role.menus]
+                tmp[f] = {m.id: m.name for m in role.menus}
             else:
                 tmp[f] = getattr(role, f)
         return_roles.append(tmp)
@@ -54,8 +56,8 @@ def get_roles(role_id=None):
 
 
 @roles_ns.route('')
-@roles_ns.expect(head_parser)
 class RoleApi(Resource):
+    @roles_ns.expect(head_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.query_roles")
     def get(self, info):
@@ -64,6 +66,7 @@ class RoleApi(Resource):
         """
         return success_return(get_roles(), "请求成功")
 
+    @roles_ns.expect(head_parser)
     @roles_ns.doc(body=role_add_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.add_roles")
@@ -71,7 +74,7 @@ class RoleApi(Resource):
         """
         添加角色
         """
-        args = role_add_parser.parse_args()
+        args = role_add_parser.parse_args(strict=True)
         menus_list = [Menu.query.get(m) for m in args['menus']]
         logger.debug(menus_list)
         if not Roles.query.filter_by(name=args['name']).first():
@@ -91,46 +94,40 @@ class RoleApi(Resource):
 @roles_ns.param('role_id', 'the role id')
 class RoleID(Resource):
     @roles_ns.marshal_with(return_json)
-    @permission_required("app.users.roles_api.query_role_id")
+    @permission_required("app.users.roles_api.query_role")
     def get(self, **kwargs):
         return success_return(get_roles(kwargs['role_id']))
 
-    @roles_ns.doc(body=role_add_parser)
+    @roles_ns.doc(body=role_change_parser)
     @roles_ns.marshal_with(return_json)
-    @permission_required("app.users.roles_api.change_roles")
-    def put(self, info):
+    @permission_required("app.users.roles_api.change_role")
+    def put(self, **kwargs):
         """
         修改角色
         """
-        args = role_add_parser.parse_args()
-        menus_list = [Menu.query.get(m) for m in args['menus']]
-        logger.debug(menus_list)
-        if not Roles.query.filter_by(name=args['name']).first():
-            new_role = Roles(name=args['name'])
-            db.session.add(new_role)
-            for menu_ in menus_list:
-                new_role.menus.append(menu_)
-            return success_return(data={"new_role_id": new_role.id},
-                                  message="角色添加成功") \
-                if session_commit() else false_return(message="角色添加失败")
+        args = role_change_parser.parse_args(strict=True)
+        name_tobe = args['name']
+        role_id = kwargs['role_id']
+        role = Roles.query.get(role_id)
+        if not Roles.query.filter_by(name=name_tobe).first():
+            old_name = role.name
+            role.name = name_tobe
+            db.session.add(role)
+            return success_return(message=f"角色修改成功{old_name}->{name_tobe}") if session_commit() else false_return(
+                message="角色添加失败")
         else:
-            return false_return(message=f"{args['name']}已经存在")
+            return false_return(message=f"{name_tobe}已经存在")
+
+    @roles_ns.marshal_with(return_json)
+    @permission_required("app.users.roles_api.delete_role")
+    def delete(self, **kwargs):
+        pass
 
 
 @roles_ns.route('/<int:role_id>/menus')
 @roles_ns.expect(head_parser)
 @roles_ns.param('role_id', 'the role id')
-class RoleBindMenu(Resource):
-    @roles_ns.marshal_with(return_json)
-    @permission_required("app.users.roles_api.query_menu_by_role_id")
-    def get(self, **kwargs):
-        """
-        获取指定角色的权限列表
-        :return: json
-        """
-        role_id = kwargs['role_id']
-        return success_return(get_menus(role_id), "请求成功")
-
+class RoleMenu(Resource):
     @roles_ns.doc(body=role_bind_menu_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.bind_menu_by_role_id")
@@ -163,5 +160,3 @@ class RoleBindMenu(Resource):
                 message="角色对应权限成功" if not fail_change_menu_name else f"权限修改部分成功，其中{fail_change_menu_name}已存在")
         else:
             return false_return(message="角色不存在")
-
-

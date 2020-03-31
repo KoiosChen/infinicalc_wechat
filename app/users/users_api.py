@@ -5,6 +5,7 @@ from . import users
 from app.auth import auths
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
+from ..public_method import table_fields
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
@@ -13,11 +14,11 @@ users_ns = default_api.namespace('users', path='/users',
                                  description='包括注册、登陆、登出、获取用户信息、用户与角色操作等')
 
 register_parser = reqparse.RequestParser()
-register_parser.add_argument('username', required=True, help='用户名，非真名')
-register_parser.add_argument('password', required=True, help='用户密码')
-register_parser.add_argument('phone', required=True, help='用户注册用的手机')
-register_parser.add_argument('email', required=True, help='用户注册用的邮箱')
-register_parser.add_argument('role', required=True, help='用户角色')
+register_parser.add_argument('username', required=True, help='用户名，非真名', location='json')
+register_parser.add_argument('password', required=True, help='用户密码', location='json')
+register_parser.add_argument('phone', required=True, help='用户注册用的手机', location='json')
+register_parser.add_argument('email', required=True, help='用户注册用的邮箱', location='json')
+register_parser.add_argument('roles', required=True, help='用户角色, 可多个，用list来传递', location='json', type=list)
 
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('username', required=True,
@@ -28,8 +29,6 @@ login_parser.add_argument('method', required=True, help='可以是password 或 c
 login_parser.add_argument('platform', required=True, help='平台字段吗， pc | mobile')
 
 bind_role_parser = reqparse.RequestParser()
-bind_role_parser.add_argument('user_id', location='json', help='可选，如果为空，则绑定发起请求的用户自身的角色（如果有权限）'
-                                                               '如果修改他人权限，那么需把用户ID传递')
 bind_role_parser.add_argument('role_id', required=True, type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
 
 return_json = users_ns.model('ReturnRegister', return_dict)
@@ -39,19 +38,23 @@ return_json = users_ns.model('ReturnRegister', return_dict)
 class QueryUsers(Resource):
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.users_info")
+    @users_ns.expect(head_parser)
     def get(self, info):
         """
         获取用户信息
         :return: json
         """
-        user = info['user']
-        return_user = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'login_time': info['login_info'].login_time
-        }
-        return success_return(return_user, "请求成功")
+        fields_ = table_fields(Users, ["roles"], ["password_hash"])
+        ru = list()
+        for user in Users.query.all():
+            tmp = {}
+            for f in fields_:
+                if f == 'roles':
+                    tmp[f] = {r.id: r.name for r in user.roles}
+                else:
+                    tmp[f] = getattr(user, f)
+            ru.append(tmp)
+        return success_return(ru, "请求成功")
 
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
@@ -64,8 +67,11 @@ class QueryUsers(Resource):
         username = args['username']
         password = args['password']
         phone = args['phone']
+        role_ids = args['roles']
         try:
             user = Users(email=email, username=username, password=password, phone=phone, status=1)
+            for id_ in role_ids:
+                user.roles.append(Roles.query.get(id_))
             db.session.add(user)
             if session_commit().get("code") == 'success':
                 return_user = {
@@ -79,6 +85,7 @@ class QueryUsers(Resource):
                 return false_return({}, '用户注册失败')
         except Exception as e:
             logger.error(f"users::register::db_commit()::error --> {str(e)}")
+            db.session.rollback()
             return false_return(data={}, message=str(e))
 
 
@@ -100,10 +107,10 @@ class Login(Resource):
 
 
 @users_ns.route('/logout')
-@users_ns.expect(head_parser)
 class Logout(Resource):
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.logout")
+    @users_ns.expect(head_parser)
     def post(self, info):
         """
         用户登出
@@ -115,19 +122,22 @@ class Logout(Resource):
         return result
 
 
-@users_ns.route('/<int:user_id>/roles')
+@users_ns.route('/<string:user_id>/roles')
 @users_ns.expect(head_parser)
+@users_ns.param("user_id", "user's id")
 class UserRole(Resource):
+    @permission_required("app.users.users_api.bind_role")
     @users_ns.doc(body=bind_role_parser)
     @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.bind_role")
     def post(self, **kwargs):
         """
         指定用户添加角色
         """
         args = bind_role_parser.parse_args()
-        user = kwargs.get('user_id')
-        old_roles = [r.name for r in user.roles]
+        user = Users.query.get(kwargs.get('user_id'))
+        if not user:
+            return false_return(message='用户不存在')
+        old_roles = [r.id for r in user.roles]
         roles = args['role_id']
         to_add_roles = set(roles) - set(old_roles)
         to_delete_roles = set(old_roles) - set(roles)
@@ -145,5 +155,5 @@ class UserRole(Resource):
                 return false_return(message=f'{roleid} is not exist')
             if role_ in user.roles:
                 user.roles.remove(role_)
-                
+
         return success_return(message='修改角色成功')

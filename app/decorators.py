@@ -23,10 +23,12 @@ def permission_required(permission):
         @wraps(f)
         def decorated_function(*args, **kwargs):
             current_user = identify(request)
-            if current_user.get("code") == "success":
+            if current_user.get("code") == "success" and "admin" not in [r.name for r in current_user['data']['user'].roles]:
                 if permission not in [p.action for p in current_user['data']['user'].permissions]:
                     logger.warn('This users\'s action is not permitted!')
                     abort(403, false_return(message='This users\'s action is not permitted!'))
+            elif current_user.get("code") == "success" and "admin" in [r.name for r in current_user['data']['user'].roles]:
+                pass
             else:
                 abort(403, current_user)
             kwargs['info'] = current_user['data']

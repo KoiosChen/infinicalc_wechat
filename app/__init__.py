@@ -67,6 +67,9 @@ def create_app(config_name):
     from .users import users as users_blueprint
     app.register_blueprint(users_blueprint)
 
+    from .roles import roles as roles_blueprint
+    app.register_blueprint(roles_blueprint)
+
     from .mall import mall as mall_blueprint
     app.register_blueprint(mall_blueprint)
 

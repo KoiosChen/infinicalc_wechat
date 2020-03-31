@@ -1,5 +1,5 @@
 from . import db, logger
-from .models import LoginInfo
+from .models import LoginInfo, Menu, Permissions
 
 
 def new_data_obj(table, **kwargs):
@@ -24,3 +24,12 @@ def new_data_obj(table, **kwargs):
     else:
         logger.debug(f">>> The line exist in {table} for {kwargs}")
     return __obj
+
+
+def table_fields(table, appends=[], removes=[]):
+    original_fields = getattr(getattr(table, '__table__'), 'columns').keys()
+    for a in appends:
+        original_fields.append(a)
+    for r in removes:
+        original_fields.remove(r)
+    return original_fields
