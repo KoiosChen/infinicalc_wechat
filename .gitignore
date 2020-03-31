@@ -1,3 +1,9 @@
 # Created by .ignore support plugin (hsz.mobi)
 /.idea/
 /migrations/
+app/__pycache__/
+app/auth/__pycache__/
+app/mall/__pycache__/
+app/menus/__pycache__/
+app/permissions/__pycache__/
+app/users/__pycache__/
