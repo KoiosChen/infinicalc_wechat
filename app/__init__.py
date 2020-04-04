@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy as SQLAlchemyBase
 from sqlalchemy.pool import NullPool
 from flask_restplus import Api
 import multiprocessing
+from fdfs_client.client import *
 
 
 class SQLAlchemy(SQLAlchemyBase):
@@ -40,6 +41,8 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.DEBUG)
 
+tracker_path = get_tracker_conf('/Users/Peter/fastdfs/client.conf')
+fastdfs_client = Fdfs_client(tracker_path)
 SECRET_KEY = '12kid9k29dj3nd8_2323'
 
 
@@ -78,5 +81,8 @@ def create_app(config_name):
 
     from .permissions import permissions as permissions_blueprint
     app.register_blueprint(permissions_blueprint)
+
+    from .img_urls import img_urls as img_urls_blueprint
+    app.register_blueprint(img_urls_blueprint)
 
     return app

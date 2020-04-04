@@ -24,7 +24,7 @@ def encode_auth_token(user_id, login_time, login_ip, platform):
     """
     try:
         payload = {
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=3600),
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, seconds=86400),
             'iat': datetime.datetime.utcnow(),
             'iss': 'infinicalc.com',
             'data': {

@@ -3,7 +3,6 @@ from . import db, redis_db
 import datetime
 import os
 import bleach
-import uuid
 import re
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -12,6 +11,7 @@ import sqlalchemy
 import uuid
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 user_role = db.Table('user_role',
                      db.Column('user_id', db.String(64), db.ForeignKey('users.id'), primary_key=True),
@@ -22,6 +22,28 @@ role_menu = db.Table('role_menu',
                      db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
                      db.Column('menu_id', db.Integer, db.ForeignKey('menu.id'), primary_key=True),
                      db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+spu_standards = db.Table('spu_standards',
+                         db.Column('spu_id', db.String(64), db.ForeignKey('spu.id'), primary_key=True),
+                         db.Column('standards_id', db.String(64), db.ForeignKey('standards.id'),
+                                   primary_key=True),
+                         db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+sku_standardvalue = db.Table('sku_standardvalue',
+                             db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
+                             db.Column('standardvalue_id', db.String(64), db.ForeignKey('standard_value.id'),
+                                       primary_key=True),
+                             db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+sku_img = db.Table('sku_img',
+                   db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
+                   db.Column('img_id', db.String(64), db.ForeignKey('img_url.id'), primary_key=True),
+                   db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+sku_shoporders = db.Table('sku_shoporders',
+                          db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
+                          db.Column('shoporders_id', db.String(64), db.ForeignKey('shop_orders.id'), primary_key=True),
+                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 
 class OptionsDict(db.Model):
@@ -116,9 +138,9 @@ class Users(db.Model):
     )
     password_hash = db.Column(db.String(128))
     status = db.Column(db.SmallInteger)
-    post = db.relationship('Post', backref='author', lazy='dynamic')
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_user', lazy='dynamic')
+    orders = db.relationship("ShopOrders", backref='consumer', lazy='dynamic')
 
     @property
     def permissions(self):
@@ -139,7 +161,6 @@ class Users(db.Model):
     @password.setter
     def password(self, password):
         self.password_hash = generate_password_hash(password)
-        self.token = None
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
@@ -157,45 +178,255 @@ class Users(db.Model):
         return '<User %r>' % self.username
 
 
-class City(db.Model):
-    __tablename__ = 'city'
+class Countries(db.Model):
+    __tablename__ = 'countries'
     id = db.Column(db.Integer, primary_key=True)
-    city = db.Column(db.String(20), unique=True, index=True, nullable=False)
-    province = db.Column(db.String(20), index=True)
-    country = db.Column(db.String(20), default='中国')
+    name = db.Column(db.String(20), unique=True, index=True, nullable=False)
+    longitude = db.Column(db.String(20))
+    latitude = db.Column(db.String(20))
+    population = db.Column(db.Integer)
+    provinces = db.relationship("Provinces", backref="countries", lazy='dynamic')
 
 
-class Post(db.Model):
-    __tablename__ = 'posts'
+class Provinces(db.Model):
+    __tablename__ = 'provinces'
     id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.Text)
-    alarm_id = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.datetime.now)
-    author_id = db.Column(db.String(64), db.ForeignKey('users.id'))
-    body_html = db.Column(db.Text)
-
-    @staticmethod
-    def on_changed_body(target, value, oldvalue, initiator):
-        allowed_tags = ['a', 'abbr', 'acronym', 'b', 'blockquote', 'code',
-                        'em', 'i', 'li', 'ol', 'pre', 'strong', 'ul',
-                        'h1', 'h2', 'h3', 'p', 'img']
-        attrs = {
-            '*': ['class'],
-            'a': ['href', 'rel'],
-            'img': ['src', 'alt', 'width', 'height'],
-        }
-        target.body_html = bleach.clean(value, tags=allowed_tags, attributes=attrs, strip=True)
+    name = db.Column(db.String(20), unique=True, index=True, nullable=False)
+    longitude = db.Column(db.String(20))
+    latitude = db.Column(db.String(20))
+    population = db.Column(db.Integer)
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'))
+    cities = db.relationship("Cities", backref='provinces', lazy='dynamic')
 
 
-db.event.listen(Post.body, 'set', Post.on_changed_body)
-
-
-class TokenRecord(db.Model):
-    __tablename__ = 'token_record'
+class Cities(db.Model):
+    __tablename__ = 'cities'
     id = db.Column(db.Integer, primary_key=True)
-    token = db.Column(db.String(512), nullable=False)
-    expire = db.Column(db.String(10))
-    create_time = db.Column(db.DateTime)
+    name = db.Column(db.String(20), unique=True, index=True, nullable=False)
+    longitude = db.Column(db.String(20))
+    latitude = db.Column(db.String(20))
+    population = db.Column(db.Integer)
+    province_id = db.Column(db.Integer, db.ForeignKey('provinces.id'))
+    districts = db.relationship("Districts", backref='included_cities', lazy='dynamic')
+    express_address = db.relationship("ExpressAddress", backref='buyer_cities', lazy='dynamic')
+
+
+class Districts(db.Model):
+    __tablename__ = 'districts'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True, index=True, nullable=False)
+    longitude = db.Column(db.String(20))
+    latitude = db.Column(db.String(20))
+    population = db.Column(db.Integer)
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'))
+
+
+class Brands(db.Model):
+    __tablename__ = 'brands'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(100), nullable=False, index=True)
+    logo = db.Column(db.String(64), db.ForeignKey('img_url.id'))
+    company_name = db.Column(db.String(100))
+    company_address = db.Column(db.String(100))
+    spu = db.relationship('SPU', backref='brand', lazy='dynamic')
+
+
+class Classifies(db.Model):
+    __tablename__ = 'classifies'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(50), nullable=False)
+
+
+class Standards(db.Model):
+    __tablename__ = 'standards'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(50), nullable=False, unique=True, index=True)
+    values = db.relationship('StandardValue', backref='standards', lazy='dynamic')
+
+
+class StandardValue(db.Model):
+    __tablename__ = 'standard_value'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    standard_id = db.Column(db.String(64), db.ForeignKey('standards.id'))
+    value = db.Column(db.String(50), nullable=False, unique=True, index=True)
+
+
+class SPU(db.Model):
+    __tablename__ = 'spu'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(100), nullable=False, index=True)
+    sub_name = db.Column(db.String(100))
+    standards = db.relationship(
+        'Standards',
+        secondary=spu_standards,
+        backref=db.backref(
+            'spu'
+        )
+    )
+    brand_id = db.Column(db.String(64), db.ForeignKey('brands.id'))
+    classify_id = db.Column(db.String(64), db.ForeignKey('classifies.id'))
+    sku = db.relationship('SKU', backref='the_spu', lazy='dynamic')
+
+
+class ImgUrl(db.Model):
+    __tablename__ = 'img_url'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    path = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    attribute = db.Column(db.SmallInteger, default=1, index=True,
+                          comment="1：轮播图  2：缩略图，用parent_id来关联对应的父级图  3：正文图片 4: banner图 5:logo")
+    coupons = db.relationship('Coupons', backref="icon_url", lazy='dynamic')
+    evaluates = db.relationship("Evaluates", backref="experience_url", lazy='dynamic')
+    thumbnail_id = db.Column(db.String(64), db.ForeignKey('thumbnail_url.id'))
+    brands = db.relationship('Brands', backref='logo_url', lazy='dynamic')
+
+
+class ThumbnailUrl(db.Model):
+    __tablename__ = 'thumbnail_url'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    path = db.Column(db.String(100), unique=True, nullable=False, index=True)
+    original_img = db.relationship('ImgUrl', backref='thumbnail_url', lazy='dynamic')
+
+
+class PurchaseInfo(db.Model):
+    __tablename__ = 'purchase_info'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
+    unit = db.Column(db.String(6), nullable=False)
+    amount = db.Column(db.Integer)
+    operator = db.Column(db.String(18))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class SKU(db.Model):
+    __tablename__ = 'sku'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(100), nullable=False, index=True)
+    price = db.Column(db.DECIMAL(7, 2), default=0.00)
+    discount = db.Column(db.DECIMAL(3, 2), default=1.00)
+    member_price = db.Column(db.DECIMAL(7, 2), default=0.00)
+    score_types = db.Column(db.SmallInteger, default=0)
+    contents = db.Column(db.Text(length=(2 ** 32) - 1))
+    quantity = db.Column(db.Integer, default=0, index=True)
+    spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
+    values = db.relationship(
+        'StandardValue',
+        secondary=sku_standardvalue,
+        backref=db.backref('sku')
+    )
+    images = db.relationship(
+        'ImgUrl',
+        secondary=sku_img,
+        backref=db.backref('img_sku')
+    )
+    status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime)
+    order = db.relationship(
+        'ShopOrders',
+        secondary=sku_shoporders,
+        backref=db.backref('order_sku')
+    )
+    purchase_info = db.relationship('PurchaseInfo', backref='purchase_sku', lazy='dynamic')
+
+
+class Coupons(db.Model):
+    __tablename__ = 'coupons'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    name = db.Column(db.String(64), nullable=False, comment="优惠券标题")
+    icon = db.Column(db.String(64), db.ForeignKey('img_url.id'), comment="优惠券图标")
+    used_in = db.Column(db.SmallInteger, nullable=False,
+                        comment="可用于：10店铺优惠券 11新人店铺券  20商品优惠券  30类目优惠券  60平台优惠券 61新人平台券'")
+    coupon_type = db.Column(db.SmallInteger, default=1, comment="1满减券 2叠加满减券 3无门槛券（需要限制大小）")
+    with_special = db.Column(db.SmallInteger, default=2, comment="1可用于特价商品 2不能  默认不能(商品优惠卷除外)")
+    with_sn = db.Column(db.String(64), comment='SPU或SKU ID')
+    with_amount = db.Column(db.Integer, default=0, comment="满多少金额")
+    used_amount = db.Column(db.Integer, comment="用券金额")
+    quota = db.Column(db.Integer, default=1, comment='配额：发券数量')
+    take_count = db.Column(db.Integer, default=0, comment='已领取的优惠券数量')
+    used_count = db.Column(db.Integer, default=0, comment='已使用的优惠券数量')
+    start_time = db.Column(db.DateTime, comment='发放开始时间')
+    end_time = db.Column(db.DateTime, comment='发放结束时间')
+    valid_type = db.Column(db.SmallInteger, default=2, comment='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
+    valid_days = db.Column(db.Integer, default=1, comment='自领取之日起有效天数')
+    status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime)
+    coupon_sent = db.relationship("CouponReady", backref='coupon_setting', lazy='dynamic')
+
+
+class CouponReady(db.Model):
+    __tablename__ = 'coupon_ready'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    coupon_id = db.Column(db.String(64), db.ForeignKey('coupons.id'))
+    status = db.Column(db.SmallInteger, default=1, comment="0: 作废，1：已领取未使用，2：已使用")
+    take_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    use_at = db.Column(db.DateTime)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class ShopOrders(db.Model):
+    __tablename__ = 'shop_orders'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    user_id = db.Column(db.String(64), db.ForeignKey('users.id'))
+    trade_sn = db.Column(db.String(64), comment="微信支付的交易号")
+    items_total_price = db.Column(db.DECIMAL(9, 2), default=0.00)
+    score_used = db.Column(db.Integer, default=0, comment="使用的积分")
+    is_pay = db.Column(db.SmallInteger, default=0, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败")
+    pay_time = db.Column(db.DateTime, comment="支付时间")
+    is_ship = db.Column(db.SmallInteger, default=0, comment="0：未发货，1：已发货")
+    ship_time = db.Column(db.DateTime, comment="发货时间")
+    receive_time = db.Column(db.DateTime, comment="收货时间")
+    is_receipt = db.Column(db.SmallInteger, default=0, comment="0：未发货 1：已发货未签收 2：已发货已签收")
+    express_company = db.Column(db.String(50))
+    express_number = db.Column(db.String(50))
+    express_fee = db.Column(db.DECIMAL(7, 2), default=10.00)
+    express_address = db.Column(db.String(64), db.ForeignKey('express_address.id'))
+    status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime)
+    items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
+    message = db.Column(db.String(500), comment='用户留言')
+
+
+class ItemsOrders(db.Model):
+    __tablename__ = 'items_orders'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
+    item_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
+    item_quantity = db.Column(db.Integer, default=1)
+    item_price = db.Column(db.DECIMAL(7, 2))
+    activity_discount = db.Column(db.DECIMAL(3, 2), default=1.00)
+    # 1：正常 2：禁用 0：取消
+    status = db.Column(db.SmallInteger, default=1)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime)
+    rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'))
+
+
+class ExpressAddress(db.Model):
+    __tablename__ = 'express_address'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    sender = db.Column(db.String(64), db.ForeignKey('users.id'))
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'))
+    district = db.Column(db.Integer, db.ForeignKey('districts.id'))
+    address1 = db.Column(db.String(100), nullable=False, comment="某某路xx号xx栋xx门牌号")
+    address2 = db.Column(db.String(100))
+    postcode = db.Column(db.String(10), comment="邮编")
+    recipients = db.Column(db.String(50), nullable=False, comment="收件人")
+    recipients_phone = db.Column(db.String(20), comment="收件人电话")
+    status = db.Column(db.SmallInteger, default=1, comment="1：正常 0：删除")
+    is_default = db.Column(db.Boolean, default=False)
+    spu_order = db.relationship("ShopOrders", backref='express_to', lazy='dynamic')
+
+
+class Evaluates(db.Model):
+    __tablename__ = 'evaluates'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    express_rate = db.Column(db.SmallInteger, default=10, comment="物流评价0~10")
+    item_rate = db.Column(db.SmallInteger, default=10, comment="商品评价0~10")
+    content = db.Column(db.Text(length=(2 ** 32) - 1))
+    used_pic = db.Column(db.String(64), db.ForeignKey('img_url.id'))
+    item_order = db.relationship('ItemsOrders', backref='evaluates', lazy='dynamic')
 
 
 aes_key = 'koiosr2d2c3p0000'

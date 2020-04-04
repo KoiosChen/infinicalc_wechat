@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import os
 from app import create_app, db
-from app.models import Users, Roles, PATH_PREFIX, Permissions, user_role, role_menu, Menu
+from app.models import Users, Roles, PATH_PREFIX, Permissions, user_role, role_menu, Menu, SKU
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -14,7 +14,7 @@ migrate = Migrate(app, db)
 
 def make_shell_context():
     return dict(app=app, db=db, Permissions=Permissions, Users=Users, Roles=Roles, user_role=user_role,
-                role_menu=role_menu, Menu=Menu)
+                role_menu=role_menu, Menu=Menu, SKU=SKU)
 
 
 manager.add_command("shell", Shell(make_context=make_shell_context))

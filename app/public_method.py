@@ -1,5 +1,5 @@
 from . import db, logger
-from .models import LoginInfo, Menu, Permissions
+from .models import LoginInfo, Menu, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue
 
 
 def new_data_obj(table, **kwargs):

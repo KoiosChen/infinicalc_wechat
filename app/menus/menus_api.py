@@ -22,7 +22,7 @@ menu_add_parser.add_argument('order', help='同等级菜单的排列顺序', loc
 menu_add_parser.add_argument('bg_color', help='对应类型的背景色', location='json')
 menu_add_parser.add_argument('type', help='菜单类型，包括目录，菜单, 按钮', location='json')
 menu_add_parser.add_argument('parent_id', help='当类型为菜单时，存在父节点，即目录', location='json')
-menu_add_parser.add_argument('permission', required=True, help='权限ID，list。例如，[1,3,4,5], 从/permissions接口获取',
+menu_add_parser.add_argument('permission', required=True, help='权限ID,例如，{"permission": 1}, 从/permissions接口获取',
                              location='json')
 
 
