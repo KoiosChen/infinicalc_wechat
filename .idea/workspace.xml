@@ -2,37 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
-      <change afterPath="$PROJECT_DIR$/app/img_urls/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/img_urls/img_url.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/brands.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/classifies.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/coupon_ready.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/coupons.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/items_orders.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/purchase_info.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/shop_orders.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/sku.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/spu.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/standard_values.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/mall/standards.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/public/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/public/cities.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/public/countries.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/public/express_address.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/public/provinces.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/auths.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/cart.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/commercial_tenant.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/coupon.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/items.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/mall_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/mall_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/menus/menus_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/menus/menus_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shell.py" beforeDir="false" afterPath="$PROJECT_DIR$/shell.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/manage.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,6 +144,7 @@
       <workItem from="1585747501021" duration="2000" />
       <workItem from="1585748119102" duration="20285000" />
       <workItem from="1585870139632" duration="33889000" />
+      <workItem from="1585991885487" duration="825000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -323,18 +296,18 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="239" height="539" key="HiddenNamespacesPopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585748775769" />
-    <state x="-1139" y="41" key="SettingsEditor" timestamp="1585889855244">
-      <screen x="-1920" y="0" width="1920" height="1080" />
+    <state x="400" y="107" key="SettingsEditor" timestamp="1585992925981">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="-1139" y="41" key="SettingsEditor/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585889855244" />
-    <state x="683" y="40" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585227162819" />
+    <state x="400" y="107" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585992925981" />
     <state x="781" y="41" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1585614617267" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1585671793486">
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1585991897869">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1585671793486" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1585991897869" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1585616161744" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -384,7 +357,7 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/infinicalc_wechat$infinicalc_wechat.coverage" NAME="infinicalc_wechat Coverage Results" MODIFIED="1585991678661" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$infinicalc_wechat.coverage" NAME="infinicalc_wechat Coverage Results" MODIFIED="1585993264861" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
     <SUITE FILE_PATH="coverage/infinicalc_wechat$untitled.coverage" NAME="untitled Coverage Results" MODIFIED="1585496934116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
