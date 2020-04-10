@@ -18,6 +18,11 @@ user_role = db.Table('user_role',
                      db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
                      db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+customer_role = db.Table('customer_role',
+                         db.Column('customer_id', db.String(64), db.ForeignKey('customers.id'), primary_key=True),
+                         db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
+                         db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 role_menu = db.Table('role_menu',
                      db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
                      db.Column('menu_id', db.Integer, db.ForeignKey('menu.id'), primary_key=True),
@@ -115,32 +120,37 @@ class LoginInfo(db.Model):
     platform = db.Column(db.String(20), nullable=False)
     login_ip = db.Column(db.String(64))
     user = db.Column(db.String(64), db.ForeignKey('users.id'))
+    customer = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.Boolean, default=True)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 
-class Users(db.Model):
-    __tablename__ = 'users'
+class Customers(db.Model):
+    __tablename__ = 'customers'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    phone = db.Column(db.String(15), nullable=False, unique=True, index=True)
     email = db.Column(db.String(64), unique=True, index=True)
-    phone = db.Column(db.String(15), unique=True, index=True)
-    wechat_id = db.Column(db.String(50), unique=True, index=True)
+    openid = db.Column(db.String(64), unique=True, index=True)
+    unionid = db.Column(db.String(64), unique=True, index=True)
+    session_key = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), index=True, unique=True)
     true_name = db.Column(db.String(30))
     # 0 unknown, 1 male, 2 female
     gender = db.Column(db.SmallInteger)
     roles = db.relationship(
         'Roles',
-        secondary=user_role,
+        secondary=customer_role,
         backref=db.backref(
-            'users'
+            'customers'
         )
     )
     password_hash = db.Column(db.String(128))
     status = db.Column(db.SmallInteger)
     address = db.Column(db.String(200))
-    login_info = db.relationship('LoginInfo', backref='login_user', lazy='dynamic')
+    login_info = db.relationship('LoginInfo', backref='login_customer', lazy='dynamic')
     orders = db.relationship("ShopOrders", backref='consumer', lazy='dynamic')
+    profile_photo = db.Column(db.String(64), db.ForeignKey('img_url.id'))
+    express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
 
     @property
     def permissions(self):
@@ -171,7 +181,64 @@ class Users(db.Model):
         :param message:
         :return:
         """
-        login_key = f"{self.id}::{self.phone}::login_message"
+        login_key = f"frontstage::verification_code::{self.phone}"
+        return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
+
+    def __repr__(self):
+        return '<User %r>' % self.username
+
+
+class Users(db.Model):
+    __tablename__ = 'users'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    phone = db.Column(db.String(15), unique=True, index=True)
+    username = db.Column(db.String(64), index=True, unique=True)
+    email = db.Column(db.String(64), unique=True, index=True)
+    true_name = db.Column(db.String(30))
+    # 0 unknown, 1 male, 2 female
+    gender = db.Column(db.SmallInteger)
+    roles = db.relationship(
+        'Roles',
+        secondary=user_role,
+        backref=db.backref(
+            'users'
+        )
+    )
+    password_hash = db.Column(db.String(128))
+    status = db.Column(db.SmallInteger)
+    address = db.Column(db.String(200))
+    login_info = db.relationship('LoginInfo', backref='login_user', lazy='dynamic')
+
+    @property
+    def permissions(self):
+        return Permissions.query.outerjoin(Menu).outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(
+            Users).filter(Users.id.__eq__(self.id)).all()
+
+    @property
+    def menus(self):
+        return Menu.query.outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
+            filter(
+            Users.id == self.id
+        ).order_by(Menu.order).all()
+
+    @property
+    def password(self):
+        raise AttributeError('password is not a readable attribute')
+
+    @password.setter
+    def password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def verify_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+    def verify_code(self, message):
+        """
+        验证码
+        :param message:
+        :return:
+        """
+        login_key = f"backstage::verification_code::{self.phone}"
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
 
     def __repr__(self):
@@ -235,6 +302,7 @@ class Classifies(db.Model):
     __tablename__ = 'classifies'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
     name = db.Column(db.String(50), nullable=False)
+    spu = db.relationship('SPU', backref='classifies', lazy='dynamic')
 
 
 class Standards(db.Model):
@@ -278,6 +346,7 @@ class ImgUrl(db.Model):
     evaluates = db.relationship("Evaluates", backref="experience_url", lazy='dynamic')
     thumbnail_id = db.Column(db.String(64), db.ForeignKey('thumbnail_url.id'))
     brands = db.relationship('Brands', backref='logo_url', lazy='dynamic')
+    customers = db.relationship('Customers', backref='photo_url', lazy='dynamic')
 
 
 class ThumbnailUrl(db.Model):
@@ -291,10 +360,12 @@ class PurchaseInfo(db.Model):
     __tablename__ = 'purchase_info'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
-    unit = db.Column(db.String(6), nullable=False)
     amount = db.Column(db.Integer)
-    operator = db.Column(db.String(18))
+    operator = db.Column(db.String(64))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废")
+    update_at = db.Column(db.DateTime)
+    memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
 
 class SKU(db.Model):
@@ -308,6 +379,7 @@ class SKU(db.Model):
     contents = db.Column(db.Text(length=(2 ** 32) - 1))
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
+    unit = db.Column(db.String(6), nullable=False)
     values = db.relationship(
         'StandardValue',
         secondary=sku_standardvalue,
@@ -327,6 +399,7 @@ class SKU(db.Model):
         backref=db.backref('order_sku')
     )
     purchase_info = db.relationship('PurchaseInfo', backref='purchase_sku', lazy='dynamic')
+    sku_layout = db.relationship('SKULayout', backref='layout_sku', lazy='dynamic')
 
 
 class Coupons(db.Model):
@@ -367,7 +440,7 @@ class CouponReady(db.Model):
 class ShopOrders(db.Model):
     __tablename__ = 'shop_orders'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
-    user_id = db.Column(db.String(64), db.ForeignKey('users.id'))
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     trade_sn = db.Column(db.String(64), comment="微信支付的交易号")
     items_total_price = db.Column(db.DECIMAL(9, 2), default=0.00)
     score_used = db.Column(db.Integer, default=0, comment="使用的积分")
@@ -406,7 +479,7 @@ class ItemsOrders(db.Model):
 class ExpressAddress(db.Model):
     __tablename__ = 'express_address'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
-    sender = db.Column(db.String(64), db.ForeignKey('users.id'))
+    sender = db.Column(db.String(64), db.ForeignKey('customers.id'))
     city_id = db.Column(db.Integer, db.ForeignKey('cities.id'))
     district = db.Column(db.Integer, db.ForeignKey('districts.id'))
     address1 = db.Column(db.String(100), nullable=False, comment="某某路xx号xx栋xx门牌号")
@@ -427,6 +500,25 @@ class Evaluates(db.Model):
     content = db.Column(db.Text(length=(2 ** 32) - 1))
     used_pic = db.Column(db.String(64), db.ForeignKey('img_url.id'))
     item_order = db.relationship('ItemsOrders', backref='evaluates', lazy='dynamic')
+
+
+class Layout(db.Model):
+    __tablename__ = 'layout'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, comment="页面板块名称")
+    desc = db.Column(db.String(100), comment="描述、备注")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    layout_sku = db.relationship('SKULayout', backref='layout', lazy='dynamic')
+
+
+class SKULayout(db.Model):
+    __tablename__ = 'sku_layout'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    layout_id = db.Column(db.Integer, db.ForeignKey('layout.id'))
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'), nullable=False)
+    order = db.Column(db.Integer, default=1, comment="排序")
+    status = db.Column(db.SmallInteger, default=1, comment='0 禁用 1 正常')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 
 aes_key = 'koiosr2d2c3p0000'

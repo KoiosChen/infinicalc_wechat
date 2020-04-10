@@ -68,9 +68,10 @@ class QueryMenus(Resource):
         new_menu = new_data_obj("Menu", **{"name": args['name']})
         for key, value in args.items():
             if key != 'name':
-                setattr(new_menu, key, value)
-        db.session.add(new_menu)
-        return success_return(message="菜单创建成功") if session_commit() else false_return(message="菜单创建失败")
+                setattr(new_menu['obj'], key, value)
+        db.session.add(new_menu['obj'])
+        return success_return(data={'id': new_menu['obj'].id}, message="菜单创建成功") \
+            if session_commit() else false_return(message="菜单创建失败")
 
 
 @menus_ns.route('/<int:menu_id>')

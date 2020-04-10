@@ -41,11 +41,8 @@ class BrandsApi(Resource):
         if brand_db:
             return false_return(message=f"<{args['name']}>已经存在")
 
-        new_one = new_data_obj("Brands", **{"name": args['name'],
-                                            "company_name": args['company_name'],
-                                            "company_address": args['company_name'],
-                                            "logo": args['file']})
-        return success_return(message=f"品牌{args['name']}添加成功，id：{new_one.id}")
+        new_one = new_data_obj("Brands", **{"name": args['name']})
+        return success_return(message=f"品牌{args['name']}添加成功，id：{new_one['obj'].id}")
 
 
 @mall_ns.route('/brands/<string:brand_id>')

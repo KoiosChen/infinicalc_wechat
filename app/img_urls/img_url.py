@@ -48,7 +48,8 @@ class ImageApi(Resource):
             logger.debug(store_result)
             if store_result.get("Status") == "Upload successed.":
                 new_logo = new_data_obj("ImgUrl", **{"path": store_result['Remote file_id'].decode(), "attribute": 5})
-                return success_return(data={'img_id': new_logo.id, 'path': store_result['Remote file_id'].decode()})
+                return success_return(
+                    data={'img_id': new_logo['obj'].id, 'path': store_result['Remote file_id'].decode()})
             else:
                 return false_return(message="fastdfs上传失败"), 400
         else:
