@@ -42,7 +42,7 @@ hdlr.setFormatter(formatter)
 logger.addHandler(hdlr)
 logger.setLevel(logging.DEBUG)
 
-tracker_path = get_tracker_conf('/Users/Peter/fastdfs/client.conf')
+tracker_path = get_tracker_conf('/etc/fdfs/client.conf')
 fastdfs_client = Fdfs_client(tracker_path)
 SECRET_KEY = '12kid9k29dj3nd8_2323'
 

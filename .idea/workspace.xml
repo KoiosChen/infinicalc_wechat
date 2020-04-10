@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shell.py" beforeDir="false" afterPath="$PROJECT_DIR$/shell.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -144,6 +143,7 @@
       <workItem from="1585748119102" duration="20285000" />
       <workItem from="1585870139632" duration="33889000" />
       <workItem from="1585991885487" duration="920000" />
+      <workItem from="1586521433386" duration="875000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -303,6 +303,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="239" height="539" key="HiddenNamespacesPopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585748775769" />
+    <state x="551" y="239" key="MultipleFileMergeDialog" timestamp="1586521452950">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="551" y="239" key="MultipleFileMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586521452950" />
     <state x="400" y="107" key="SettingsEditor" timestamp="1585992925981">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -311,10 +315,10 @@
     <state x="781" y="41" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1585614617267" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1585993296839">
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1586521457955">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1585993296839" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1586521457955" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1585616161744" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -334,9 +338,10 @@
     </state>
     <state x="495" y="266" width="689" height="518" key="find.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1585497897564" />
     <state x="-1354" y="291" width="788" height="522" key="find.popup/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585880338490" />
-    <state x="727" y="326" key="git4idea.merge.GitMergeDialog" timestamp="1585614554884">
-      <screen x="0" y="0" width="1920" height="1080" />
+    <state x="636" y="317" key="git4idea.merge.GitMergeDialog" timestamp="1586521442481">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
+    <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586521442481" />
     <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585614554884" />
     <state x="577" y="240" width="766" height="696" key="search.everywhere.popup" timestamp="1585784512343">
       <screen x="0" y="0" width="1920" height="1080" />
@@ -350,7 +355,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/app/mall/sku.py</url>
-          <line>119</line>
+          <line>127</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
