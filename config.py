@@ -23,7 +23,7 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = True
     DB_USERNAME = os.environ.get('DEV_DATABASE_USERNAME') or 'peter'
-    DB_PASSWORD = os.environ.get('DEV_DATABASE_PASSWORD') or '123123'
+    DB_PASSWORD = os.environ.get('DEV_DATABASE_PASSWORD') or 'Ftp123buzhidao_'
     DB_HOST = os.environ.get('DEV_DATABASE_HOST') or '127.0.0.1'
     DB_DATABASE = os.environ.get('DEV_DATABASE_DATABASE') or 'infinicalc'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
@@ -32,47 +32,10 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     DEBUG = False
     DB_USERNAME = os.environ.get('TEST_DATABASE_USERNAME') or 'peter'
-    DB_PASSWORD = os.environ.get('TEST_DATABASE_PASSWORD') or 'ftp123buzhidao'
+    DB_PASSWORD = os.environ.get('TEST_DATABASE_PASSWORD') or 'Ftp123buzhidao_'
     DB_HOST = os.environ.get('TEST_DATABASE_HOST') or '127.0.0.1'
-    DB_DATABASE = os.environ.get('TEST_DATABASE_DATABASE') or 'r2d2'
+    DB_DATABASE = os.environ.get('TEST_DATABASE_DATABASE') or 'infinicalc'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
-
-    JOBS = [
-
-        {
-            'id': 'ups',
-            'func': 'app.r2d2.UpsMonitor:ups_monitor',
-            'args': (),
-            'trigger': 'interval',
-            'seconds': 300,
-        },
-
-        {
-            'id': 'cacti',
-            'func': 'app.r2d2.CactiMonitor:cacti_db_monitor',
-            'args': (),
-            'trigger': 'interval',
-            'seconds': 300,
-        },
-
-        {
-            'id': 'polling',
-            'func': 'app.r2d2.ScheduleWorker:unalarmed_polling',
-            'args': (),
-            'trigger': 'interval',
-            'seconds': 300,
-        },
-
-        {
-            'id': 'check_licence',
-            'func': 'app.MyModule.SeqPickle:checkLicence',
-            'args': (),
-            'trigger': 'interval',
-            'seconds': 30,
-        },
-    ]
-
-    SCHEDULER_VIEWS_ENABLED = True
 
 
 class ProductionConfig(Config):

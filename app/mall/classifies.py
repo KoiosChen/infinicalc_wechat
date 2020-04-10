@@ -39,7 +39,7 @@ class ClassifiesApi(Resource):
             return false_return(message=f"<{args['name']}>已经存在")
 
         new_one = new_data_obj("Classifies", **{"name": args['name']})
-        return success_return(message=f"分类<{args['name']}>添加成功，id：{new_one.id}")
+        return success_return(message=f"分类<{args['name']}>添加成功，id：{new_one['ojb'].id}")
 
 
 @mall_ns.route('/classifies/<int:classify_id>')
@@ -77,3 +77,20 @@ class ClassifyApi(Resource):
         classify = Classifies.query.get(kwargs['classify_id'])
         db.session.delete(classify)
         return success_return() if session_commit() else false_return(message="删除分类失败")
+
+
+@mall_ns.route('/classifies/<int:classify_id>/items')
+@mall_ns.param('classify_id', '分类ID')
+@mall_ns.expect(head_parser)
+class ClassifyItemsApi(Resource):
+    @mall_ns.marshal_with(return_json)
+    @permission_required("app.mall.brands.query_classify_items")
+    def get(self, **kwargs):
+        """
+        获取指定分类的所有商品信息
+        """
+        c = Classifies.query.get(kwargs['classify_id'])
+        spu = c.spu.all()
+        r = list()
+        for s in spu:
+            pass

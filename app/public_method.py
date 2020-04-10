@@ -1,5 +1,6 @@
 from . import db, logger
-from .models import LoginInfo, Menu, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue
+from .models import LoginInfo, Menu, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
+    PurchaseInfo, Layout, SKULayout
 
 
 def new_data_obj(table, **kwargs):
@@ -11,6 +12,7 @@ def new_data_obj(table, **kwargs):
     """
     logger.debug(f">>> Check the {table} for data {kwargs}")
     __obj = eval(table).query.filter_by(**kwargs).first()
+    new_one = True
     if not __obj:
         logger.debug(f">>> The table {table} does not have the obj, create new one!")
         try:
@@ -23,7 +25,8 @@ def new_data_obj(table, **kwargs):
             return False
     else:
         logger.debug(f">>> The line exist in {table} for {kwargs}")
-    return __obj
+        new_one = False
+    return {'obj': __obj, 'status': new_one}
 
 
 def table_fields(table, appends=[], removes=[]):

@@ -47,7 +47,7 @@ class QueryPermissions(Resource):
         if now_p:
             return false_return(message=f"<{args['action']}>已经存在，当前权限名为<{now_p.name}>")
         new_one = new_data_obj("Permissions", **{"name": args['name'], "action": args['action']})
-        return success_return(message=f"{args['name']}: {args['action']} 添加成功，id：{new_one.id}")
+        return success_return(message=f"{args['name']}: {args['action']} 添加成功，id：{new_one['obj'].id}")
 
 
 @permission_ns.route('/<int:permission_id>')

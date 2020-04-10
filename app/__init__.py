@@ -10,6 +10,7 @@ from sqlalchemy.pool import NullPool
 from flask_restplus import Api
 import multiprocessing
 from fdfs_client.client import *
+from qcloudsms_py import SmsSingleSender, SmsMultiSender
 
 
 class SQLAlchemy(SQLAlchemyBase):
@@ -44,6 +45,19 @@ logger.setLevel(logging.DEBUG)
 tracker_path = get_tracker_conf('/Users/Peter/fastdfs/client.conf')
 fastdfs_client = Fdfs_client(tracker_path)
 SECRET_KEY = '12kid9k29dj3nd8_2323'
+
+# 短信应用 SDK AppID
+appid = 1400346102  # SDK AppID 以1400开头
+# 短信应用 SDK AppKey
+appkey = "c5bed6666ff8e6bf76340bb03cdc22ec"
+# 需要发送短信的手机号码
+phone_numbers = ["13817730962", "15962968250‬"]
+# 短信模板ID，需要在短信控制台中申请
+template_id = 572001  # NOTE: 这里的模板 ID`7839`只是示例，真实的模板 ID 需要在短信控制台中申请
+# 签名
+sms_sign = "Infinicalc"
+
+ssender = SmsSingleSender(appid, appkey)
 
 
 def create_app(config_name):
@@ -84,5 +98,11 @@ def create_app(config_name):
 
     from .img_urls import img_urls as img_urls_blueprint
     app.register_blueprint(img_urls_blueprint)
+
+    from .layout import layout as layout_blueprint
+    app.register_blueprint(layout_blueprint)
+
+    from .sms import sms as sms_blueprint
+    app.register_blueprint(sms_blueprint)
 
     return app

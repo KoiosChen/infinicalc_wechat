@@ -63,7 +63,7 @@ class SPUApi(Resource):
                                          "brand_id": args['brand_id'],
                                          "classify_id": args['classify_id']})
 
-        return success_return(message=f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one.id}")
+        return success_return(message=f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}")
 
 
 @mall_ns.route('/spu/<string:spu_id>')

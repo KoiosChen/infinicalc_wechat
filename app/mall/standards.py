@@ -40,4 +40,4 @@ class StandardsApi(Resource):
 
         new_one = new_data_obj("Standards", **{"name": args['name']})
 
-        return success_return(message=f"产品规格<{args['name']}>添加成功，id：{new_one.id}")
+        return success_return(message=f"产品规格<{args['name']}>添加成功，id：{new_one['obj'].id}")
