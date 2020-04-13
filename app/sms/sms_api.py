@@ -24,7 +24,6 @@ return_json = sms_ns.model('ReturnRegister', return_dict)
 class SendSMS(Resource):
     @sms_ns.doc(body=sms_add_parser)
     @sms_ns.marshal_with(return_json)
-    @permission_required("app.sms.sms_api.send_sms")
     def post(self, **kwargs):
         """
         发送短信
