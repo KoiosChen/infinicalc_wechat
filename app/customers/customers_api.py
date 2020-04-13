@@ -39,6 +39,8 @@ update_customer_parser.add_argument('role_id', type=list, location='json', help=
 update_customer_parser.add_argument('address', location='json', help='用户地址')
 update_customer_parser.add_argument('profile_photo', location='json', help='用户头像对应的img_url中的ID')
 update_customer_parser.add_argument('Authorization', required=True, location='headers')
+update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime.strftime(x, '%Y-%m-%d'),
+                                    help="生日，格式'%Y-%m-%d")
 
 return_json = customers_ns.model('ReturnRegister', return_dict)
 

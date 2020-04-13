@@ -134,7 +134,7 @@ def identify(request):
     auth_header = request.headers.get('Authorization')
     if auth_header:
         auth_token_arr = auth_header.split(" ")
-        if not auth_token_arr or auth_token_arr[0] != 'JWT' or len(auth_token_arr) != 2:
+        if not auth_token_arr or auth_token_arr[0] != 'Bearer' or len(auth_token_arr) != 2:
             result = false_return(message='请传递正确的验证头信息')
         else:
             auth_token = auth_token_arr[1]
