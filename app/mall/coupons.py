@@ -83,9 +83,9 @@ class CouponsApi(Resource):
 @mall_ns.expect(head_parser)
 class TakeCouponApi(Resource):
     @mall_ns.marshal_with(return_json)
-    @permission_required("app.mall.coupons.take_coupon")
+    @permission_required("frontstage.app.mall.coupons.take_coupon")
     def post(self, **kwargs):
-        """jkl90
+        """
         获取优惠券
         """
         coupon_id = kwargs.get('coupon_id')

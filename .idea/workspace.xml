@@ -3,6 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/auth/auths.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/customers/customers_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/customers/customers_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/frontstage_auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/frontstage_auth/auths.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/mall/coupons.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/coupons.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,7 +82,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/app" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="MTConfigurable" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -144,6 +148,7 @@
       <workItem from="1585870139632" duration="33889000" />
       <workItem from="1585991885487" duration="920000" />
       <workItem from="1586521433386" duration="875000" />
+      <workItem from="1586757314846" duration="2112000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -303,23 +308,24 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="239" height="539" key="HiddenNamespacesPopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585748775769" />
-    <state x="551" y="239" key="MultipleFileMergeDialog" timestamp="1586521452950">
+    <state x="551" y="239" key="MultipleFileMergeDialog" timestamp="1586783163289">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="551" y="239" key="MultipleFileMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586521452950" />
-    <state x="400" y="107" key="SettingsEditor" timestamp="1585992925981">
+    <state x="551" y="239" key="MultipleFileMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783163289" />
+    <state x="630" y="246" key="MultipleFileMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757322622" />
+    <state x="530" y="142" key="SettingsEditor" timestamp="1586783411170">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="-1139" y="41" key="SettingsEditor/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585889855244" />
-    <state x="400" y="107" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1585992925981" />
+    <state x="530" y="142" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1586783411170" />
     <state x="781" y="41" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1585614617267" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1586521457955">
-      <screen x="0" y="0" width="1680" height="1050" />
+    <state x="503" y="268" key="Vcs.Push.Dialog.v2" timestamp="1586757335434">
+      <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1586521457955" />
-    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1585616161744" />
+    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1586757335434" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -333,16 +339,20 @@
     </state>
     <state x="569" y="211" key="com.intellij.database.view.ui.AbstractDbRefactoringDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1585411118306" />
     <state x="650" y="217" key="com.intellij.database.view.ui.AbstractDbRefactoringDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585790847581" />
-    <state x="-1354" y="291" width="788" height="522" key="find.popup" timestamp="1585880338490">
-      <screen x="-1920" y="23" width="1920" height="1057" />
-    </state>
-    <state x="495" y="266" width="689" height="518" key="find.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1585497897564" />
-    <state x="-1354" y="291" width="788" height="522" key="find.popup/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585880338490" />
-    <state x="636" y="317" key="git4idea.merge.GitMergeDialog" timestamp="1586521442481">
+    <state x="495" y="266" width="689" height="518" key="find.popup" timestamp="1586783558329">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
+    <state x="495" y="266" width="689" height="518" key="find.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1586783558329" />
+    <state x="-1354" y="291" width="788" height="522" key="find.popup/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585880338490" />
+    <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog" timestamp="1586783160811">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783160811" />
+    <state x="727" y="326" key="git4idea.merge.GitMergeDialog" timestamp="1586757320651">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
     <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586521442481" />
-    <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585614554884" />
+    <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757320651" />
     <state x="577" y="240" width="766" height="696" key="search.everywhere.popup" timestamp="1585784512343">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
@@ -354,9 +364,9 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/mall/sku.py</url>
-          <line>127</line>
-          <option name="timeStamp" value="7" />
+          <url>file://$PROJECT_DIR$/app/sms/verify_code.py</url>
+          <line>29</line>
+          <option name="timeStamp" value="16" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
