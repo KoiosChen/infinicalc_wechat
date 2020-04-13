@@ -128,15 +128,16 @@ class LoginInfo(db.Model):
 class Customers(db.Model):
     __tablename__ = 'customers'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
-    phone = db.Column(db.String(15), nullable=False, unique=True, index=True)
-    email = db.Column(db.String(64), unique=True, index=True)
-    openid = db.Column(db.String(64), unique=True, index=True)
-    unionid = db.Column(db.String(64), unique=True, index=True)
+    phone = db.Column(db.String(15), nullable=False, index=True)
+    email = db.Column(db.String(64), index=True)
+    openid = db.Column(db.String(64), index=True)
+    unionid = db.Column(db.String(64), index=True)
     session_key = db.Column(db.String(64), unique=True, index=True)
-    username = db.Column(db.String(64), index=True, unique=True)
+    username = db.Column(db.String(64), index=True)
     true_name = db.Column(db.String(30))
     # 0 unknown, 1 male, 2 female
     gender = db.Column(db.SmallInteger)
+    birthday = db.Column(db.Date)
     roles = db.relationship(
         'Roles',
         secondary=customer_role,
@@ -145,23 +146,24 @@ class Customers(db.Model):
         )
     )
     password_hash = db.Column(db.String(128))
-    status = db.Column(db.SmallInteger)
+    status = db.Column(db.SmallInteger, comment='1: 正常 0: 删除')
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_customer', lazy='dynamic')
     orders = db.relationship("ShopOrders", backref='consumer', lazy='dynamic')
     profile_photo = db.Column(db.String(64), db.ForeignKey('img_url.id'))
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
+    coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
 
     @property
     def permissions(self):
-        return Permissions.query.outerjoin(Menu).outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(
-            Users).filter(Users.id.__eq__(self.id)).all()
+        return Permissions.query.outerjoin(Menu).outerjoin(role_menu).outerjoin(Roles).outerjoin(customer_role).outerjoin(
+            Customers).filter(Customers.id.__eq__(self.id)).all()
 
     @property
     def menus(self):
-        return Menu.query.outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
+        return Menu.query.outerjoin(role_menu).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
             filter(
-            Users.id == self.id
+            Customers.id == self.id
         ).order_by(Menu.order).all()
 
     @property
@@ -173,6 +175,8 @@ class Customers(db.Model):
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
     def verify_code(self, message):
@@ -181,20 +185,21 @@ class Customers(db.Model):
         :param message:
         :return:
         """
-        login_key = f"frontstage::verification_code::{self.phone}"
+        login_key = f"front::verification_code::{self.phone}"
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User %r>' % self.phone
 
 
 class Users(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
-    phone = db.Column(db.String(15), unique=True, index=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(64), unique=True, index=True)
+    phone = db.Column(db.String(15), nullable=False, index=True)
+    username = db.Column(db.String(64), index=True)
+    email = db.Column(db.String(64), index=True)
     true_name = db.Column(db.String(30))
+    birthday = db.Column(db.Date)
     # 0 unknown, 1 male, 2 female
     gender = db.Column(db.SmallInteger)
     roles = db.relationship(
@@ -230,6 +235,8 @@ class Users(db.Model):
         self.password_hash = generate_password_hash(password)
 
     def verify_password(self, password):
+        if not self.password_hash:
+            return False
         return check_password_hash(self.password_hash, password)
 
     def verify_code(self, message):
@@ -238,7 +245,7 @@ class Users(db.Model):
         :param message:
         :return:
         """
-        login_key = f"backstage::verification_code::{self.phone}"
+        login_key = f"back::verification_code::{self.phone}"
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
 
     def __repr__(self):
@@ -380,6 +387,7 @@ class SKU(db.Model):
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
+    special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品")
     values = db.relationship(
         'StandardValue',
         secondary=sku_standardvalue,
@@ -418,10 +426,11 @@ class Coupons(db.Model):
     take_count = db.Column(db.Integer, default=0, comment='已领取的优惠券数量')
     used_count = db.Column(db.Integer, default=0, comment='已使用的优惠券数量')
     start_time = db.Column(db.DateTime, comment='发放开始时间')
-    end_time = db.Column(db.DateTime, comment='发放结束时间')
+    end_time = db.Column(db.DateTime,  comment='发放结束时间')
     valid_type = db.Column(db.SmallInteger, default=2, comment='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
     valid_days = db.Column(db.Integer, default=1, comment='自领取之日起有效天数')
-    status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束')
+    absolute_date = db.Column(db.DateTime, comment='当valid_type为1时，此项不能为空')
+    status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束', default=1)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime)
     coupon_sent = db.relationship("CouponReady", backref='coupon_setting', lazy='dynamic')
@@ -435,6 +444,7 @@ class CouponReady(db.Model):
     take_at = db.Column(db.DateTime, default=datetime.datetime.now)
     use_at = db.Column(db.DateTime)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    consumer = db.Column(db.String(64), db.ForeignKey('customers.id'))
 
 
 class ShopOrders(db.Model):
@@ -505,7 +515,7 @@ class Evaluates(db.Model):
 class Layout(db.Model):
     __tablename__ = 'layout'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, comment="页面板块名称")
+    name = db.Column(db.String(64), nullable=False, comment="页面板块名称")
     desc = db.Column(db.String(100), comment="描述、备注")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     layout_sku = db.relationship('SKULayout', backref='layout', lazy='dynamic')
@@ -518,6 +528,36 @@ class SKULayout(db.Model):
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'), nullable=False)
     order = db.Column(db.Integer, default=1, comment="排序")
     status = db.Column(db.SmallInteger, default=1, comment='0 禁用 1 正常')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class SMSTemplate(db.Model):
+    __tablename__ = 'sms_template'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64))
+    template_id = db.Column(db.String(64), nullable=False)
+    platform = db.Column(db.String(100), default='tencent', nullable=False)
+    content = db.Column(db.String(140))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class SMSSign(db.Model):
+    __tablename__ = 'sms_sign'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64))
+    sign_id = db.Column(db.String(64), nullable=False)
+    content = db.Column(db.String(140))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class SMSApp(db.Model):
+    __tablename__ = 'sms_app'
+    id = db.Column(db.Integer, primary_key=True)
+    app_id = db.Column(db.String(64), nullable=False, index=True)
+    app_key = db.Column(db.String(64), nullable=False, index=True)
+    platform = db.Column(db.String(100), default='tencent', nullable=False)
+    status = db.Column(db.SmallInteger, default=1, comment="1正常；2暂停")
+    callback_url = db.Column(db.String(100), comment="短信回调URL")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 

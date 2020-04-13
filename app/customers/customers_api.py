@@ -1,102 +1,91 @@
 from flask import jsonify, request
 from flask_restplus import Resource, fields, reqparse
-from ..models import Users, Roles
-from . import users
-from app.auth import auths
+from ..models import Users, Roles, Customers
+from . import customers
+from app.frontstage_auth import auths
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields
+from ..public_method import table_fields, new_data_obj
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
-from ..public_method import new_data_obj
 
-users_ns = default_api.namespace('users', path='/users',
-                                 description='包括注册、登陆、登出、获取用户信息、用户与角色操作等')
+customers_ns = default_api.namespace('customers', path='/customers',
+                                     description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
 
 register_parser = reqparse.RequestParser()
 register_parser.add_argument('phone', required=True, help='用户注册用的手机', location='json')
 register_parser.add_argument('verify_code', required=True, help='验证码', location='json')
-register_parser.add_argument('username', help='用户名，非真名，选填', location='json')
-register_parser.add_argument('password', help='用户密码，选填', location='json')
-register_parser.add_argument('email', help='用户注册用的邮箱，选填', location='json')
-register_parser.add_argument('role_id', help='用户角色, 可多个，用list来传递', location='json', type=list)
+register_parser.add_argument('role_id', help='用户角色, 可多个，用list来传递。如果不传递，则为默认普通用户权限', location='json', type=list)
 
 login_parser = reqparse.RequestParser()
-login_parser.add_argument('username', required=True, help='可以是用户名、邮箱、手机号、微信ID等')
-login_parser.add_argument('password', required=True, help='当username传递的是手机号时，password对应为发送的验证码')
-login_parser.add_argument('method', required=True, help='可以是password 或 code。 当username传递手机号时为code')
-login_parser.add_argument('platform', required=True, help='平台字段吗， pc | mobile')
+login_parser.add_argument('username', required=True, help='微信unionid | 手机号 | 用户名')
+login_parser.add_argument('password', required=True, help='当为unionid时，不需要密码；当为手机号时，需要传递短信验证码；当为用户名时，为用户密码')
+login_parser.add_argument('method', required=True, help='可以是password 或 code 或 unionid。 当username传递手机号时为code')
+login_parser.add_argument('platform', required=True, help='平台字段， pc | mobile')
 
 bind_role_parser = reqparse.RequestParser()
 bind_role_parser.add_argument('role_id', required=True, type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
 
-update_user_parser = reqparse.RequestParser()
-update_user_parser.add_argument('phone', help='用户手机号，如需更改，需要发送验证码认证，调用<string:phone>/verify_code 验证', location='json')
-update_user_parser.add_argument('username', help='登陆用户名', location='json')
-update_user_parser.add_argument('email', help='email', location='json')
-update_user_parser.add_argument('true_name', help='真实姓名', location='json')
-update_user_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
-update_user_parser.add_argument('password', help='密码', location='json')
-update_user_parser.add_argument('role_id', type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
-update_user_parser.add_argument('address', location='json', help='用户地址')
+update_customer_parser = reqparse.RequestParser()
+update_customer_parser.add_argument('phone', help='用户手机号，如需更改，需要发送验证码认证，调用<string:phone>/verify_code 验证',
+                                    location='json')
+update_customer_parser.add_argument('username', help='登陆用户名', location='json')
+update_customer_parser.add_argument('email', help='email', location='json')
+update_customer_parser.add_argument('true_name', help='真实姓名', location='json')
+update_customer_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
+update_customer_parser.add_argument('password', help='密码', location='json')
+update_customer_parser.add_argument('role_id', type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
+update_customer_parser.add_argument('address', location='json', help='用户地址')
+update_customer_parser.add_argument('profile_photo', location='json', help='用户头像对应的img_url中的ID')
+update_customer_parser.add_argument('Authorization', required=True, location='headers')
 
-return_json = users_ns.model('ReturnRegister', return_dict)
+return_json = customers_ns.model('ReturnRegister', return_dict)
 
 
-@users_ns.route('')
-class QueryUsers(Resource):
-    @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.users_info")
-    @users_ns.expect(head_parser)
+@customers_ns.route('')
+class CustomersAPI(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required("frontstage.app.users.users_api.users_info")
+    @customers_ns.expect(head_parser)
     def get(self, info):
         """
-        获取用户信息
-        :return: json
+        获取前端用户信息
         """
-        fields_ = table_fields(Users, ["roles"], ["password_hash"])
+        fields_ = table_fields(Customers, ["roles"], ["password_hash"])
         ru = list()
-        for user in Users.query.all():
+        for customer in Customers.query.all():
             tmp = {}
             for f in fields_:
                 if f == 'roles':
-                    tmp[f] = {r.id: r.name for r in user.roles}
+                    tmp[f] = {r.id: r.name for r in customer.roles}
                 else:
-                    tmp[f] = getattr(user, f)
+                    tmp[f] = getattr(customer, f)
             ru.append(tmp)
         return success_return(ru, "请求成功")
 
-    @users_ns.doc(body=register_parser)
-    @users_ns.marshal_with(return_json)
+    @customers_ns.doc(body=register_parser)
+    @customers_ns.marshal_with(return_json)
     def post(self):
         """
-        后端用户注册
+        前端用户注册
         """
         args = register_parser.parse_args()
         phone = args['phone']
-        username = args.get('username')
-        password = args.get('password')
-        email = args.get('email')
         verify_code = args['verify_code']
         role_ids = args.get('role_id')
-        key = f'back::verification_code::{phone}'
+        key = f'front::verification_code::{phone}'
         try:
             if redis_db.exists(key) and redis_db.get(key) == verify_code:
-                new_user = new_data_obj('Users', **{"phone": phone, "status": 1})
-                if new_user and new_user.get('status'):
-                    user = new_user['obj']
-                    if username:
-                        user.username = username
-                    if password:
-                        user.password = password
-                    if email:
-                        user.email = email
+                new_customer = new_data_obj('Customers', **{"phone": phone, "status": 1})
+                if new_customer and new_customer.get('status'):
+                    user = new_customer['obj']
                 else:
                     return false_return(message=f"<{phone}>已经存在")
 
                 if not role_ids:
                     role_ids = list()
-                    role_ids.append(new_data_obj("Roles", **{"name": "normal_user"})['obj'].id)
+                    role_ids.append(new_data_obj("Roles", **{"name": "normal_customer"})['obj'].id)
 
                 for id_ in role_ids:
                     user.roles.append(Roles.query.get(id_))
@@ -116,16 +105,16 @@ class QueryUsers(Resource):
             db.session.rollback()
             return false_return(data={}, message=str(e))
 
-    @users_ns.doc(body=update_user_parser)
-    @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.update_user_attributes")
+    @customers_ns.marshal_with(return_json)
+    @permission_required("frontstage.app.users.users_api.update_user_attributes")
+    @customers_ns.doc(body=update_customer_parser)
     def put(self, **kwargs):
         """
-        修改用户属性
+        修改前端用户属性
         """
-        args = update_user_parser.parse_args()
+        args = update_customer_parser.parse_args()
         user = kwargs['info']['user']
-        fields_ = table_fields(Users, appends=['role_id'])
+        fields_ = table_fields(Customers, appends=['role_id', 'password'], removes=['password_hash'])
         for f in fields_:
             if f == 'role_id' and args.get(f):
                 user.roles = []
@@ -137,10 +126,10 @@ class QueryUsers(Resource):
         return success_return(message="更新成功")
 
 
-@users_ns.route('/login')
+@customers_ns.route('/login')
 class Login(Resource):
-    @users_ns.doc(body=login_parser)
-    @users_ns.marshal_with(return_json)
+    @customers_ns.doc(body=login_parser)
+    @customers_ns.marshal_with(return_json)
     def post(self):
         """
         用户登陆，获取JWT
@@ -154,11 +143,11 @@ class Login(Resource):
         return auths.authenticate(username, password, user_ip, platform, method=method)
 
 
-@users_ns.route('/logout')
+@customers_ns.route('/logout')
 class Logout(Resource):
-    @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.logout")
-    @users_ns.expect(head_parser)
+    @customers_ns.marshal_with(return_json)
+    @permission_required("frontstage.app.customers.customers_api.logout")
+    @customers_ns.expect(head_parser)
     def post(self, info):
         """
         用户登出
@@ -170,19 +159,19 @@ class Logout(Resource):
         return result
 
 
-@users_ns.route('/<string:user_id>/roles')
-@users_ns.expect(head_parser)
-@users_ns.param("user_id", "后台用户ID")
-class UserRole(Resource):
-    @permission_required("app.users.users_api.bind_role")
-    @users_ns.doc(body=bind_role_parser)
-    @users_ns.marshal_with(return_json)
+@customers_ns.route('/<string:customer_id>/roles')
+@customers_ns.expect(head_parser)
+@customers_ns.param("customer_id", "customer's id")
+class CustomerRole(Resource):
+    @permission_required("frontstage.app.customers.customers_api.bind_role")
+    @customers_ns.doc(body=bind_role_parser)
+    @customers_ns.marshal_with(return_json)
     def post(self, **kwargs):
         """
-        指定用户添加角色
+        给用户添加角色
         """
         args = bind_role_parser.parse_args()
-        user = Users.query.get(kwargs.get('user_id'))
+        user = Customers.query.get(kwargs.get('customer_id'))
         if not user:
             return false_return(message='用户不存在')
         old_roles = [r.id for r in user.roles]

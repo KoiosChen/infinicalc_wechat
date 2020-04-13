@@ -4,6 +4,7 @@ from .models import Permissions
 from . import logger
 from .common import success_return, false_return
 from app.auth.auths import identify
+from app.frontstage_auth import auths
 
 
 def login_required(f):
@@ -15,6 +16,7 @@ def login_required(f):
         if not identify(request).get('code') == "success":
             abort(jsonify(false_return(message='用户未登陆')))
         return f(*args, **kwargs)
+
     return decorated_function
 
 
@@ -22,18 +24,31 @@ def permission_required(permission):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            current_user = identify(request)
-            if current_user.get("code") == "success" and "admin" not in [r.name for r in current_user['data']['user'].roles]:
+            # 区分前后台
+            if permission.split('.')[0] == 'frontstage':
+                current_user = auths.identify(request)
+            else:
+                current_user = identify(request)
+
+            if current_user.get('code') == 'success' and 'logout' in permission:
+                kwargs['info'] = current_user['data']
+                return f(*args, **kwargs)
+
+            if current_user.get("code") == "success" and "admin" not in [r.name for r in
+                                                                         current_user['data']['user'].roles]:
                 if permission not in [p.action for p in current_user['data']['user'].permissions]:
-                    logger.warn('This users\'s action is not permitted!')
-                    abort(403, false_return(message='This users\'s action is not permitted!'))
-            elif current_user.get("code") == "success" and "admin" in [r.name for r in current_user['data']['user'].roles]:
+                    logger.warn('This user\'s action is not permitted!')
+                    abort(403, false_return(message='This user\'s action is not permitted!'))
+            elif current_user.get("code") == "success" and "admin" in [r.name for r in
+                                                                       current_user['data']['user'].roles]:
                 pass
             else:
                 abort(403, current_user)
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 

@@ -108,13 +108,13 @@ class PerSKUApi(Resource):
                 tmp1 = list()
                 t1 = getattr(p, f)
                 for value in t1:
-                    tmp1.append({'image_id': value.id, 'path': value.path, 'type': value.attribute})
+                    tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
                 tmp[f] = tmp1
             elif f == 'values':
                 tmp1 = list()
                 t1 = getattr(p, f)
                 for value in t1:
-                    tmp1.append({'value_id': value.id, 'value': value.value, 'standard': value.standards.name})
+                    tmp1.append({'value': value.value, 'standard_name': value.standards.name})
                 tmp[f] = tmp1
             else:
                 tmp[f] = getattr(p, f)
