@@ -1,6 +1,6 @@
 from . import db, logger
 from .models import LoginInfo, Menu, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
-    PurchaseInfo, Layout, SKULayout
+    PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users
 
 
 def new_data_obj(table, **kwargs):
@@ -36,3 +36,17 @@ def table_fields(table, appends=[], removes=[]):
     for r in removes:
         original_fields.remove(r)
     return original_fields
+
+
+def get_table_data(table, appends=[], removes=[]):
+    fields = table_fields(table, appends, removes)
+    r = list()
+    for t in table.query.all():
+        tmp = dict()
+        for f in fields:
+            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount']:
+                tmp[f] = str(getattr(t, f))
+            else:
+                tmp[f] = getattr(t, f)
+        r.append(tmp)
+    return r

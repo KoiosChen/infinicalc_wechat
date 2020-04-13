@@ -15,13 +15,13 @@ sms_ns = default_api.namespace('sms', path='/sms', description='短信API接口'
 
 sms_add_parser = reqparse.RequestParser()
 sms_add_parser.add_argument('phone', required=True, help='手机号码，国内号')
+sms_add_parser.add_argument('stage', required=True, help='front | back')
 
 return_json = sms_ns.model('ReturnRegister', return_dict)
 
 
 @sms_ns.route('')
-@sms_ns.expect(head_parser)
-class QueryMenus(Resource):
+class SendSMS(Resource):
     @sms_ns.doc(body=sms_add_parser)
     @sms_ns.marshal_with(return_json)
     @permission_required("app.sms.sms_api.send_sms")
@@ -30,5 +30,4 @@ class QueryMenus(Resource):
         发送短信
         """
         args = sms_add_parser.parse_args()
-        send_verification_code(args['phone'])
-        return success_return(message="短信已发送")
+        return send_verification_code(phone=args['phone'], stage=args['stage'])

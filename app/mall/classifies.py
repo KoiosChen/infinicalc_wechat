@@ -1,5 +1,5 @@
 from flask_restplus import Resource, fields, reqparse
-from ..models import Classifies
+from ..models import Classifies, SKU, ImgUrl, StandardValue
 from . import mall
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
@@ -42,7 +42,7 @@ class ClassifiesApi(Resource):
         return success_return(message=f"分类<{args['name']}>添加成功，id：{new_one['ojb'].id}")
 
 
-@mall_ns.route('/classifies/<int:classify_id>')
+@mall_ns.route('/classifies/<string:classify_id>')
 @mall_ns.param('classify_id', '分类ID')
 @mall_ns.expect(head_parser)
 class ClassifyApi(Resource):
@@ -79,7 +79,7 @@ class ClassifyApi(Resource):
         return success_return() if session_commit() else false_return(message="删除分类失败")
 
 
-@mall_ns.route('/classifies/<int:classify_id>/items')
+@mall_ns.route('/classifies/<string:classify_id>/items')
 @mall_ns.param('classify_id', '分类ID')
 @mall_ns.expect(head_parser)
 class ClassifyItemsApi(Resource):
@@ -92,5 +92,31 @@ class ClassifyItemsApi(Resource):
         c = Classifies.query.get(kwargs['classify_id'])
         spu = c.spu.all()
         r = list()
+        sku_fields = table_fields(SKU, appends=['images', 'values'], removes=['create_at', 'update_at'])
+        image_fields = table_fields(ImgUrl)
+        standard_value_fields = table_fields(StandardValue, appends=['standards'], removes=['id', 'standard_id'])
         for s in spu:
-            pass
+            tmp = dict()
+            for u in s.sku.all():
+                for f in sku_fields:
+                    if f in ('price', 'discount', 'member_price'):
+                        tmp[f] = str(getattr(u, f))
+                    elif f == 'images':
+                        tmp[f] = [{image_field: getattr(image, image_field) for image_field in image_fields if
+                                   getattr(image, image_field) is not None} for image in getattr(u, f)]
+                    elif f == 'values':
+                        value_tmp = list()
+                        for sv in getattr(u, f):
+                            tmp_dict = dict()
+                            for sv_field in standard_value_fields:
+                                if getattr(sv, sv_field) is not None:
+                                    if sv_field == 'standards':
+                                        tmp_dict['standard_name'] = sv.standards.name
+                                    else:
+                                        tmp_dict[sv_field] = getattr(sv, sv_field)
+                            value_tmp.append(tmp_dict)
+                        tmp[f] = value_tmp
+                    else:
+                        tmp[f] = getattr(u, f)
+                r.append({'spu': s.name, 'sku': tmp})
+        return success_return(data=r)

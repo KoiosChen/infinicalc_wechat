@@ -2,7 +2,7 @@ import jwt
 import datetime
 import time
 from flask import jsonify
-from ..models import Users, Menu, LoginInfo
+from ..models import Menu, LoginInfo, Customers
 from .. import config, db, logger, SECRET_KEY, redis_db
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
@@ -62,9 +62,9 @@ def authenticate(username, password, login_ip, platform, method='password'):
         'code': {'method': 'verify_code', 'msg': '验证码错误'}
     }
 
-    user_info = Users.query.filter(or_(Users.username.__eq__(username),
-                                       Users.phone.__eq__(username),
-                                       Users.email.__eq__(username)), Users.status.__eq__(1)).first()
+    user_info = Customers.query.filter(or_(Customers.username.__eq__(username),
+                                           Customers.phone.__eq__(username),
+                                           Customers.email.__eq__(username)), Customers.status.__eq__(1)).first()
 
     if user_info is None:
         return false_return('', '找不到用户')
@@ -85,7 +85,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
                          'login_time': login_time,
                          'login_ip': login_ip,
                          'platform': platform,
-                         'user': user_info.id,
+                         'customer': user_info.id,
                          'status': True
                      }
                      )
@@ -93,7 +93,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
         session_commit()
         permission = [{f: getattr(u, f) for f in Menu.__table__.columns.keys() if f != "permission"} for u in
                       user_info.menus]
-        fields_ = table_fields(Users, ["roles"], ["password_hash"])
+        fields_ = table_fields(Customers, ["roles"], ["password_hash"])
         ru = dict()
         for f in fields_:
             if f == 'roles':
@@ -141,11 +141,11 @@ def identify(request):
             payload = decode_auth_token(auth_token)
             if payload['code'] == 'success':
                 data = payload['data']['data']
-                user = Users.query.filter_by(id=data['id']).first()
+                user = Customers.query.filter_by(id=data['id']).first()
                 if user is None:
                     result = false_return('', '找不到该用户信息')
                 else:
-                    login_info = LoginInfo.query.filter_by(token=auth_token, user=user.id).first()
+                    login_info = LoginInfo.query.filter_by(token=auth_token, customer=user.id).first()
                     if login_info and login_info.login_time == data['login_time']:
                         result = success_return(data={"user": user, "login_info": login_info}, message='请求成功')
                     else:
