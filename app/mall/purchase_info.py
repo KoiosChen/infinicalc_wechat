@@ -38,10 +38,10 @@ class PerPurchase(Resource):
                 return success_return(
                     f'作废进货单<{buy_id}>成功，'
                     f'SKU<{purchase_info.sku_id}>数量减少<{purchase_info.amount}>，'
-                    f'现在为<{sku.quantity}>') if session_commit() else false_return(message=f"作废进货单失败")
+                    f'现在为<{sku.quantity}>') if session_commit() else false_return(message=f"作废进货单失败"), 400
             else:
-                return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法删除进货单，请先下架")
+                return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法删除进货单，请先下架"), 400
         elif purchase_info and not purchase_info.status:
-            return false_return(message=f"进货单 <{purchase_info.id}> 已经作废，不可操作")
+            return false_return(message=f"进货单 <{purchase_info.id}> 已经作废，不可操作"), 400
         else:
-            return false_return(message=f"进货单不存在")
+            return false_return(message=f"进货单不存在"), 400

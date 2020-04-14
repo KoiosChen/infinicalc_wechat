@@ -1,9 +1,7 @@
-from flask import jsonify, request
 from flask_restplus import Resource, fields, reqparse
 from ..models import Users, Coupons
 from . import mall
-from app.auth import auths
-from .. import db, redis_db, default_api, logger
+from .. import db, redis_db, logger
 from ..common import success_return, false_return, session_commit
 import datetime
 from ..decorators import permission_required
@@ -18,6 +16,7 @@ add_coupon_parser.add_argument('used_in', type=int, required=True,
                                help='使用范围，传递整数。'
                                     '例如：10：店铺优惠券，11：新人店铺券 (10, 11目前用不到）。'
                                     '20：商品优惠券（针对SKU），30：类目优惠券（针对SPU），40：分类优惠券（针对Classifies的ID）'
+                                    '50: 线下上铺使用'
                                     '60：平台优惠券，61：新人平台券')
 add_coupon_parser.add_argument('coupon_type', required=True, type=int, help='1满减券 2叠加满减券 3无门槛券.（需要限制大小）')
 add_coupon_parser.add_argument('with_special', type=int, help='是否可用于特价商品，若不传递则为默认值：非特价商品。0：非特价，1：特价')
@@ -55,18 +54,8 @@ class CouponsApi(Resource):
         """新增优惠券"""
         args = add_coupon_parser.parse_args()
         name = args.get('name')
-        # icon = args.get('icon')
         used_in = args.get('used_in')
-        # coupon_type = args.get('coupon_type')
-        # with_special = args.get('with_special')
-        # with_sn = args.get('with_sn')
-        # with_amount = args.get('with_amount')
-        # used_amount = args.get('used_amount')
-        # quota = args.get('quota')
-        # start_time = args.get('start_time')
-        # stop_time = args.get('stop_time')
-        # valid_type = args.get('valid_type')
-        # valid_days = args.get('valid_days')
+
         new_coupon = new_data_obj('Coupons', **{"name": name, "used_in": used_in})
         if new_coupon and new_coupon.get('status'):
             fields_ = table_fields(Coupons)
@@ -75,7 +64,7 @@ class CouponsApi(Resource):
                     setattr(new_coupon['obj'], f, args.get(f))
             return success_return(message=f"优惠券‘{name}’添加成功, ID: <{new_coupon['obj'].id}>")
         else:
-            return false_return(message=f"优惠券‘{name}’已经存在")
+            return false_return(message=f"优惠券‘{name}’已经存在"), 400
 
 
 @mall_ns.route('/coupons/<string:coupon_id>/take')
@@ -102,12 +91,13 @@ class TakeCouponApi(Resource):
                         coupon_setting.take_count += 1
                         # take_coupon['obj'].receiptor = kwargs['info']['user']
                     redis_db.delete(key)
-                    return success_return() if take_coupon.get('status') else false_return(message=f"领取优惠券<{coupon_id}>失败")
+                    return success_return() if take_coupon.get('status') else false_return(
+                        message=f"领取优惠券<{coupon_id}>失败"), 400
                 else:
                     redis_db.delete(key)
-                    return false_return(message=f'优惠券<{coupon_id}>已领完')
+                    return false_return(message=f'优惠券<{coupon_id}>已领完'), 400
             else:
                 redis_db.delete(key)
-                return false_return(message=f"未找到优惠券设置<{coupon_id}>")
+                return false_return(message=f"未找到优惠券设置<{coupon_id}>"), 400
         else:
-            return false_return(message="优惠券正在发放，请稍后再试")
+            return false_return(message="优惠券正在发放，请稍后再试"), 400

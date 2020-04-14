@@ -1,9 +1,8 @@
 import jwt
 import datetime
 import time
-from flask import jsonify
-from ..models import Menu, LoginInfo, Customers
-from .. import config, db, logger, SECRET_KEY, redis_db
+from ..models import Elements, LoginInfo, Customers
+from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
 from sqlalchemy import or_
@@ -67,7 +66,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
                                            Customers.email.__eq__(username)), Customers.status.__eq__(1)).first()
 
     if user_info is None:
-        return false_return('', '找不到用户')
+        return false_return('', '找不到用户'), 400
 
     # 查询并删除已经登陆的信息
     logged_in_info = user_info.login_info.filter_by(platform=platform, status=True).all()
@@ -91,8 +90,8 @@ def authenticate(username, password, login_ip, platform, method='password'):
                      )
         db.session.add(user_info)
         session_commit()
-        permission = [{f: getattr(u, f) for f in Menu.__table__.columns.keys() if f != "permission"} for u in
-                      user_info.menus]
+        elements = [{f: getattr(u, f) for f in Elements.__table__.columns.keys() if f != "permission"} for u in
+                      user_info.elements]
         fields_ = table_fields(Customers, ["roles"], ["password_hash"])
         ru = dict()
         for f in fields_:
@@ -100,9 +99,9 @@ def authenticate(username, password, login_ip, platform, method='password'):
                 ru[f] = [{"id": r.id, "name": r.name} for r in user_info.roles]
             else:
                 ru[f] = getattr(user_info, f)
-        return success_return(data={'token': token, 'permission': permission, 'user_info': ru}, message='登录成功')
+        return success_return(data={'token': token, 'elements': elements, 'user_info': ru}, message='登录成功')
     else:
-        return false_return(message=verify_method[method]['msg'])
+        return false_return(message=verify_method[method]['msg']), 400
 
 
 def decode_auth_token(auth_token):

@@ -1,12 +1,11 @@
-from flask import jsonify, request
-from flask_restplus import Resource, fields, reqparse
+from flask import request
+from flask_restplus import Resource, reqparse
 from ..models import Users, Roles
 from . import users
 from app.auth import auths
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import table_fields
-import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
 from ..public_method import new_data_obj
@@ -166,7 +165,7 @@ class Logout(Resource):
         login_info = info.get('login_info')
         db.session.delete(login_info)
         result = success_return(message="登出成功") if session_commit().get("code") == 'success' else false_return(
-            message='登出失败')
+            message='登出失败'), 400
         return result
 
 
@@ -184,7 +183,7 @@ class UserRole(Resource):
         args = bind_role_parser.parse_args()
         user = Users.query.get(kwargs.get('user_id'))
         if not user:
-            return false_return(message='用户不存在')
+            return false_return(message='用户不存在'), 400
         old_roles = [r.id for r in user.roles]
         roles = args['role_id']
         to_add_roles = set(roles) - set(old_roles)
@@ -193,14 +192,14 @@ class UserRole(Resource):
         for roleid in to_add_roles:
             role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{roleid} is not exist')
+                return false_return(message=f'{roleid} is not exist'), 400
             if role_ not in user.roles:
                 user.roles.append(role_)
 
         for roleid in to_delete_roles:
             role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{roleid} is not exist')
+                return false_return(message=f'{roleid} is not exist'), 400
             if role_ in user.roles:
                 user.roles.remove(role_)
 

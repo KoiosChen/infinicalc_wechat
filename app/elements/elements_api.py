@@ -1,0 +1,138 @@
+from flask_restplus import Resource, reqparse
+from ..models import Elements, Permissions
+from . import elements
+from .. import db, redis_db, default_api, logger
+from ..common import success_return, false_return, session_commit
+from ..public_method import new_data_obj, table_fields
+from ..decorators import permission_required
+from ..swagger import return_dict, head_parser
+
+elements_ns = default_api.namespace('elements', path='/elements', description='包括元素相关操作')
+
+return_json = elements_ns.model('ReturnRegister', return_dict)
+
+add_element_parser = reqparse.RequestParser()
+add_element_parser.add_argument('name', required=True, help='新的元素名称', location='json')
+add_element_parser.add_argument('icon', help='元素图标对应图片的存储路径', location='json')
+add_element_parser.add_argument('url', help='元素的url', location='json')
+add_element_parser.add_argument('order', help='同等级元素的排列顺序', location='json')
+add_element_parser.add_argument('bg_color', help='对应类型的背景色', location='json')
+add_element_parser.add_argument('type', help='元素类型，包括menu, button, api等', location='json')
+add_element_parser.add_argument('parent_id', help='当类型为元素时，存在父节点，即目录', location='json')
+add_element_parser.add_argument('permissions', type=list, required=True, help='权限ID,例如，[1,2,3], 从/permissions接口获取',
+                                location='json')
+
+update_element_parser = add_element_parser.copy()
+update_element_parser.replace_argument('name', required=False, help='新的元素名称', location='json')
+update_element_parser.replace_argument('permissions', type=list, help='权限ID,例如，[1,2,3], 从/permissions接口获取',
+                                       location='json')
+
+
+def get_elements(element_id=None):
+    fields_ = table_fields(Elements, appends=["permissions"])
+    elements_ = Elements.query.all() if element_id is None else Elements.query.filter_by(id=element_id).all()
+    return_elements = list()
+
+    for element in elements_:
+        tmp = dict()
+        for f in fields_:
+            if f == 'permissions':
+                tmp[f] = [{'id': p.id, 'name': p.name, 'action': p.action} for p in element.permissions]
+            else:
+                tmp[f] = getattr(element, f)
+        return_elements.append(tmp)
+
+    return return_elements
+
+
+@elements_ns.route('')
+@elements_ns.expect(head_parser)
+class QueryElements(Resource):
+    @elements_ns.marshal_with(return_json)
+    @permission_required("app.elements.elements_api.get_elements")
+    def get(self, **kwargs):
+        """
+        查询所有Elements列表
+        :return:
+        """
+        return success_return(get_elements(), "请求成功")
+
+    @elements_ns.doc(body=add_element_parser)
+    @elements_ns.marshal_with(return_json)
+    @permission_required("app.elements.elements_api.add_element")
+    def post(self, **kwargs):
+        """
+        创建权限
+        :return:
+        """
+        args = add_element_parser.parse_args()
+        new_element = new_data_obj("Element", **{"name": args['name']})
+        for key, value in args.items():
+            if key != 'name':
+                setattr(new_element['obj'], key, value)
+        db.session.add(new_element['obj'])
+        return success_return(data={'id': new_element['obj'].id}, message="元素创建成功") \
+            if session_commit() else false_return(message="元素创建失败")
+
+
+@elements_ns.route('/<int:element_id>')
+@elements_ns.expect(head_parser)
+class QueryElement(Resource):
+    @elements_ns.marshal_with(return_json)
+    @permission_required("app.elements.elements_api.get_element")
+    def get(self, **kwargs):
+        """
+        通过element id查询element
+        """
+        result = get_elements(kwargs['element_id'])
+        return false_return(message=f"无对应资源") if not result else success_return(result, "请求成功")
+
+    @elements_ns.doc(body=update_element_parser)
+    @elements_ns.marshal_with(return_json)
+    @permission_required("app.elements.elements_api.change_element")
+    def put(self, **kwargs):
+        """
+        修改element
+        """
+        args = update_element_parser.parse_args()
+        the_element = Elements.query.get(kwargs['element_id'])
+        if not the_element:
+            return false_return(message=f"<{kwargs['element_id']}>不存在")
+
+        try:
+            for key, value in args.items():
+                if key == 'name' and Elements.query.filter_by(name=value).first():
+                    return false_return(message="元素名已存在")
+                elif key == 'permissions' and value:
+                    the_element.permissions = []
+                    for p in value:
+                        _p = Permissions.query.get(p)
+                        if _p:
+                            the_element.permissions.append(_p)
+                        else:
+                            db.session.rollback()
+                            return false_return(message=f"Permission<{p}>不存在"), 400
+                elif value:
+                    setattr(the_element, key, value)
+            db.session.add(the_element)
+            return success_return(message="元素修改成功") if session_commit() else false_return(message=f"元素修改数据提交失败"), 400
+        except Exception as e:
+            db.session.rollback()
+            return false_return(message=f"更新元素失败：{e}"), 400
+
+    @elements_ns.marshal_with(return_json)
+    @permission_required("app.elements.elements_api.delete_element")
+    def delete(self, **kwargs):
+        """
+        删除element
+        """
+        tobe_delete = Elements.query.get(kwargs['element_id'])
+        if tobe_delete:
+            roles = tobe_delete.elements_roles.all()
+            if not roles:
+                db.session.delete(tobe_delete)
+                return success_return(message="元素删除成功") if session_commit() else false_return(message="元素删除失败"), 400
+            else:
+                return false_return(message=f"此元素被占用，不可删除：{roles}"), 400
+        else:
+            return false_return(message=f"元素不存在"), 400

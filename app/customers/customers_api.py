@@ -83,7 +83,7 @@ class CustomersAPI(Resource):
                 if new_customer and new_customer.get('status'):
                     user = new_customer['obj']
                 else:
-                    return false_return(message=f"<{phone}>已经存在")
+                    return false_return(message=f"<{phone}>已经存在"), 400
 
                 if not role_ids:
                     role_ids = list()
@@ -99,13 +99,13 @@ class CustomersAPI(Resource):
                     }
                     return success_return(return_user, "用户注册成功")
                 else:
-                    return false_return({}, '用户注册失败')
+                    return false_return({}, '用户注册失败'), 400
             else:
-                return false_return(message='验证码错误')
+                return false_return(message='验证码错误'), 400
         except Exception as e:
             logger.error(f"customers::register::db_commit()::error --> {str(e)}")
             db.session.rollback()
-            return false_return(data={}, message=str(e))
+            return false_return(data={}, message=str(e)), 400
 
     @customers_ns.marshal_with(return_json)
     @permission_required("frontstage.app.users.users_api.update_user_attributes")
@@ -157,7 +157,7 @@ class Logout(Resource):
         login_info = info.get('login_info')
         db.session.delete(login_info)
         result = success_return(message="登出成功") if session_commit().get("code") == 'success' else false_return(
-            message='登出失败')
+            message='登出失败'), 400
         return result
 
 
@@ -175,7 +175,7 @@ class CustomerRole(Resource):
         args = bind_role_parser.parse_args()
         user = Customers.query.get(kwargs.get('customer_id'))
         if not user:
-            return false_return(message='用户不存在')
+            return false_return(message='用户不存在'), 400
         old_roles = [r.id for r in user.roles]
         roles = args['role_id']
         to_add_roles = set(roles) - set(old_roles)
@@ -184,15 +184,16 @@ class CustomerRole(Resource):
         for roleid in to_add_roles:
             role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{roleid} is not exist')
+                return false_return(message=f'{roleid} is not exist'), 400
             if role_ not in user.roles:
                 user.roles.append(role_)
 
         for roleid in to_delete_roles:
             role_ = Roles.query.get(roleid)
             if not role_:
-                return false_return(message=f'{roleid} is not exist')
+                return false_return(message=f'{roleid} is not exist'), 400
             if role_ in user.roles:
                 user.roles.remove(role_)
 
-        return success_return(message='修改角色成功')
+        db.session.add(user)
+        return success_return(message='修改角色成功') if session_commit() else false_return(message="修改角色失败"), 400

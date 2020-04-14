@@ -56,7 +56,7 @@ class SPUApi(Resource):
         args = add_spu_parser.parse_args()
         spu_db = SPU.query.filter_by(brand_id=args['brand_id'], name=args['name']).first()
         if spu_db:
-            return false_return(message=f"<{args['name']}>已经存在其对应的品牌中")
+            return false_return(message=f"<{args['name']}>已经存在其对应的品牌中"), 400
 
         new_one = new_data_obj("SPU", **{"name": args['name'],
                                          "sub_name": args.get('sub_name'),
@@ -97,9 +97,9 @@ class PerSPUApi(Resource):
         if spu_db:
             db.session.delete(spu_db)
             return success_return(message=f"SPU {kwargs['spu_id']}已被删除") if session_commit() else false_return(
-                message=f"SPU {kwargs['spu_id']}删除失败")
+                message=f"SPU {kwargs['spu_id']}删除失败"), 400
         else:
-            return false_return(f"不存在{kwargs['spu_id']}")
+            return false_return(f"不存在{kwargs['spu_id']}"), 400
 
     @mall_ns.doc(body=update_spu_parser)
     @mall_ns.marshal_with(return_json)
@@ -159,4 +159,4 @@ class PerSPUStandard(Resource):
             return success_return(
                 message="SPU对应规格修改成功" if not fail_change_spu_name else f"规格修改部分成功，其中{fail_change_spu_name}已存在")
         else:
-            return false_return(message="SPU不存在")
+            return false_return(message="SPU不存在"), 400

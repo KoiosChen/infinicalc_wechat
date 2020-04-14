@@ -36,7 +36,7 @@ class StandardsApi(Resource):
         args = add_standard_parser.parse_args()
         standard_db = Standards.query.filter_by(name=args['name']).first()
         if standard_db:
-            return false_return(message=f"<{args['name']}>已经存在产品规格中")
+            return false_return(message=f"<{args['name']}>已经存在产品规格中"), 400
 
         new_one = new_data_obj("Standards", **{"name": args['name']})
 

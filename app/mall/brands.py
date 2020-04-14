@@ -39,7 +39,7 @@ class BrandsApi(Resource):
         args = add_brand_parser.parse_args()
         brand_db = Brands.query.filter_by(name=args['name']).first()
         if brand_db:
-            return false_return(message=f"<{args['name']}>已经存在")
+            return false_return(message=f"<{args['name']}>已经存在"), 400
 
         new_one = new_data_obj("Brands", **{"name": args['name']})
         return success_return(message=f"品牌{args['name']}添加成功，id：{new_one['obj'].id}")
@@ -77,4 +77,4 @@ class BrandApi(Resource):
         """删除品牌"""
         brand = Brands.query.get(kwargs['brand_id'])
         db.session.delete(brand)
-        return success_return() if session_commit() else false_return(message="删除品牌失败")
+        return success_return() if session_commit() else false_return(message="删除品牌失败"), 400

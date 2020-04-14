@@ -23,10 +23,16 @@ customer_role = db.Table('customer_role',
                          db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
-role_menu = db.Table('role_menu',
-                     db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
-                     db.Column('menu_id', db.Integer, db.ForeignKey('menu.id'), primary_key=True),
-                     db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+roles_elements = db.Table('roles_elements',
+                          db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
+                          db.Column('element_id', db.Integer, db.ForeignKey('elements.id'), primary_key=True),
+                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+elements_permissions = db.Table('elements_permissions',
+                                db.Column('element_id', db.Integer, db.ForeignKey('elements.id'), primary_key=True),
+                                db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'),
+                                          primary_key=True),
+                                db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 spu_standards = db.Table('spu_standards',
                          db.Column('spu_id', db.String(64), db.ForeignKey('spu.id'), primary_key=True),
@@ -74,11 +80,11 @@ class Roles(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), unique=True)
     default = db.Column(db.Boolean, default=False, index=True)
-    menus = db.relationship(
-        'Menu',
-        secondary=role_menu,
+    elements = db.relationship(
+        'Elements',
+        secondary=roles_elements,
         backref=db.backref(
-            'role_menus',
+            'elements_roles',
             lazy='dynamic'
         )
     )
@@ -87,8 +93,8 @@ class Roles(db.Model):
         return '<Role %r>' % self.name
 
 
-class Menu(db.Model):
-    __tablename__ = 'menu'
+class Elements(db.Model):
+    __tablename__ = 'elements'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
     icon = db.Column(db.String(50))
@@ -96,12 +102,19 @@ class Menu(db.Model):
     order = db.Column(db.SmallInteger, default=0)
     bg_color = db.Column(db.String(50))
     type = db.Column(db.String(20))
-    permission = db.Column(db.Integer, db.ForeignKey('permissions.id'))
-    parent_id = db.Column(db.Integer, db.ForeignKey('menu.id'))
-    parent = db.relationship('Menu', backref="children", remote_side=[id])
+    permissions = db.relationship(
+        'Permissions',
+        secondary=elements_permissions,
+        backref=db.backref(
+            'permissions_elements',
+            lazy='dynamic'
+        )
+    )
+    parent_id = db.Column(db.Integer, db.ForeignKey('elements.id'))
+    parent = db.relationship('Elements', backref="children", remote_side=[id])
 
     def __repr__(self):
-        return '<Menu\'s name: %r>' % self.name
+        return '<Element\'s name: %r>' % self.name
 
 
 class Permissions(db.Model):
@@ -109,7 +122,6 @@ class Permissions(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), index=True)
     action = db.Column(db.String(250), unique=True, index=True)
-    menu = db.relationship('Menu', backref='permissions', lazy='dynamic')
 
 
 class LoginInfo(db.Model):
@@ -156,15 +168,14 @@ class Customers(db.Model):
 
     @property
     def permissions(self):
-        return Permissions.query.outerjoin(Menu).outerjoin(role_menu).outerjoin(Roles).outerjoin(customer_role).outerjoin(
+        return Permissions.query.outerjoin(Elements).outerjoin(roles_elements).outerjoin(Roles).outerjoin(
+            customer_role).outerjoin(
             Customers).filter(Customers.id.__eq__(self.id)).all()
 
     @property
-    def menus(self):
-        return Menu.query.outerjoin(role_menu).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
-            filter(
-            Customers.id == self.id
-        ).order_by(Menu.order).all()
+    def elements(self):
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
+            filter(Customers.id == self.id).order_by(Elements.order).all()
 
     @property
     def password(self):
@@ -216,15 +227,16 @@ class Users(db.Model):
 
     @property
     def permissions(self):
-        return Permissions.query.outerjoin(Menu).outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(
+        return Permissions.query.outerjoin(Elements).outerjoin(roles_elements).outerjoin(Roles).outerjoin(
+            user_role).outerjoin(
             Users).filter(Users.id.__eq__(self.id)).all()
 
     @property
-    def menus(self):
-        return Menu.query.outerjoin(role_menu).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
+    def elements(self):
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
             filter(
             Users.id == self.id
-        ).order_by(Menu.order).all()
+        ).order_by(Elements.order).all()
 
     @property
     def password(self):
@@ -382,12 +394,12 @@ class SKU(db.Model):
     price = db.Column(db.DECIMAL(7, 2), default=0.00)
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
     member_price = db.Column(db.DECIMAL(7, 2), default=0.00)
-    score_types = db.Column(db.SmallInteger, default=0)
+    score_types = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
     contents = db.Column(db.Text(length=(2 ** 32) - 1))
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
-    special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品")
+    special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售")
     values = db.relationship(
         'StandardValue',
         secondary=sku_standardvalue,
@@ -426,7 +438,7 @@ class Coupons(db.Model):
     take_count = db.Column(db.Integer, default=0, comment='已领取的优惠券数量')
     used_count = db.Column(db.Integer, default=0, comment='已使用的优惠券数量')
     start_time = db.Column(db.DateTime, comment='发放开始时间')
-    end_time = db.Column(db.DateTime,  comment='发放结束时间')
+    end_time = db.Column(db.DateTime, comment='发放结束时间')
     valid_type = db.Column(db.SmallInteger, default=2, comment='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
     valid_days = db.Column(db.Integer, default=1, comment='自领取之日起有效天数')
     absolute_date = db.Column(db.DateTime, comment='当valid_type为1时，此项不能为空')

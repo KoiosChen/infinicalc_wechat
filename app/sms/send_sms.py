@@ -20,7 +20,7 @@ def send_verification_code(phone, stage, template_id='576515', sms_sign='泛渤�
         redis_db.set(key, code)
         redis_db.expire(key, 125)
     except HTTPError as e:
-        return false_return(message=f"短信发送失败，HTTPError: {e}")
+        return false_return(message=f"短信发送失败，HTTPError: {e}"), 400
     except Exception as e:
-        return false_return(message=f"短信发送失败，{e}")
+        return false_return(message=f"短信发送失败，{e}"), 400
     return success_return(data=result, message="短信已发送")

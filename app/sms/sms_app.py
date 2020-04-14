@@ -8,7 +8,7 @@ from ..common import success_return, false_return, session_commit
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
-from ..menus.menus_api import get_menus
+from ..elements.elements_api import get_elements
 from .send_sms import send_verification_code
 from .sms_api import sms_ns
 from ..public_method import new_data_obj, get_table_data
@@ -51,9 +51,9 @@ class SMSAppsAPI(Resource):
             new_template['obj'].content = args.get("callback_url")
             new_template['obj'].platform = args.get('platform') if args.get('platform') else 'tencent'
         else:
-            return false_return(message="此APP ID已存在")
+            return false_return(message="此APP ID已存在"), 400
         return success_return(data={"id": new_template['obj'].id, "app_id": new_template['obj'].app_id},
-                              message="短信APP已添加") if session_commit() else false_return(message="短信APP添加失败")
+                              message="短信APP已添加") if session_commit() else false_return(message="短信APP添加失败"), 400
 
 
 @sms_ns.route('/app/<int:id>')
@@ -79,6 +79,6 @@ class SMSAppAPI(Resource):
             if args.get('callback_url'):
                 app_.content = args.get('callback_url')
             db.session.add(app_)
-            return success_return(message="更新成功") if session_commit() else false_return(message='更新失败')
+            return success_return(message="更新成功") if session_commit() else false_return(message='更新失败'), 400
         else:
-            return false_return(message=f"<{kwargs.get('id')}>不存在")
+            return false_return(message=f"<{kwargs.get('id')}>不存在"), 400

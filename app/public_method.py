@@ -1,5 +1,5 @@
 from . import db, logger
-from .models import LoginInfo, Menu, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
+from .models import LoginInfo, Elements, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users
 
 
