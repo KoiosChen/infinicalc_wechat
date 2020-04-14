@@ -2,7 +2,7 @@ from functools import wraps
 from flask import abort, request, jsonify
 from .models import Permissions
 from . import logger
-from .common import success_return, false_return
+from .common import false_return, exp_return
 from app.auth.auths import identify
 from app.frontstage_auth import auths
 
@@ -43,7 +43,7 @@ def permission_required(permission):
                                                                        current_user['data']['user'].roles]:
                 pass
             else:
-                abort(403, current_user)
+                abort(401, exp_return(message='login fail or expiration'))
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
 

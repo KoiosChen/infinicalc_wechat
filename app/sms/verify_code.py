@@ -32,4 +32,4 @@ class VerifyCode(Resource):
         if redis_db.exists(key) and redis_db.get(key) == args['code']:
             return success_return(message="验证码正确")
         else:
-            return false_return(message="手机不存在或者验证码错误")
+            return false_return(message="手机不存在或者验证码错误"), 403

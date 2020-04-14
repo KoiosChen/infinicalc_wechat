@@ -8,7 +8,6 @@ import queue
 from flask_sqlalchemy import SQLAlchemy as SQLAlchemyBase
 from sqlalchemy.pool import NullPool
 from flask_restplus import Api
-import multiprocessing
 from fdfs_client.client import *
 from qcloudsms_py import SmsSingleSender, SmsMultiSender
 
@@ -90,8 +89,8 @@ def create_app(config_name):
     from .mall import mall as mall_blueprint
     app.register_blueprint(mall_blueprint)
 
-    from .menus import menus as menus_blueprint
-    app.register_blueprint(menus_blueprint)
+    from .elements import elements as elements_blueprint
+    app.register_blueprint(elements_blueprint)
 
     from .permissions import permissions as permissions_blueprint
     app.register_blueprint(permissions_blueprint)

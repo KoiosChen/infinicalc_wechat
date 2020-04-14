@@ -75,9 +75,9 @@ class LayoutApi(Resource):
             new_one.desc = args['desc']
             db.session.add(new_one)
             return success_return(message=f"页面板块{args['name']}添加成功，id：{new_one['obj'].id}") \
-                if session_commit() else false_return(message=f"页面板块{args['name']}添加描述失败")
+                       if session_commit() else false_return(message=f"页面板块{args['name']}添加描述失败"), 400
         else:
-            return false_return(message=f"页面板块{args['name']}已经存在")
+            return false_return(message=f"页面板块{args['name']}已经存在"), 400
 
 
 @layout_ns.route('/sku')
@@ -121,7 +121,7 @@ class SKULayoutApi(Resource):
                 failed.append({'layout_id': kwargs['layout_id'], 'sku_id': sl['id']})
 
         return success_return(message="添加sku到页面板块中成功") if not failed else false_return(data=failed,
-                                                                                       message="部分SKU已存在该页面板块")
+                                                                                       message="部分SKU已存在该页面板块"), 400
 
 
 @layout_ns.doc(body=update_sku_layout_parser)
@@ -142,8 +142,8 @@ def put(self, **kwargs):
             if eval(sl.get('status')) in (0, 1):
                 update_one.status = sl['status']
         else:
-            return false_return(f'<{sl["id"]}> 此SKU 不存在 ')
-    return success_return(message="更新sku到页面板块中成功") if session_commit() else false_return(message='更新页面板块失败')
+            return false_return(f'<{sl["id"]}> 此SKU 不存在 '), 400
+    return success_return(message="更新sku到页面板块中成功") if session_commit() else false_return(message='更新页面板块失败'), 400
 
 
 @layout_ns.doc(body=delete_sku_in_layout_parser)
@@ -156,4 +156,4 @@ def delete(self, **kwargs):
         to_delete = SKULayoutApi.query.filter_by(layout_id=kwargs['layout_id'], sku_id=sku).first()
         if to_delete:
             db.session.delete(to_delete)
-    return success_return(message="删除页面板块中的SKU失败") if session_commit() else false_return(message="删除页面板块中的SKU失败")
+    return success_return(message="删除页面板块中的SKU失败") if session_commit() else false_return(message="删除页面板块中的SKU失败"), 400

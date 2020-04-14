@@ -36,7 +36,7 @@ class ClassifiesApi(Resource):
         args = add_classify_parser.parse_args()
         classify_db = Classifies.query.filter_by(name=args['name']).first()
         if classify_db:
-            return false_return(message=f"<{args['name']}>已经存在")
+            return false_return(message=f"<{args['name']}>已经存在"), 400
 
         new_one = new_data_obj("Classifies", **{"name": args['name']})
         return success_return(message=f"分类<{args['name']}>添加成功，id：{new_one['ojb'].id}")
@@ -76,7 +76,7 @@ class ClassifyApi(Resource):
         """删除分类"""
         classify = Classifies.query.get(kwargs['classify_id'])
         db.session.delete(classify)
-        return success_return() if session_commit() else false_return(message="删除分类失败")
+        return success_return() if session_commit() else false_return(message="删除分类失败"), 400
 
 
 @mall_ns.route('/classifies/<string:classify_id>/items')

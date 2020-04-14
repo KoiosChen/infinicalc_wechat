@@ -141,9 +141,9 @@ class PerSKUApi(Resource):
         sku = SKU.query.get(kwargs['sku_id'])
         if sku:
             db.session.delete(sku)
-            return success_return("删除SKU成功") if session_commit() else false_return(message="删除SKU失败")
+            return success_return("删除SKU成功") if session_commit() else false_return(message="删除SKU失败"), 400
         else:
-            return false_return(message=f"<{kwargs['sku_id']}>不存在")
+            return false_return(message=f"<{kwargs['sku_id']}>不存在"), 400
 
 
 @mall_ns.route('/sku/<string:sku_id>/standards/values')
@@ -164,7 +164,7 @@ class SKUStandardsValues(Resource):
                 sku.values.append(new_value['obj'])
             return success_return(message=f"<{sku_id}>添加规则值成功")
         else:
-            return false_return(message=f"<{sku_id}>不存在")
+            return false_return(message=f"<{sku_id}>不存在"), 400
 
 
 @mall_ns.route('/sku/<string:sku_id>/images')
@@ -185,10 +185,10 @@ class SKUImages(Resource):
                     if image:
                         sku.images.append(image)
                     else:
-                        return false_return(message="图片不存在")
+                        return false_return(message="图片不存在"), 400
             return success_return(message=f"<{sku_id}>增加图片成功")
         else:
-            return false_return(message=f"<{sku_id}>不存在")
+            return false_return(message=f"<{sku_id}>不存在"), 400
 
 
 @mall_ns.route('/sku/<string:sku_id>/purchase_info')
@@ -213,10 +213,10 @@ class SKUPurchase(Resource):
                 db.session.add(sku)
                 return success_return(
                     message=f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>") \
-                    if session_commit() else false_return(message=f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")
+                    if session_commit() else false_return(message=f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败"), 400
             else:
-                false_return(message="进货数据添加失败")
+                false_return(message="进货数据添加失败"), 400
         elif sku and sku.status:
-            return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进货单，请先下架")
+            return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进货单，请先下架"), 400
         else:
-            return false_return(message=f"<{sku_id}>不存在")
+            return false_return(message=f"<{sku_id}>不存在"), 400
