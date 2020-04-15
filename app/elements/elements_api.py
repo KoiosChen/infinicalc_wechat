@@ -53,7 +53,6 @@ class QueryElements(Resource):
     def get(self, **kwargs):
         """
         查询所有Elements列表
-        :return:
         """
         return success_return(get_elements(), "请求成功")
 
@@ -62,8 +61,7 @@ class QueryElements(Resource):
     @permission_required("app.elements.elements_api.add_element")
     def post(self, **kwargs):
         """
-        创建权限
-        :return:
+        创建页面元素
         """
         args = add_element_parser.parse_args()
         new_element = new_data_obj("Element", **{"name": args['name']})
@@ -89,7 +87,7 @@ class QueryElement(Resource):
 
     @elements_ns.doc(body=update_element_parser)
     @elements_ns.marshal_with(return_json)
-    @permission_required("app.elements.elements_api.change_element")
+    @permission_required("app.elements.elements_api.update_element")
     def put(self, **kwargs):
         """
         修改element

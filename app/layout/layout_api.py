@@ -3,7 +3,7 @@ from ..models import Layout, SKULayout, SKU
 from . import layout
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict
 
@@ -59,10 +59,7 @@ class LayoutApi(Resource):
         """
         获取全部页面板块设置
         """
-        fields_ = table_fields(Layout)
-        fields_.remove("create_at")
-        r = [{f: getattr(p, f) for f in fields_} for p in Layout.query.all()]
-        return success_return(r, "")
+        return success_return(get_table_data(Layout, removes=['create_at']), "")
 
     @layout_ns.doc(body=add_layout_parser)
     @layout_ns.marshal_with(return_json)
@@ -126,7 +123,7 @@ class SKULayoutApi(Resource):
 
 @layout_ns.doc(body=update_sku_layout_parser)
 @layout_ns.marshal_with(return_json)
-@permission_required("app.mall.layout.update_sku_to_layout")
+@permission_required("app.mall.layout.update_sku_in_layout")
 def put(self, **kwargs):
     """
     修改页面布局中的sku(如果传递的SKU不存在，会新增）
