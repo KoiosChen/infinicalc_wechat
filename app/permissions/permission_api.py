@@ -39,6 +39,8 @@ class QueryPermissions(Resource):
         """创建权限"""
         args = add_permission_parser.parse_args()
         new_one = new_data_obj("Permissions", **{"name": args['name'], "action": args['action']})
+        if not new_one:
+            return false_return(message=f"创建权限失败"), 400
         if not new_one['status']:
             return false_return(message=f"<{args['action']}>已经存在，当前权限名为<{new_one['obj'].name}>"), 400
 

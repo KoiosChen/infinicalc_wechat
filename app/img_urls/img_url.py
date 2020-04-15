@@ -4,14 +4,13 @@ from ..models import ImgUrl
 from . import img_urls
 from .. import db, redis_db, default_api, logger, fastdfs_client
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 import datetime
 from ..decorators import permission_required
-from ..swagger import head_parser
+from ..swagger import head_parser,return_dict
 from sqlalchemy import or_
 from werkzeug.datastructures import FileStorage
 from .. import default_api
-from ..swagger import return_dict
 
 img_ns = default_api.namespace('img_urls', path='/img_urls',
                                description='图片文件')
@@ -26,14 +25,12 @@ upload_img_parser.add_argument('file', required=True, type=FileStorage, location
 @img_ns.expect(head_parser)
 class ImageApi(Resource):
     @img_ns.marshal_with(return_json)
-    @permission_required("app.img_urls.img_url.query_img_url")
+    @permission_required("app.img_urls.img_url.query_img_urls")
     def get(self, **kwargs):
         """
         获取所有图片
         """
-        fields_ = table_fields(ImgUrl)
-        r = [{f: getattr(p, f) for f in fields_} for p in ImgUrl.query.all()]
-        return success_return(r, "")
+        return success_return(get_table_data(ImgUrl), "")
 
     @img_ns.doc(body=upload_img_parser)
     @img_ns.marshal_with(return_json)

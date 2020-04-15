@@ -137,6 +137,43 @@ class LoginInfo(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 
+class PointRecords(db.Model):
+    __tablename__ = 'point_records'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    source_type = db.Column(db.SmallInteger, default=1, comment='1: 订单, 提在字典表中，查询point_records获取')
+    source_id = db.Column(db.String(64), comment='积分源ID')
+    card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
+    operation_type = db.Column(db.SmallInteger, default=1, comment='1: 增长， 2: 消费，3: 罚扣')
+    points = db.Column(db.Integer, comment='积分数')
+    note = db.Column(db.String(100), comment='预留给客服做备注')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class MemberRechargeRecords(db.Model):
+    __tablename__ = 'member_recharge_records'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    recharge_amount = db.Column(db.DECIMAL(7, 2), default=0.00, comment="充值金额")
+
+
+class MemberCards(db.Model):
+    __tablename__ = 'member_cards'
+    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
+    grade = db.Column(db.SmallInteger, default=1,
+                      comment='会员卡等级，在OptionsDict表中查找card_grades来获取对应的文字描述.默认为1')
+    discount = db.Column(db.DECIMAL(3, 2), default=1.00, comment="会员折扣")
+    shop_id = db.Column(db.String(64), default='all', comment='预留，对于店铺发店铺会员卡，目前会员卡为商城全局')
+    open_date = db.Column(db.DateTime, default=datetime.datetime.now, comment="开卡日期")
+    validate_date = db.Column(db.DateTime, comment="卡有效期")
+    note = db.Column(db.String(100), comment='备注')
+    creator_id = db.Column(db.String(64), db.ForeignKey('users.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
+
+
 class Customers(db.Model):
     __tablename__ = 'customers'
     id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
@@ -147,6 +184,11 @@ class Customers(db.Model):
     session_key = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), index=True)
     true_name = db.Column(db.String(30))
+    level = db.Column(db.SmallInteger, default=1, comment="用户等级")
+    total_points = db.Column(db.Integer, default=0, comment="用户积分")
+    total_consumption = db.Column(db.DECIMAL(7, 2), default=0.00, comment='累积消费')
+    total_count = db.Column(db.Integer, default=0, comment='累积消费次数')
+
     # 0 unknown, 1 male, 2 female
     gender = db.Column(db.SmallInteger)
     birthday = db.Column(db.Date)
@@ -165,6 +207,7 @@ class Customers(db.Model):
     profile_photo = db.Column(db.String(64), db.ForeignKey('img_url.id'))
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
+    member_card = db.relationship('MemberCards', backref='card_owner', lazy='dynamic')
 
     @property
     def permissions(self):
@@ -224,6 +267,7 @@ class Users(db.Model):
     status = db.Column(db.SmallInteger)
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_user', lazy='dynamic')
+    member_card = db.relationship('MemberCards', backref='cards_creator', lazy='dynamic')
 
     @property
     def permissions(self):
@@ -383,7 +427,7 @@ class PurchaseInfo(db.Model):
     operator = db.Column(db.String(64))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废")
-    update_at = db.Column(db.DateTime)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
 
@@ -412,7 +456,7 @@ class SKU(db.Model):
     )
     status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     order = db.relationship(
         'ShopOrders',
         secondary=sku_shoporders,
@@ -444,7 +488,7 @@ class Coupons(db.Model):
     absolute_date = db.Column(db.DateTime, comment='当valid_type为1时，此项不能为空')
     status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束', default=1)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     coupon_sent = db.relationship("CouponReady", backref='coupon_setting', lazy='dynamic')
 
 
@@ -478,7 +522,7 @@ class ShopOrders(db.Model):
     express_address = db.Column(db.String(64), db.ForeignKey('express_address.id'))
     status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
     message = db.Column(db.String(500), comment='用户留言')
 
@@ -494,7 +538,7 @@ class ItemsOrders(db.Model):
     # 1：正常 2：禁用 0：取消
     status = db.Column(db.SmallInteger, default=1)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime)
+    update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'))
 
 

@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort, request, jsonify
+from flask import abort, request, jsonify, make_response
 from .models import Permissions
 from . import logger
 from .common import false_return, exp_return
@@ -38,12 +38,13 @@ def permission_required(permission):
                                                                          current_user['data']['user'].roles]:
                 if permission not in [p.action for p in current_user['data']['user'].permissions]:
                     logger.warn('This user\'s action is not permitted!')
-                    abort(403, false_return(message='This user\'s action is not permitted!'))
+                    abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
             elif current_user.get("code") == "success" and "admin" in [r.name for r in
                                                                        current_user['data']['user'].roles]:
                 pass
             else:
-                abort(401, exp_return(message='login fail or expiration'))
+
+                abort(make_response(exp_return(message='login fail or expiration'), 403))
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
 

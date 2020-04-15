@@ -48,7 +48,7 @@ return_json = customers_ns.model('ReturnRegister', return_dict)
 @customers_ns.route('')
 class CustomersAPI(Resource):
     @customers_ns.marshal_with(return_json)
-    @permission_required("frontstage.app.users.users_api.users_info")
+    @permission_required("frontstage.app.customers.customers_api.users_info")
     @customers_ns.expect(head_parser)
     def get(self, info):
         """
@@ -108,7 +108,7 @@ class CustomersAPI(Resource):
             return false_return(data={}, message=str(e)), 400
 
     @customers_ns.marshal_with(return_json)
-    @permission_required("frontstage.app.users.users_api.update_user_attributes")
+    @permission_required("frontstage.app.customers.customers_api.update_customer_attributes")
     @customers_ns.doc(body=update_customer_parser)
     def put(self, **kwargs):
         """
