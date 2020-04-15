@@ -14,7 +14,7 @@ def login_required(f):
             'IP {} is checking login status'.format(
                 request.headers.get('X-Forwarded-For', request.remote_addr)))
         if not identify(request).get('code') == "success":
-            abort(jsonify(false_return(message='用户未登陆')))
+            abort(make_response(false_return(message='用户未登陆'), 401))
         return f(*args, **kwargs)
 
     return decorated_function
@@ -61,7 +61,7 @@ def permission_ip(permission_ip_list):
                 'IP {} is trying to get the api'.format(
                     request.headers.get('X-Forwarded-For', request.remote_addr)))
             if request.headers.get('X-Forwarded-For', request.remote_addr) not in permission_ip_list:
-                abort(jsonify({'code': 'fail', 'message': 'IP ' + request.remote_addr + ' not permitted', 'data': ''}))
+                abort(make_response(false_return(message='IP ' + request.remote_addr + ' not permitted')), 403)
             return f(*args, **kwargs)
 
         return decorated_function
