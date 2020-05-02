@@ -1,15 +1,8 @@
-from flask import jsonify, request
-from flask_restplus import Resource, fields, reqparse
+from flask_restplus import Resource, reqparse
 from ..models import SMSTemplate
-from . import sms
-from app.auth import auths
-from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
-from ..elements.elements_api import get_elements
-from .send_sms import send_verification_code
 from .sms_api import sms_ns
 from ..public_method import new_data_obj, get_table_data
 

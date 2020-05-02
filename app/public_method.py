@@ -1,6 +1,7 @@
 from . import db, logger
-from .models import LoginInfo, Elements, Permissions, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
-    PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users
+from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
+    PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
+    Benefits, PromotionGroups, Gifts
 
 
 def new_data_obj(table, **kwargs):
@@ -18,7 +19,7 @@ def new_data_obj(table, **kwargs):
         try:
             __obj = eval(table)(**kwargs)
             db.session.add(__obj)
-            db.session.commit()
+            db.session.flush()
         except Exception as e:
             logger.error(f'create {table} fail {kwargs} {e}')
             db.session.rollback()
@@ -42,6 +43,20 @@ def get_table_data(table, appends=[], removes=[]):
     fields = table_fields(table, appends, removes)
     r = list()
     for t in table.query.all():
+        tmp = dict()
+        for f in fields:
+            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount']:
+                tmp[f] = str(getattr(t, f))
+            else:
+                tmp[f] = getattr(t, f)
+        r.append(tmp)
+    return r
+
+
+def get_table_data_by_id(table, key_id, appends=[], removes=[]):
+    fields = table_fields(table, appends, removes)
+    r = list()
+    for t in table.query.get(key_id):
         tmp = dict()
         for f in fields:
             if f in ['create_at', 'update_at', 'price', 'member_price', 'discount']:

@@ -92,9 +92,6 @@ def create_app(config_name):
     from .elements import elements as elements_blueprint
     app.register_blueprint(elements_blueprint)
 
-    from .permissions import permissions as permissions_blueprint
-    app.register_blueprint(permissions_blueprint)
-
     from .img_urls import img_urls as img_urls_blueprint
     app.register_blueprint(img_urls_blueprint)
 
@@ -106,5 +103,11 @@ def create_app(config_name):
 
     from .customers import customers as customers_blueprint
     app.register_blueprint(customers_blueprint)
+
+    from .promotion_groups import promotion_groups as promotion_groups_blueprint
+    app.register_blueprint(promotion_groups_blueprint)
+
+    from .promotions import promotions as promotions_blueprint
+    app.register_blueprint(promotions_blueprint)
 
     return app

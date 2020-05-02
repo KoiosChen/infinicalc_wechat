@@ -1,6 +1,5 @@
 from functools import wraps
-from flask import abort, request, jsonify, make_response
-from .models import Permissions
+from flask import abort, request, make_response
 from . import logger
 from .common import false_return, exp_return
 from app.auth.auths import identify
@@ -36,7 +35,7 @@ def permission_required(permission):
 
             if current_user.get("code") == "success" and "admin" not in [r.name for r in
                                                                          current_user['data']['user'].roles]:
-                if permission not in [p.action for p in current_user['data']['user'].permissions]:
+                if permission not in [p.permission for p in current_user['data']['user'].permissions]:
                     logger.warn('This user\'s action is not permitted!')
                     abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
             elif current_user.get("code") == "success" and "admin" in [r.name for r in
