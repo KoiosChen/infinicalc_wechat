@@ -2,28 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="env">
-      <change afterPath="$PROJECT_DIR$/app/promotion_groups/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/promotion_groups/promotion_groups_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/promotions/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/promotions/add_promotions.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/promotions/promotions_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/promotions/type_validation.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/decorators.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/decorators.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/elements/elements_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/elements/elements_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/coupons.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/coupons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/permissions/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/permissions/permission_api.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/roles/roles_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/roles/roles_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/sms/sms_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/sms_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/sms/sms_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/sms_app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/sms/sms_template.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/sms_template.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shell.py" beforeDir="false" afterPath="$PROJECT_DIR$/shell.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/promotions/promotions_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/promotions_api.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -180,6 +160,7 @@
       <workItem from="1587804341272" duration="31218000" />
       <workItem from="1588039595589" duration="13118000" />
       <workItem from="1588118480460" duration="28569000" />
+      <workItem from="1588405301498" duration="282000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -258,10 +239,10 @@
     <state x="-1259" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585884783441" />
     <state x="661" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585788409963" />
     <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1586877604206">
+    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1588405307368">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1586877604206" />
+    <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1588405307368" />
     <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585615002489" />
     <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -386,10 +367,10 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2" timestamp="1586969887916">
-      <screen x="0" y="23" width="1680" height="973" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1588405310061">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1586877617346" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1588405310061" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1586757335434" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
