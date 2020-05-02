@@ -5,5 +5,4 @@ app/__pycache__/
 app/auth/__pycache__/
 app/mall/__pycache__/
 app/elements/__pycache__/
-app/permissions/__pycache__/
 app/users/__pycache__/

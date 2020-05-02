@@ -13,6 +13,11 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.mysql import LONGTEXT
 
+
+def make_uuid():
+    return str(uuid.uuid4())
+
+
 user_role = db.Table('user_role',
                      db.Column('user_id', db.String(64), db.ForeignKey('users.id'), primary_key=True),
                      db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
@@ -27,12 +32,6 @@ roles_elements = db.Table('roles_elements',
                           db.Column('role_id', db.Integer, db.ForeignKey('roles.id'), primary_key=True),
                           db.Column('element_id', db.Integer, db.ForeignKey('elements.id'), primary_key=True),
                           db.Column('create_at', db.DateTime, default=datetime.datetime.now))
-
-elements_permissions = db.Table('elements_permissions',
-                                db.Column('element_id', db.Integer, db.ForeignKey('elements.id'), primary_key=True),
-                                db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'),
-                                          primary_key=True),
-                                db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 spu_standards = db.Table('spu_standards',
                          db.Column('spu_id', db.String(64), db.ForeignKey('spu.id'), primary_key=True),
@@ -55,6 +54,40 @@ sku_shoporders = db.Table('sku_shoporders',
                           db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
                           db.Column('shoporders_id', db.String(64), db.ForeignKey('shop_orders.id'), primary_key=True),
                           db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+benefits_gifts = db.Table('benefits_gifts',
+                          db.Column('benefits_id', db.String(64), db.ForeignKey('benefits.id'), primary_key=True),
+                          db.Column('gifts_id', db.String(64), db.ForeignKey('gifts.id'), primary_key=True),
+                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+promotions_benefits = db.Table('promotions_benefits',
+                               db.Column('promotions_id', db.String(64), db.ForeignKey('promotions.id'),
+                                         primary_key=True),
+                               db.Column('benefits_id', db.String(64), db.ForeignKey('benefits.id'), primary_key=True),
+                               db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+promotions_brands = db.Table('promotions_brands',
+                             db.Column('promotions_id', db.String(64), db.ForeignKey('promotions.id'),
+                                       primary_key=True),
+                             db.Column('brands_id', db.String(64), db.ForeignKey('brands.id'), primary_key=True),
+                             db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+promotions_spu = db.Table('promotions_spu',
+                          db.Column('promotions_id', db.String(64), db.ForeignKey('promotions.id'), primary_key=True),
+                          db.Column('spu_id', db.String(64), db.ForeignKey('spu.id'), primary_key=True),
+                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+promotions_sku = db.Table('promotions_sku',
+                          db.Column('promotions_id', db.String(64), db.ForeignKey('promotions.id'), primary_key=True),
+                          db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
+                          db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+promotions_classifies = db.Table('promotions_classifies',
+                                 db.Column('promotions_id', db.String(64), db.ForeignKey('promotions.id'),
+                                           primary_key=True),
+                                 db.Column('classifies_id', db.String(64), db.ForeignKey('classifies.id'),
+                                           primary_key=True),
+                                 db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 
 class OptionsDict(db.Model):
@@ -102,26 +135,12 @@ class Elements(db.Model):
     order = db.Column(db.SmallInteger, default=0)
     bg_color = db.Column(db.String(50))
     type = db.Column(db.String(20))
-    permissions = db.relationship(
-        'Permissions',
-        secondary=elements_permissions,
-        backref=db.backref(
-            'permissions_elements',
-            lazy='dynamic'
-        )
-    )
+    permission = db.Column(db.String(100), unique=True, index=True, comment='API接口权限')
     parent_id = db.Column(db.Integer, db.ForeignKey('elements.id'))
     parent = db.relationship('Elements', backref="children", remote_side=[id])
 
     def __repr__(self):
         return '<Element\'s name: %r>' % self.name
-
-
-class Permissions(db.Model):
-    __tablename__ = 'permissions'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), index=True)
-    action = db.Column(db.String(250), unique=True, index=True)
 
 
 class LoginInfo(db.Model):
@@ -139,7 +158,7 @@ class LoginInfo(db.Model):
 
 class PointRecords(db.Model):
     __tablename__ = 'point_records'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     source_type = db.Column(db.SmallInteger, default=1, comment='1: 订单, 提在字典表中，查询point_records获取')
     source_id = db.Column(db.String(64), comment='积分源ID')
     card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
@@ -151,13 +170,17 @@ class PointRecords(db.Model):
 
 class MemberRechargeRecords(db.Model):
     __tablename__ = 'member_recharge_records'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     recharge_amount = db.Column(db.DECIMAL(7, 2), default=0.00, comment="充值金额")
+    member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
+    note = db.Column(db.String(200), comment='备注')
+    usable = db.Column(db.SmallInteger, default=1, comment='0 不可用， 1 可用；例如开通会员卡的金额可设置为不可使用')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 
 class MemberCards(db.Model):
     __tablename__ = 'member_cards'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
@@ -173,10 +196,12 @@ class MemberCards(db.Model):
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
 
+    recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
+
 
 class Customers(db.Model):
     __tablename__ = 'customers'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     phone = db.Column(db.String(15), nullable=False, index=True)
     email = db.Column(db.String(64), index=True)
     openid = db.Column(db.String(64), index=True)
@@ -211,14 +236,13 @@ class Customers(db.Model):
 
     @property
     def permissions(self):
-        return Permissions.query.outerjoin(Elements).outerjoin(roles_elements).outerjoin(Roles).outerjoin(
-            customer_role).outerjoin(
-            Customers).filter(Customers.id.__eq__(self.id)).all()
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
+            filter(Customers.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
 
     @property
     def elements(self):
         return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
-            filter(Customers.id == self.id).order_by(Elements.order).all()
+            filter(Customers.id == self.id, Elements.type != 'api').order_by(Elements.order).all()
 
     @property
     def password(self):
@@ -248,7 +272,7 @@ class Customers(db.Model):
 
 class Users(db.Model):
     __tablename__ = 'users'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     phone = db.Column(db.String(15), nullable=False, index=True)
     username = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), index=True)
@@ -271,15 +295,15 @@ class Users(db.Model):
 
     @property
     def permissions(self):
-        return Permissions.query.outerjoin(Elements).outerjoin(roles_elements).outerjoin(Roles).outerjoin(
-            user_role).outerjoin(
-            Users).filter(Users.id.__eq__(self.id)).all()
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
+            filter(Users.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
 
     @property
     def elements(self):
         return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
             filter(
-            Users.id == self.id
+            Users.id == self.id,
+            Elements.type != 'api'
         ).order_by(Elements.order).all()
 
     @property
@@ -353,7 +377,7 @@ class Districts(db.Model):
 
 class Brands(db.Model):
     __tablename__ = 'brands'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     logo = db.Column(db.String(64), db.ForeignKey('img_url.id'))
     company_name = db.Column(db.String(100))
@@ -363,28 +387,28 @@ class Brands(db.Model):
 
 class Classifies(db.Model):
     __tablename__ = 'classifies'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), nullable=False)
     spu = db.relationship('SPU', backref='classifies', lazy='dynamic')
 
 
 class Standards(db.Model):
     __tablename__ = 'standards'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), nullable=False, unique=True, index=True)
     values = db.relationship('StandardValue', backref='standards', lazy='dynamic')
 
 
 class StandardValue(db.Model):
     __tablename__ = 'standard_value'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     standard_id = db.Column(db.String(64), db.ForeignKey('standards.id'))
     value = db.Column(db.String(50), nullable=False, unique=True, index=True)
 
 
 class SPU(db.Model):
     __tablename__ = 'spu'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
     standards = db.relationship(
@@ -401,7 +425,7 @@ class SPU(db.Model):
 
 class ImgUrl(db.Model):
     __tablename__ = 'img_url'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     path = db.Column(db.String(100), unique=True, nullable=False, index=True)
     attribute = db.Column(db.SmallInteger, default=1, index=True,
                           comment="1：轮播图  2：缩略图，用parent_id来关联对应的父级图  3：正文图片 4: banner图 5:logo")
@@ -414,14 +438,14 @@ class ImgUrl(db.Model):
 
 class ThumbnailUrl(db.Model):
     __tablename__ = 'thumbnail_url'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     path = db.Column(db.String(100), unique=True, nullable=False, index=True)
     original_img = db.relationship('ImgUrl', backref='thumbnail_url', lazy='dynamic')
 
 
 class PurchaseInfo(db.Model):
     __tablename__ = 'purchase_info'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     amount = db.Column(db.Integer)
     operator = db.Column(db.String(64))
@@ -433,9 +457,11 @@ class PurchaseInfo(db.Model):
 
 class SKU(db.Model):
     __tablename__ = 'sku'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
+    show_price = db.Column(db.String(9), default='0.00', comment='显示价格， 当special不为0时，显示此价格，并且用删除线')
     price = db.Column(db.DECIMAL(7, 2), default=0.00)
+    seckill_price = db.Column(db.DECIMAL(7, 2), default=0.00, comment='当SKU参加秒杀活动时，设置秒杀价格写在这个字段，如果不为0， 则表示参加秒杀，查找秒杀活动')
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
     member_price = db.Column(db.DECIMAL(7, 2), default=0.00)
     score_types = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
@@ -468,33 +494,26 @@ class SKU(db.Model):
 
 class Coupons(db.Model):
     __tablename__ = 'coupons'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(64), nullable=False, comment="优惠券标题")
+    desc = db.Column(db.String(100), comment='优惠券描述')
     icon = db.Column(db.String(64), db.ForeignKey('img_url.id'), comment="优惠券图标")
-    used_in = db.Column(db.SmallInteger, nullable=False,
-                        comment="可用于：10店铺优惠券 11新人店铺券  20商品优惠券  30类目优惠券  60平台优惠券 61新人平台券'")
-    coupon_type = db.Column(db.SmallInteger, default=1, comment="1满减券 2叠加满减券 3无门槛券（需要限制大小）")
-    with_special = db.Column(db.SmallInteger, default=2, comment="1可用于特价商品 2不能  默认不能(商品优惠卷除外)")
-    with_sn = db.Column(db.String(64), comment='SPU或SKU ID')
-    with_amount = db.Column(db.Integer, default=0, comment="满多少金额")
-    used_amount = db.Column(db.Integer, comment="用券金额")
     quota = db.Column(db.Integer, default=1, comment='配额：发券数量')
     take_count = db.Column(db.Integer, default=0, comment='已领取的优惠券数量')
     used_count = db.Column(db.Integer, default=0, comment='已使用的优惠券数量')
-    start_time = db.Column(db.DateTime, comment='发放开始时间')
-    end_time = db.Column(db.DateTime, comment='发放结束时间')
     valid_type = db.Column(db.SmallInteger, default=2, comment='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
     valid_days = db.Column(db.Integer, default=1, comment='自领取之日起有效天数')
-    absolute_date = db.Column(db.DateTime, comment='当valid_type为1时，此项不能为空')
+    absolute_date = db.Column(db.DateTime, comment='优惠券的绝对结束日期，当valid_type为1时，此项不能为空')
     status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束', default=1)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     coupon_sent = db.relationship("CouponReady", backref='coupon_setting', lazy='dynamic')
+    promotions = db.relationship("Promotions", backref='coupons', lazy='dynamic')
 
 
 class CouponReady(db.Model):
     __tablename__ = 'coupon_ready'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     coupon_id = db.Column(db.String(64), db.ForeignKey('coupons.id'))
     status = db.Column(db.SmallInteger, default=1, comment="0: 作废，1：已领取未使用，2：已使用")
     take_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -505,7 +524,7 @@ class CouponReady(db.Model):
 
 class ShopOrders(db.Model):
     __tablename__ = 'shop_orders'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     trade_sn = db.Column(db.String(64), comment="微信支付的交易号")
     items_total_price = db.Column(db.DECIMAL(9, 2), default=0.00)
@@ -529,7 +548,7 @@ class ShopOrders(db.Model):
 
 class ItemsOrders(db.Model):
     __tablename__ = 'items_orders'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
     item_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     item_quantity = db.Column(db.Integer, default=1)
@@ -544,7 +563,7 @@ class ItemsOrders(db.Model):
 
 class ExpressAddress(db.Model):
     __tablename__ = 'express_address'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     sender = db.Column(db.String(64), db.ForeignKey('customers.id'))
     city_id = db.Column(db.Integer, db.ForeignKey('cities.id'))
     district = db.Column(db.Integer, db.ForeignKey('districts.id'))
@@ -560,7 +579,7 @@ class ExpressAddress(db.Model):
 
 class Evaluates(db.Model):
     __tablename__ = 'evaluates'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     express_rate = db.Column(db.SmallInteger, default=10, comment="物流评价0~10")
     item_rate = db.Column(db.SmallInteger, default=10, comment="商品评价0~10")
     content = db.Column(db.Text(length=(2 ** 32) - 1))
@@ -579,7 +598,7 @@ class Layout(db.Model):
 
 class SKULayout(db.Model):
     __tablename__ = 'sku_layout'
-    id = db.Column(db.String(64), primary_key=True, default=str(uuid.uuid4()))
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     layout_id = db.Column(db.Integer, db.ForeignKey('layout.id'))
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'), nullable=False)
     order = db.Column(db.Integer, default=1, comment="排序")
@@ -615,6 +634,89 @@ class SMSApp(db.Model):
     status = db.Column(db.SmallInteger, default=1, comment="1正常；2暂停")
     callback_url = db.Column(db.String(100), comment="短信回调URL")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class PromotionGroups(db.Model):
+    """设置促销活动组"""
+    __tablename__ = 'promotion_groups'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    group_id = db.Column(db.SmallInteger, comment="组ID， 0 为特殊组，特殊组和任何组不互斥")
+    priority = db.Column(db.SmallInteger, comment="1-10, 10优先级最低，当有组互斥时，使用优先级最高的，0优先级最高")
+    name = db.Column(db.String(30))
+    desc = db.Column(db.String(100))
+    promotions = db.relationship('Promotions', backref='groups', lazy='dynamic')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
+class Gifts(db.Model):
+    """折扣商品或者赠品表"""
+    __tablename__ = 'gifts'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    sku = db.Column(db.String(64), db.ForeignKey('sku.id'))
+    discount = db.Column(db.DECIMAL(3, 2), default=0.00, comment='如果是0折，则为赠送，其它折扣，则为降价商品')
+    benefit = db.Column(db.String(64), db.ForeignKey('benefits.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+
+
+class Benefits(db.Model):
+    """活动利益表"""
+    __tablename__ = 'benefits'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64))
+    with_amount = db.Column(db.Integer, default=0, comment="满多少金额")
+    reduced_amount = db.Column(db.Integer, default=0, comment="满xx后减多少钱，只能是整数")
+    discount_amount = db.Column(db.DECIMAL(3, 2), default=1.00, comment='满xx后的折扣')
+    with_quantity = db.Column(db.Integer, default=0, comment="满多少件")
+    free_quantity = db.Column(db.SmallInteger, default=0, comment="满xx送几件")
+    pay_more = db.Column(db.DECIMAL(7, 2), default=0.00, comment='加价购，可选范围在gifts中，由pay_more_quantity来控制加价购可选商品数量')
+    pay_more_quantity = db.Column(db.SmallInteger, comment='控制加价购数量')
+    combo_price = db.Column(db.DECIMAL(7, 2), default=0.00, comment='仅当活动类型是4时生效, 添加的sku为活动范围，添加的gifts为这个sku套餐的其它sku')
+    presell_price = db.Column(db.DECIMAL(7, 2), default=0.00, comment='当类型是5时， 设置预售定金')
+    presell_multiple = db.Column(db.DECIMAL(3, 2), default=0.00, comment='预售定金倍数，例如定金是10元，倍数是1.5，那么抵扣商品15元')
+    gifts = db.relationship('Gifts', secondary=benefits_gifts, backref=db.backref('benefits'))
+    status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束', default=1)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+
+
+class Promotions(db.Model):
+    """
+    用于设置活动规则
+    """
+    __tablename__ = 'promotions'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64), comment="促销活动名称", unique=True, index=True)
+    first_order = db.Column(db.SmallInteger, default=0, comment='0: 不是首单，1: 首单, 用户首单参加活动')
+    reject_coupon = db.Column(db.SmallInteger, default=0, comment='是否排斥优惠券，默认0不排斥，1排斥')
+    customer_level = db.Column(db.SmallInteger, default=1, comment='用户等级，1为最低')
+    gender = db.Column(db.SmallInteger, default=0, comment='参与的性别，默认为0， 1为男性、2为女性')
+    age_min = db.Column(db.SmallInteger, default=0, comment='参与最小年龄，默认为0')
+    age_max = db.Column(db.SmallInteger, default=200, comment='参与最大年龄，默认为200')
+    promotion_type = db.Column(db.SmallInteger, comment='0: 满减，1：满赠，2：满折，3：加价购，4：套餐，5：预售, 6：秒杀, 7: 满减优惠券, 8: 满赠优惠券')
+
+    express_free = db.Column(db.SmallInteger, default=0, comment="0: 不包邮, 1: 包邮")
+
+    accumulation = db.Column(db.SmallInteger, default=0, comment='是否允许累积，默认为0，不允许。如果允许累加则为1。如果可以累加，则利益规则数量会大于')
+    scope = db.Column(db.SmallInteger, default=1, comment='0：非全场，1: 全场， 2：线下')
+
+    # 多对多关系
+    brands = db.relationship('Brands', secondary=promotions_brands, backref=db.backref('brand_promotions'))
+    spu = db.relationship('SPU', secondary=promotions_spu, backref=db.backref('spu_promotions'))
+    sku = db.relationship('SKU', secondary=promotions_sku, backref=db.backref('sku_promotions'))
+    classifies = db.relationship('Classifies',
+                                 secondary=promotions_classifies,
+                                 backref=db.backref('classifies_promotions'))
+    benefits = db.relationship('Benefits', secondary=promotions_benefits, backref=db.backref('benefits_promotions'))
+    group = db.Column(db.String(64), db.ForeignKey('promotion_groups.id'), comment='group_id 为-1表示是发优惠券，>=0的group，为活动')
+
+    with_special = db.Column(db.SmallInteger, default=0, comment="1: 可用于特价商品 0: 不能。默认不能(商品优惠卷除外)")
+    start_time = db.Column(db.DateTime, comment='活动开始时间')
+    end_time = db.Column(db.DateTime, comment='活动结束时间')
+    status = db.Column(db.SmallInteger, comment='1生效 2失效 3已结束', default=1)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    coupon_id = db.Column(db.String(64), db.ForeignKey('coupons.id'))
 
 
 aes_key = 'koiosr2d2c3p0000'

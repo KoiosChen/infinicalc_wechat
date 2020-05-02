@@ -1,14 +1,9 @@
-from flask import jsonify, request
-from flask_restplus import Resource, fields, reqparse
-from ..models import Users, Roles, Elements, Permissions, roles_elements
-from . import roles
-from app.auth import auths
-from .. import db, redis_db, default_api, logger
+from flask_restplus import Resource, reqparse
+from ..models import Roles, Elements, roles_elements
+from .. import db, default_api, logger
 from ..common import success_return, false_return, session_commit
-import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser
-from ..elements.elements_api import get_elements
 
 roles_ns = default_api.namespace('roles', path='/roles', description='包括角色、元素、权限相关操作')
 
