@@ -126,7 +126,8 @@ def _add(args):
     else:
         return new_base
 
-def _c
+def _coupons():
+    pass
 
 
 @promotions_ns.route('')
