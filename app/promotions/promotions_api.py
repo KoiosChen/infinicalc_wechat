@@ -8,7 +8,7 @@ from ..decorators import permission_required
 import datetime
 from ..swagger import return_dict, head_parser
 from .type_validation import *
-from .add_promotions import AddPromotions
+from .operate_promotions import AddPromotions
 
 promotions_ns = default_api.namespace('promotions', path='/promotions', description='包括促销活动设置相关操作')
 
@@ -99,6 +99,7 @@ add_coupon_parser.remove_argument('group')
 add_coupon_parser.add_argument('icon', help='优惠券图片')
 add_coupon_parser.add_argument('desc', help='优惠券说明')
 add_coupon_parser.add_argument('quota', required=True, type=int, help='优惠券发放数量')
+add_combo_parser.add_argument('per_user', required=True, default=1, type=int, help='每用户允许领取数量')
 add_coupon_parser.add_argument('valid_type', required=True, default=2, type=int, choices=[1, 2],
                                help='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
 add_coupon_parser.add_argument('valid_days', default=1, type=int, help='自领取之日起有效天数')
@@ -126,6 +127,7 @@ def _add(args):
     else:
         return new_base
 
+
 def _coupons():
     pass
 
@@ -143,11 +145,11 @@ class QueryPromotions(Resource):
 
 
 @promotions_ns.route('/enough_reduce')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class EnoughReduce(Resource):
     @promotions_ns.doc(body=add_enough_reduce_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.enough_reduce")
     def post(self, **kwargs):
         """添加满减活动"""
         args = add_enough_reduce_parser.parse_args(strict=True)
@@ -157,11 +159,11 @@ class EnoughReduce(Resource):
 
 
 @promotions_ns.route('/enough_gifts')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class EnoughGifts(Resource):
     @promotions_ns.doc(body=add_enough_gifts_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.enough_gifts")
     def post(self, **kwargs):
         """添加满赠活动"""
         args = add_enough_gifts_parser.parse_args(strict=True)
@@ -171,11 +173,11 @@ class EnoughGifts(Resource):
 
 
 @promotions_ns.route('/pay_more')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class PayMore(Resource):
     @promotions_ns.doc(body=add_pay_more_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.pay_more")
     def post(self, **kwargs):
         """添加加价购活动"""
         args = add_pay_more_parser.parse_args(strict=True)
@@ -185,11 +187,11 @@ class PayMore(Resource):
 
 
 @promotions_ns.route('/combo')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class Combo(Resource):
     @promotions_ns.doc(body=add_combo_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.combo")
     def post(self, **kwargs):
         """添加套餐活动"""
         args = add_combo_parser.parse_args(strict=True)
@@ -199,11 +201,11 @@ class Combo(Resource):
 
 
 @promotions_ns.route('/presell')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class Presell(Resource):
     @promotions_ns.doc(body=add_presell_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.presell")
     def post(self, **kwargs):
         """添加预售活动"""
         args = add_presell_parser.parse_args(strict=True)
@@ -213,11 +215,11 @@ class Presell(Resource):
 
 
 @promotions_ns.route('/seckill')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class Seckill(Resource):
     @promotions_ns.doc(body=add_seckill_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.seckill")
     def post(self, **kwargs):
         """添加秒杀活动"""
         args = add_seckill_parser.parse_args(strict=True)
@@ -227,11 +229,11 @@ class Seckill(Resource):
 
 
 @promotions_ns.route('/coupons/reduce')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class CouponsReduce(Resource):
     @promotions_ns.doc(body=add_coupon_reduce_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.coupons_reduce")
     def post(self, **kwargs):
         """添加满减优惠券"""
         args = add_coupon_reduce_parser.parse_args(strict=True)
@@ -250,11 +252,11 @@ class CouponsReduce(Resource):
 
 
 @promotions_ns.route('/coupons/gifts')
-# @promotions_ns.expect(head_parser)
+@promotions_ns.expect(head_parser)
 class CouponsGifts(Resource):
     @promotions_ns.doc(body=add_coupon_gifts_parser)
     @promotions_ns.marshal_with(return_json)
-    # @permission_required("app.promotions.promotions_api.spend_enough")
+    @permission_required("app.promotions.promotions_api.coupons_gifts")
     def post(self, **kwargs):
         """添加满增优惠券， 如果要设置实物礼品券，可设置满0元赠送，商品对象都为空，直接在benefit表中添加gifts"""
         args = add_coupon_gifts_parser.parse_args(strict=True)

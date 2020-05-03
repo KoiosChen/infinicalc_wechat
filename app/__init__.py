@@ -10,6 +10,7 @@ from sqlalchemy.pool import NullPool
 from flask_restplus import Api
 from fdfs_client.client import *
 from qcloudsms_py import SmsSingleSender, SmsMultiSender
+import threading
 
 
 class SQLAlchemy(SQLAlchemyBase):
@@ -57,6 +58,9 @@ template_id = 572001  # NOTE: 这里的模板 ID`7839`只是示例，真实的�
 sms_sign = "Infinicalc"
 
 ssender = SmsSingleSender(appid, appkey)
+
+coupon_lock = threading.Lock()
+order_lock = threading.Lock()
 
 
 def create_app(config_name):

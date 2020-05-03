@@ -2,6 +2,7 @@ from . import db, logger
 from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
     Benefits, PromotionGroups, Gifts
+from time import sleep
 
 
 def new_data_obj(table, **kwargs):
@@ -65,3 +66,4 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[]):
                 tmp[f] = getattr(t, f)
         r.append(tmp)
     return r
+

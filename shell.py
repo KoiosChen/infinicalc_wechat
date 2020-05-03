@@ -2,7 +2,7 @@
 import os
 from app import create_app, db
 from app.models import Users, Roles, user_role, roles_elements, Elements, SKU, Layout, SKULayout, \
-    Classifies, SPU
+    Classifies, SPU, customer_role, Customers
 from flask_script import Manager, Shell
 from flask_migrate import Migrate, MigrateCommand
 
@@ -14,9 +14,9 @@ migrate = Migrate(app, db)
 
 
 def make_shell_context():
-    return dict(app=app, db=db, Users=Users, Roles=Roles, user_role=user_role,
-                roles_elements=roles_elements, Elements=Elements, SKU=SKU, Layout=Layout, SKULayout=SKULayout, Classifies=Classifies,
-                SPU=SPU)
+    return dict(app=app, db=db, Users=Users, Roles=Roles, user_role=user_role, customer_role=customer_role,
+                roles_elements=roles_elements, Elements=Elements, SKU=SKU, Layout=Layout, SKULayout=SKULayout,
+                Classifies=Classifies, Customers=Customers, SPU=SPU)
 
 
 manager.add_command("shell", Shell(make_context=make_shell_context))

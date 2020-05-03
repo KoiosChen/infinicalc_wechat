@@ -1,4 +1,4 @@
-from ..models import SKU, SPU, Classifies, Brands, Gifts, Benefits
+from ..models import SKU, SPU, Classifies, Brands, Gifts, Benefits, Promotions
 from .. import db
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
@@ -73,6 +73,7 @@ class AddPromotions:
         new_coupon = new_data_obj('Coupons', **{'name': self.promotion_name,
                                                 'icon': self.args.get('icon'),
                                                 'quota': self.args.get('quota'),
+                                                'per_user': self.args.get('per_user'),
                                                 'valid_type': self.args.get('valid_type')})
 
         if new_coupon.get('status'):
@@ -91,3 +92,17 @@ class AddPromotions:
                 message="create coupon fail")
         else:
             return false_return(message=f"coupon already exist")
+
+
+class UpdatePromotions:
+    def __init__(self, promotion_id):
+        self.promotion = Promotions.query.get(promotion_id)
+
+    def update_scope(self):
+        pass
+
+    def update_benefit(self):
+        pass
+
+    def update_coupon(self):
+        pass
