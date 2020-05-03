@@ -236,13 +236,13 @@ class Customers(db.Model):
 
     @property
     def permissions(self):
-        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
-            filter(Customers.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(
+            Customers).filter(Customers.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
 
     @property
     def elements(self):
-        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(Customers). \
-            filter(Customers.id == self.id, Elements.type != 'api').order_by(Elements.order).all()
+        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(
+            Customers).filter(Customers.id == self.id, Elements.type != 'api').order_by(Elements.order).all()
 
     @property
     def password(self):
@@ -267,7 +267,7 @@ class Customers(db.Model):
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
 
     def __repr__(self):
-        return '<User %r>' % self.phone
+        return '<Customer %r>' % self.phone
 
 
 class Users(db.Model):
@@ -499,6 +499,7 @@ class Coupons(db.Model):
     desc = db.Column(db.String(100), comment='优惠券描述')
     icon = db.Column(db.String(64), db.ForeignKey('img_url.id'), comment="优惠券图标")
     quota = db.Column(db.Integer, default=1, comment='配额：发券数量')
+    per_user = db.Column(db.SmallInteger, default=1, comment='每用户允许领取数量')
     take_count = db.Column(db.Integer, default=0, comment='已领取的优惠券数量')
     used_count = db.Column(db.Integer, default=0, comment='已使用的优惠券数量')
     valid_type = db.Column(db.SmallInteger, default=2, comment='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
