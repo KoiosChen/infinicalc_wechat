@@ -1,10 +1,9 @@
 import jwt
 import datetime
 import time
-from flask import jsonify
 from ..models import Users, Elements, LoginInfo
-from .. import config, db, logger, SECRET_KEY, redis_db
-from ..common import success_return, false_return, session_commit
+from .. import db, logger, SECRET_KEY
+from ..common import success_return, false_return, session_commit, code_return
 from ..public_method import new_data_obj
 from sqlalchemy import or_
 from ..public_method import table_fields
@@ -67,7 +66,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
                                        Users.email.__eq__(username)), Users.status.__eq__(1)).first()
 
     if user_info is None:
-        return false_return('', '找不到用户'), 400
+        return code_return(false_return(message='找不到用户'))
 
     # 查询并删除已经登陆的信息
     logged_in_info = user_info.login_info.filter_by(platform=platform, status=True).all()
@@ -92,7 +91,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
         db.session.add(user_info)
         session_commit()
         elements = [{f: getattr(u, f) for f in Elements.__table__.columns.keys() if f != "permission"} for u in
-                      user_info.elements]
+                    user_info.elements]
         fields_ = table_fields(Users, ["roles"], ["password_hash"])
         ru = dict()
         for f in fields_:
@@ -102,7 +101,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
                 ru[f] = getattr(user_info, f)
         return success_return(data={'token': token, 'elements': elements, 'user': ru}, message='登录成功')
     else:
-        return false_return(message=verify_method[method]['msg']), 400
+        return code_return(false_return(message=verify_method[method]['msg']))
 
 
 def decode_auth_token(auth_token):
@@ -135,7 +134,7 @@ def identify(request):
     if auth_header:
         auth_token_arr = auth_header.split(" ")
         if not auth_token_arr or auth_token_arr[0] != 'Bearer' or len(auth_token_arr) != 2:
-            result = false_return(message='请传递正确的验证头信息')
+            result = code_return(false_return(message='请传递正确的验证头信息'))
         else:
             auth_token = auth_token_arr[1]
             payload = decode_auth_token(auth_token)
@@ -143,15 +142,15 @@ def identify(request):
                 data = payload['data']['data']
                 user = Users.query.filter_by(id=data['id']).first()
                 if user is None:
-                    result = false_return('', '找不到该用户信息')
+                    result = code_return(false_return('', '找不到该用户信息'))
                 else:
                     login_info = LoginInfo.query.filter_by(token=auth_token, user=user.id).first()
                     if login_info and login_info.login_time == data['login_time']:
                         result = success_return(data={"user": user, "login_info": login_info}, message='请求成功')
                     else:
-                        result = false_return(message='Token已更改，请重新登录获取')
+                        result = code_return(false_return(message='Token已更改，请重新登录获取'))
             else:
                 result = payload
     else:
-        result = false_return(message='没有提供认证token')
+        result = code_return(false_return(message='没有提供认证token'))
     return result

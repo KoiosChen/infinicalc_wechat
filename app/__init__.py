@@ -114,4 +114,7 @@ def create_app(config_name):
     from .promotions import promotions as promotions_blueprint
     app.register_blueprint(promotions_blueprint)
 
+    from .shopping_cart import shopping_cart as shopping_cart_blueprint
+    app.register_blueprint(shopping_cart_blueprint)
+
     return app

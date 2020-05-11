@@ -3,9 +3,9 @@ from ..models import SPU, Standards, spu_standards
 from . import mall
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
-from ..swagger import head_parser
+from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
 
 add_spu_parser = reqparse.RequestParser()
@@ -29,24 +29,14 @@ spu_standard_parser.add_argument('standards', type=list, help='传递最新的�
 @mall_ns.expect(head_parser)
 class SPUApi(Resource):
     @mall_ns.marshal_with(return_json)
+    @mall_ns.doc(body=page_parser)
     @permission_required("app.mall.spu.query_spu_all")
     def get(self, **kwargs):
         """
         获取全部SPU
         """
-        fields_ = table_fields(SPU)
-        fields_.append("sku")
-        result = list()
-        for p in SPU.query.all():
-            tmp = dict()
-            for f in fields_:
-                if f == 'sku':
-                    tmp[f] = {s.id: s.name for s in p.sku.all()}
-                else:
-                    tmp[f] = getattr(p, f)
-            result.append(tmp)
-
-        return success_return(result, "")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(SPU, args['page'], args['current'], args['size'], ['sku']))
 
     @mall_ns.doc(body=add_spu_parser)
     @mall_ns.marshal_with(return_json)

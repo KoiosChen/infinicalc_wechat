@@ -5,7 +5,7 @@ from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
-from ..swagger import head_parser, return_dict
+from ..swagger import head_parser, return_dict, page_parser
 
 layout_ns = default_api.namespace('layout', path='/layout', description='页面板块')
 
@@ -54,12 +54,15 @@ def query_sku_layout(layout_id=None):
 @layout_ns.expect(head_parser)
 class LayoutApi(Resource):
     @layout_ns.marshal_with(return_json)
+    @layout_ns.doc(body=page_parser)
     @permission_required("app.mall.layout.query_layouts")
     def get(self, **kwargs):
         """
         获取全部页面板块设置
         """
-        return success_return(get_table_data(Layout, removes=['create_at']), "")
+        args = page_parser.parse_args()
+        return success_return(
+            get_table_data(Layout, args['page'], args['current'], args['size'], removes=['create_at']), "")
 
     @layout_ns.doc(body=add_layout_parser)
     @layout_ns.marshal_with(return_json)

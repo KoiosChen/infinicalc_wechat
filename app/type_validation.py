@@ -58,5 +58,11 @@ def presell_type(value):
 
 def seckill_type(value):
     parse_keys = {'id': {'required': True, 'type': str},
-                  'seckill_price': {'required': True, 'type': float}}
+                  'seckill_price': {'required': True, 'type': float},
+                  'per_user': {'type': int}}
+    return type_base(parse_keys, value)
+
+
+def checkout_sku_type(value):
+    parse_keys = {'id': {'required': True, 'type': str}, 'quantity': {'required': True, 'type': int}}
     return type_base(parse_keys, value)

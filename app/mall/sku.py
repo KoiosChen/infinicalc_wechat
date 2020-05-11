@@ -3,9 +3,9 @@ from ..models import Brands, SKU, sku_standardvalue, ImgUrl, PurchaseInfo
 from . import mall
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
-from ..swagger import head_parser
+from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
 
 add_sku_parser = reqparse.RequestParser()
@@ -39,30 +39,14 @@ add_purchase_parser.add_argument("amount", required=True, help='进货数量')
 @mall_ns.expect(head_parser)
 class SKUApi(Resource):
     @mall_ns.marshal_with(return_json)
+    @mall_ns.doc(body=page_parser)
     @permission_required("app.mall.sku.query_sku_all")
     def get(self, **kwargs):
         """
         获取全部SKU
         """
-        fields_ = table_fields(SKU)
-        fields_.extend(["values", "images"])
-        r = list()
-        for p in SKU.query.all():
-            tmp = dict()
-            for f in fields_:
-                v = getattr(p, f)
-                if f in ['price', 'discount', 'member_price', 'create_at', 'update_at']:
-                    tmp[f] = str(v)
-                elif f in ['values', 'images']:
-                    tmp1 = list()
-                    t1 = getattr(p, f)
-                    for value in t1:
-                        tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
-                    tmp[f] = tmp1
-                else:
-                    tmp[f] = getattr(p, f)
-            r.append(tmp)
-        return success_return(r, "")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(SKU, args['page'], args['current'], args['size'], ['values', 'images']))
 
     @mall_ns.doc(body=add_sku_parser)
     @mall_ns.marshal_with(return_json)
@@ -213,7 +197,7 @@ class SKUPurchase(Resource):
                 db.session.add(sku)
                 return success_return(
                     message=f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>") \
-                    if session_commit() else false_return(message=f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败"), 400
+                           if session_commit() else false_return(message=f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败"), 400
             else:
                 false_return(message="进货数据添加失败"), 400
         elif sku and sku.status:

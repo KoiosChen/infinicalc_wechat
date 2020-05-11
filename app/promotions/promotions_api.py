@@ -1,13 +1,12 @@
-from flask_restplus import Resource, reqparse, fields
-from flask import request
-from ..models import PromotionGroups, Promotions, Coupons, CouponReady, Benefits, SKU, SPU, Classifies, Brands
-from .. import db, redis_db, default_api, logger
+from flask_restplus import Resource, reqparse
+from ..models import Promotions
+from .. import default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
+from ..public_method import new_data_obj, get_table_data
 from ..decorators import permission_required
 import datetime
-from ..swagger import return_dict, head_parser
-from .type_validation import *
+from ..swagger import return_dict, head_parser, page_parser
+from app.type_validation import *
 from .operate_promotions import AddPromotions
 
 promotions_ns = default_api.namespace('promotions', path='/promotions', description='包括促销活动设置相关操作')
@@ -64,7 +63,7 @@ add_pay_more_parser.remove_argument('accumulation')
 
 add_combo_parser = add_promotion_parser.copy()
 add_combo_parser.add_argument('benefits', required=True, type=combo_type, location='json', default=[{}],
-                              help='accumulation为0，list中只允许传一个json. list中json为：'
+                              help='accumulation为1，list中只允许多个json. list中json为：'
                                    '{"combo_price": float, "gifts": list}')
 add_combo_parser.remove_argument('accumulation')
 add_combo_parser.remove_argument('brands')
@@ -82,7 +81,7 @@ add_presell_parser.remove_argument('spu')
 
 add_seckill_parser = add_promotion_parser.copy()
 add_seckill_parser.replace_argument('sku', required=True, type=seckill_type, location='json', default=[{}],
-                                    help='[{"id": str, "seckill_price": float}]')
+                                    help='[{"id": str, "seckill_price": float, "per_user": int}]')
 add_seckill_parser.remove_argument('accumulation')
 add_seckill_parser.remove_argument('brands')
 add_seckill_parser.remove_argument('classifies')
@@ -136,12 +135,14 @@ def _coupons():
 @promotions_ns.expect(head_parser)
 class QueryPromotions(Resource):
     @promotions_ns.marshal_with(return_json)
+    @promotions_ns.doc(body=page_parser)
     @permission_required("app.promotions.promotions_api.query_promotions_all")
     def get(self, **kwargs):
         """
         查询所有promotions列表
         """
-        return success_return(get_table_data(Promotions), "请求成功")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(Promotions, args['page'], args['current'], args['size']), "请求成功")
 
 
 @promotions_ns.route('/enough_reduce')
@@ -197,6 +198,7 @@ class Combo(Resource):
         args = add_combo_parser.parse_args(strict=True)
         logger.debug(f'>>>> Combo promotion args: {args}')
         args['promotion_type'] = 4
+        args['accumulation'] = 1
         return _add(args)
 
 

@@ -3,9 +3,9 @@ from ..models import Brands
 from . import mall
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
-from ..swagger import head_parser
+from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
 
 add_brand_parser = reqparse.RequestParser()
@@ -22,14 +22,14 @@ update_brand_parser.replace_argument('name', required=False)
 @mall_ns.expect(head_parser)
 class BrandsApi(Resource):
     @mall_ns.marshal_with(return_json)
+    @mall_ns.doc(body=page_parser)
     @permission_required("app.mall.brands.query_brands")
     def get(self, **kwargs):
         """
         获取全部品牌
         """
-        fields_ = table_fields(Brands)
-        r = [{f: getattr(p, f) for f in fields_} for p in Brands.query.all()]
-        return success_return(r, "")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(Brands, args['page'], args['current'], args['size']))
 
     @mall_ns.doc(body=add_brand_parser)
     @mall_ns.marshal_with(return_json)

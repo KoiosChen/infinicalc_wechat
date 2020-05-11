@@ -7,8 +7,8 @@ from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import table_fields
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
-from ..public_method import new_data_obj
+from ..swagger import return_dict, head_parser, page_parser
+from ..public_method import new_data_obj, get_table_data
 
 users_ns = default_api.namespace('users', path='/users',
                                  description='包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -42,28 +42,21 @@ update_user_parser.add_argument('address', location='json', help='用户地址')
 
 return_json = users_ns.model('ReturnRegister', return_dict)
 
+page_parser.add_argument('Authorization', required=True, location='headers')
+
 
 @users_ns.route('')
 class QueryUsers(Resource):
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.users_info")
-    @users_ns.expect(head_parser)
+    @users_ns.expect(page_parser)
     def get(self, info):
         """
-        获取用户信息
-        :return: json
+        获取后端用户信息
         """
-        fields_ = table_fields(Users, ["roles"], ["password_hash"])
-        ru = list()
-        for user in Users.query.all():
-            tmp = {}
-            for f in fields_:
-                if f == 'roles':
-                    tmp[f] = {r.id: r.name for r in user.roles}
-                else:
-                    tmp[f] = getattr(user, f)
-            ru.append(tmp)
-        return success_return(ru, "请求成功")
+        args = page_parser.parse_args()
+        return success_return(
+            get_table_data(Users, args['page'], args['current'], args['size'], ['role'], ['password_hash']), "请求成功")
 
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
@@ -91,7 +84,7 @@ class QueryUsers(Resource):
                     if email:
                         user.email = email
                 else:
-                    return false_return(message=f"<{phone}>已经存在")
+                    return false_return(message=f"<{phone}>已经存在"), 400
 
                 if not role_ids:
                     role_ids = list()
@@ -107,13 +100,13 @@ class QueryUsers(Resource):
                     }
                     return success_return(return_user, "用户注册成功")
                 else:
-                    return false_return({}, '用户注册失败')
+                    return false_return({}, '用户注册失败'), 400
             else:
-                return false_return(message='验证码错误')
+                return false_return(message='验证码错误'), 400
         except Exception as e:
             logger.error(f"customers::register::db_commit()::error --> {str(e)}")
             db.session.rollback()
-            return false_return(data={}, message=str(e))
+            return false_return(data={}, message=str(e)), 400
 
     @users_ns.doc(body=update_user_parser)
     @users_ns.marshal_with(return_json)

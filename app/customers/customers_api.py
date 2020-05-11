@@ -5,10 +5,10 @@ from . import customers
 from app.frontstage_auth import auths
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj
+from ..public_method import table_fields, new_data_obj, get_table_data
 import datetime
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -44,27 +44,21 @@ update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime
 
 return_json = customers_ns.model('ReturnRegister', return_dict)
 
+page_parser.add_argument('Authorization', required=True, location='headers')
+
 
 @customers_ns.route('')
 class CustomersAPI(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required("frontstage.app.customers.customers_api.users_info")
-    @customers_ns.expect(head_parser)
+    @customers_ns.expect(page_parser)
     def get(self, info):
         """
         获取前端用户信息
         """
-        fields_ = table_fields(Customers, ["roles"], ["password_hash"])
-        ru = list()
-        for customer in Customers.query.all():
-            tmp = {}
-            for f in fields_:
-                if f == 'roles':
-                    tmp[f] = {r.id: r.name for r in customer.roles}
-                else:
-                    tmp[f] = getattr(customer, f)
-            ru.append(tmp)
-        return success_return(ru, "请求成功")
+        args = page_parser.parse_args()
+        return success_return(
+            get_table_data(Customers, args['page'], args['current'], args['size'], ['role'], ['password_hash']), "请求成功")
 
     @customers_ns.doc(body=register_parser)
     @customers_ns.marshal_with(return_json)

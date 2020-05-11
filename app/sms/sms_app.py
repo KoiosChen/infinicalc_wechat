@@ -3,7 +3,7 @@ from ..models import SMSApp
 from .. import db
 from ..common import success_return, false_return, session_commit
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 from .sms_api import sms_ns
 from ..public_method import new_data_obj, get_table_data
 
@@ -24,12 +24,14 @@ return_json = sms_ns.model('ReturnRegister', return_dict)
 @sms_ns.expect(head_parser)
 class SMSAppsAPI(Resource):
     @sms_ns.marshal_with(return_json)
+    @sms_ns.doc(body=page_parser)
     @permission_required("app.sms.sms_app.query_apps")
     def get(self, **kwargs):
         """
         查询所有短息接口app信息
         """
-        return success_return(data=get_table_data(SMSApp))
+        args = page_parser.parse_args()
+        return success_return(data=get_table_data(SMSApp, args['page'], args['current'], args['size']))
 
     @sms_ns.doc(body=sms_app_add_parser)
     @sms_ns.marshal_with(return_json)
