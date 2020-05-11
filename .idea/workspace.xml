@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="env">
+    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -227,7 +226,14 @@
       <option name="project" value="LOCAL" />
       <updated>1589207322259</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="env">
+      <created>1589209661014</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1589209661014</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -236,11 +242,11 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="ignore" />
     <MESSAGE value="delete migrations" />
-    <MESSAGE value="env" />
     <MESSAGE value="bug" />
     <MESSAGE value="默认不传page" />
     <MESSAGE value="or 改成 and" />
-    <option name="LAST_COMMIT_MESSAGE" value="or 改成 and" />
+    <MESSAGE value="env" />
+    <option name="LAST_COMMIT_MESSAGE" value="env" />
   </component>
   <component name="WindowStateProjectService">
     <state x="440" y="190" key="#Inspections" timestamp="1585658022757">
@@ -259,10 +265,10 @@
     <state x="578" y="203" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1588513394516" />
     <state x="661" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585788409963" />
     <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1588405307368">
+    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1589209660906">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1588405307368" />
+    <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209660906" />
     <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585615002489" />
     <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -391,10 +397,10 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1589207849783">
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2" timestamp="1589209663936">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589207849783" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209663936" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">

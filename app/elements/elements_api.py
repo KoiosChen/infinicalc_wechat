@@ -42,6 +42,7 @@ class QueryElements(Resource):
         查询所有Elements列表
         """
         args = page_parser.parse_args()
+        logger.debug(args)
         args['search'] = dict()
         if args.get("permission"):
             args['search']['permission'] = args.get('permission')
