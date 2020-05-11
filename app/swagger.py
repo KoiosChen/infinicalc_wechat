@@ -9,6 +9,6 @@ return_dict = {'code': fields.String(required=True, description='success | false
 
 
 page_parser = reqparse.RequestParser()
-page_parser.add_argument('page', default='false', help='true | false, 是否分页')
+page_parser.add_argument('page', help='true | false, 是否分页')
 page_parser.add_argument('current', type=int, help='当前页')
 page_parser.add_argument('size', type=int, help='当前页行数')

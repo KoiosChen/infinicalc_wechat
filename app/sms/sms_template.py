@@ -29,7 +29,7 @@ class SMSTemplatesAPI(Resource):
         查询所有短息模板
         """
         args = page_parser.parse_args()
-        return success_return(data=get_table_data(SMSTemplate, args['page'], args['current'], args['size']))
+        return success_return(data=get_table_data(SMSTemplate, args))
 
     @sms_ns.doc(body=sms_template_add_parser)
     @sms_ns.marshal_with(return_json)

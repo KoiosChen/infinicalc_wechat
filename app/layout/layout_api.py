@@ -61,8 +61,7 @@ class LayoutApi(Resource):
         获取全部页面板块设置
         """
         args = page_parser.parse_args()
-        return success_return(
-            get_table_data(Layout, args['page'], args['current'], args['size'], removes=['create_at']), "")
+        return success_return(get_table_data(Layout, args, removes=['create_at']), "")
 
     @layout_ns.doc(body=add_layout_parser)
     @layout_ns.marshal_with(return_json)

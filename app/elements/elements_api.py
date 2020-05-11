@@ -27,6 +27,10 @@ update_element_parser.add_argument('type', required=False, help='元素类型，
 update_element_parser.add_argument('permission', required=False, help='例如：app.elements.elements_api.get_element')
 
 
+page_parser.add_argument('permission', help='搜索permission字段')
+page_parser.add_argument('name', help='搜索name字段')
+
+
 @elements_ns.route('')
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
@@ -38,7 +42,12 @@ class QueryElements(Resource):
         查询所有Elements列表
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Elements, args['page'], args['current'], args['size']), "请求成功")
+        args['search'] = dict()
+        if args.get("permission"):
+            args['search']['permission'] = args.get('permission')
+        if args.get("name"):
+            args['search']['name'] = args.get('name')
+        return success_return(get_table_data(Elements, args), "请求成功")
 
     @elements_ns.doc(body=add_element_parser)
     @elements_ns.marshal_with(return_json)

@@ -58,7 +58,7 @@ class CustomersAPI(Resource):
         """
         args = page_parser.parse_args()
         return success_return(
-            get_table_data(Customers, args['page'], args['current'], args['size'], ['role'], ['password_hash']), "请求成功")
+            get_table_data(Customers, args, ['role'], ['password_hash']), "请求成功")
 
     @customers_ns.doc(body=register_parser)
     @customers_ns.marshal_with(return_json)

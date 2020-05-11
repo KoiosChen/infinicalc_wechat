@@ -26,7 +26,7 @@ class ClassifiesApi(Resource):
         获取全部分类
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Classifies, args['page'], args['current'], args['size']))
+        return success_return(get_table_data(Classifies, args))
 
     @mall_ns.doc(body=add_classify_parser)
     @mall_ns.marshal_with(return_json)

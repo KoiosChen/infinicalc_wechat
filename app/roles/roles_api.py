@@ -45,7 +45,7 @@ class RoleApi(Resource):
         """
         args = page_parser.parse_args()
         return success_return(
-            get_table_data(Roles, args['page'], args['current'], args['size'], ['elements']),
+            get_table_data(Roles, args, ['elements']),
             "请求成功"
         )
 

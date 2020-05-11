@@ -34,7 +34,7 @@ class QueryPromotionGroups(Resource):
         查询所有PromotionGroups列表
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(PromotionGroups, args['page'], args['current'], args['size']), "请求成功")
+        return success_return(get_table_data(PromotionGroups, args), "请求成功")
 
     @promotion_groups_ns.doc(body=add_promotion_group_parser)
     @promotion_groups_ns.marshal_with(return_json)

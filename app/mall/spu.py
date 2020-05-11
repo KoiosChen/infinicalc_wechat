@@ -36,7 +36,7 @@ class SPUApi(Resource):
         获取全部SPU
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(SPU, args['page'], args['current'], args['size'], ['sku']))
+        return success_return(get_table_data(SPU, args, ['sku']))
 
     @mall_ns.doc(body=add_spu_parser)
     @mall_ns.marshal_with(return_json)

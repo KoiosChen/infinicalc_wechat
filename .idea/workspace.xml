@@ -3,7 +3,22 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="env">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/customers/customers_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/customers/customers_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/elements/elements_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/elements/elements_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/img_urls/img_url.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/img_urls/img_url.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout/layout_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout/layout_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/mall/brands.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/brands.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/mall/classifies.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/classifies.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/mall/sku.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/sku.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/mall/spu.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/spu.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/promotion_groups/promotion_groups_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotion_groups/promotion_groups_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/promotions/promotions_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/promotions_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/roles/roles_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/roles/roles_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/sms/sms_app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/sms_app.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/sms/sms_template.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/sms_template.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/swagger.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/swagger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/users/users_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/users/users_api.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -231,7 +246,8 @@
     <MESSAGE value="delete migrations" />
     <MESSAGE value="env" />
     <MESSAGE value="bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="bug" />
+    <MESSAGE value="默认不传page" />
+    <option name="LAST_COMMIT_MESSAGE" value="默认不传page" />
   </component>
   <component name="WindowStateProjectService">
     <state x="440" y="190" key="#Inspections" timestamp="1585658022757">
@@ -382,11 +398,11 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="503" y="268" key="Vcs.Push.Dialog.v2" timestamp="1589189859185">
+    <state x="503" y="268" key="Vcs.Push.Dialog.v2" timestamp="1589191200298">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
     <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1588499453177" />
-    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589189859185" />
+    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
