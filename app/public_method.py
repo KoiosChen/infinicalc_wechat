@@ -3,7 +3,7 @@ from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Cl
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
     Benefits, PromotionGroups, Gifts
 from time import sleep
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 
 def new_data_obj(table, **kwargs):
@@ -46,7 +46,7 @@ def get_table_data(table, args, appends=[], removes=[]):
     current = args.get('current')
     size = args.get('size')
     search = args.get('search')
-    or_fields_list = list()
+    and_fields_list = list()
     fields = table_fields(table, appends, removes)
     r = list()
     base_sql = table.query
@@ -54,17 +54,17 @@ def get_table_data(table, args, appends=[], removes=[]):
         if search:
             for k, v in search.items():
                 if k in fields:
-                    or_fields_list.append(getattr(getattr(table, k), 'contains')(v))
-            table_data = base_sql.filter(or_(*or_fields_list)).all()
+                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+            table_data = base_sql.filter(and_(*and_fields_list)).all()
         else:
             table_data = base_sql.all()
     else:
         if search:
             for k, v in search.items():
                 if k in fields:
-                    or_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
 
-            table_data = base_sql.filter(or_(*or_fields_list)).offset(current).limit(size)
+            table_data = base_sql.filter(and_(*and_fields_list)).offset(current).limit(size)
         else:
             table_data = base_sql.offset(current).limit(size)
     for t in table_data:
