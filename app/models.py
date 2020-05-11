@@ -470,6 +470,7 @@ class SKU(db.Model):
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
     special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售")
+    per_user = db.Column(db.SmallInteger, default=0, comment="设置限购量，默认为0不限购，一般在特价，秒杀折扣时使用")
     values = db.relationship(
         'StandardValue',
         secondary=sku_standardvalue,
@@ -718,6 +719,9 @@ class Promotions(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     coupon_id = db.Column(db.String(64), db.ForeignKey('coupons.id'))
+
+    def __repr__(self):
+        return '<Promotion name %r>' % self.name
 
 
 aes_key = 'koiosr2d2c3p0000'

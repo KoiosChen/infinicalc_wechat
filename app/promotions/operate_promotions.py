@@ -40,6 +40,8 @@ class AddPromotions:
                         scope_obj = v.query.get(s['id'])
                         if 'seckill_price' in s.keys():
                             setattr(scope_obj, 'seckill_price', s['seckill_price'])
+                        if 'per_user' in s.keys():
+                            setattr(scope_obj, 'per_user', s['per_user'])
                         getattr(getattr(obj, k), 'append')(scope_obj)
 
     def new_benefits(self):

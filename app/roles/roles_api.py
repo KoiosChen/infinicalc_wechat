@@ -3,7 +3,8 @@ from ..models import Roles, Elements, roles_elements
 from .. import db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
+from ..public_method import get_table_data, get_table_data_by_id
 
 roles_ns = default_api.namespace('roles', path='/roles', description='包括角色、元素、权限相关操作')
 
@@ -30,36 +31,23 @@ query_element_parser.add_argument('role_id', help='要查询的角色ID(Roles.id
 
 return_json = roles_ns.model('ReturnRegister', return_dict)
 
-
-def get_roles(role_id=None):
-    role_field = Roles.__table__.columns.keys()
-    role_field.append('elements')
-    if role_id is None:
-        roles = Roles.query.all()
-    else:
-        roles = [Roles.query.get(role_id)]
-    return_roles = list()
-    for role in roles:
-        tmp = dict()
-        for f in role_field:
-            if f == 'elements':
-                tmp[f] = {e.id: e.name for e in role.elements}
-            else:
-                tmp[f] = getattr(role, f)
-        return_roles.append(tmp)
-    return return_roles
+page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @roles_ns.route('')
 class RoleApi(Resource):
-    @roles_ns.expect(head_parser)
+    @roles_ns.expect(page_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.query_roles")
     def get(self, info):
         """
         获取所有角色列表
         """
-        return success_return(get_roles(), "请求成功")
+        args = page_parser.parse_args()
+        return success_return(
+            get_table_data(Roles, args['page'], args['current'], args['size'], ['elements']),
+            "请求成功"
+        )
 
     @roles_ns.expect(head_parser)
     @roles_ns.doc(body=role_add_parser)
@@ -79,7 +67,7 @@ class RoleApi(Resource):
                 new_role.elements.append(element_)
             return success_return(data={"new_role_id": new_role.id},
                                   message="角色添加成功") \
-                if session_commit() else false_return(message="角色添加失败"), 400
+                       if session_commit() else false_return(message="角色添加失败"), 400
         else:
             return false_return(message=f"{args['name']}已经存在"), 400
 
@@ -91,7 +79,9 @@ class RoleID(Resource):
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.query_role")
     def get(self, **kwargs):
-        return success_return(get_roles(kwargs['role_id']))
+        return success_return(
+            get_table_data_by_id(Roles, kwargs['role_id'], ['elements'])
+        )
 
     @roles_ns.doc(body=role_change_parser)
     @roles_ns.marshal_with(return_json)
@@ -135,7 +125,8 @@ class RoleElements(Resource):
         role_ = Roles.query.get(role_id)
         fail_change_element_name = list()
         now_elements = args['elements']
-        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(Roles.id.__eq__(role_id)).all()
+        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(
+            Roles.id.__eq__(role_id)).all()
         old_elements = [e.id for e in elements_in_db]
         elements_tobe_added = set(now_elements) - set(old_elements)
         elements_tobe_deleted = set(old_elements) - set(now_elements)

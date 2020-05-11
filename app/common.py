@@ -11,6 +11,10 @@ def false_return(data="", message=""):
     return {"code": "false", "data": data, "message": message}
 
 
+def code_return(msg, code=400):
+    return msg, code
+
+
 def exp_return(data="", message=""):
     return {"code": "exp", "data": data, "message": message}
 
@@ -32,6 +36,3 @@ def nesteddict():
     :return:
     """
     return defaultdict(nesteddict)
-
-
-

@@ -2,7 +2,7 @@ from flask_restplus import Resource, reqparse
 from ..models import SMSTemplate
 from ..common import success_return, false_return, session_commit
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 from .sms_api import sms_ns
 from ..public_method import new_data_obj, get_table_data
 
@@ -22,12 +22,14 @@ return_json = sms_ns.model('ReturnRegister', return_dict)
 @sms_ns.expect(head_parser)
 class SMSTemplatesAPI(Resource):
     @sms_ns.marshal_with(return_json)
+    @sms_ns.doc(body=page_parser)
     @permission_required("app.sms.sms_template.query_templates")
     def get(self, **kwargs):
         """
         查询所有短息模板
         """
-        return success_return(data=get_table_data(SMSTemplate))
+        args = page_parser.parse_args()
+        return success_return(data=get_table_data(SMSTemplate, args['page'], args['current'], args['size']))
 
     @sms_ns.doc(body=sms_template_add_parser)
     @sms_ns.marshal_with(return_json)

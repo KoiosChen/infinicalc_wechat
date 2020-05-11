@@ -60,7 +60,7 @@ def take_coupon(coupon_id, take_coupon_id, user, lock):
 @promotions_ns.expect(head_parser)
 class TakeCouponApi(Resource):
     @promotions_ns.marshal_with(return_json)
-    @permission_required("frontstage.app.mall.coupons.take_coupon")
+    @permission_required("frontstage.app.promotions.coupons.take_coupon")
     def get(self, **kwargs):
         """
         获取优惠券

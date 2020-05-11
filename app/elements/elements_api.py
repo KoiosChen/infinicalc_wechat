@@ -5,7 +5,7 @@ from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 
 elements_ns = default_api.namespace('elements', path='/elements', description='包括元素相关操作')
 
@@ -31,12 +31,14 @@ update_element_parser.add_argument('permission', required=False, help='例如：
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
     @elements_ns.marshal_with(return_json)
+    @elements_ns.doc(body=page_parser)
     @permission_required("app.elements.elements_api.get_elements")
     def get(self, **kwargs):
         """
         查询所有Elements列表
         """
-        return success_return(get_table_data(Elements), "请求成功")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(Elements, args['page'], args['current'], args['size']), "请求成功")
 
     @elements_ns.doc(body=add_element_parser)
     @elements_ns.marshal_with(return_json)
@@ -46,7 +48,7 @@ class QueryElements(Resource):
         创建页面元素
         """
         args = add_element_parser.parse_args()
-        new_element = new_data_obj("Element", **{"name": args['name']})
+        new_element = new_data_obj("Elements", **{"name": args['name']})
         for key, value in args.items():
             if key != 'name':
                 setattr(new_element['obj'], key, value)

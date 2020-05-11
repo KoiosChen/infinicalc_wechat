@@ -4,7 +4,7 @@ from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 
 promotion_groups_ns = default_api.namespace('promotion_groups', path='/promotion_groups', description='包括促销活动组设置相关操作')
 
@@ -27,12 +27,14 @@ update_promotion_group_parser.add_argument('priority', required=False, help='1-1
 @promotion_groups_ns.expect(head_parser)
 class QueryPromotionGroups(Resource):
     @promotion_groups_ns.marshal_with(return_json)
+    @promotion_groups_ns.doc(body=page_parser)
     @permission_required("app.promotion_groups.promotion_groups_api.query_promotion_groups_all")
     def get(self, **kwargs):
         """
         查询所有PromotionGroups列表
         """
-        return success_return(get_table_data(PromotionGroups), "请求成功")
+        args = page_parser.parse_args()
+        return success_return(get_table_data(PromotionGroups, args['page'], args['current'], args['size']), "请求成功")
 
     @promotion_groups_ns.doc(body=add_promotion_group_parser)
     @promotion_groups_ns.marshal_with(return_json)
