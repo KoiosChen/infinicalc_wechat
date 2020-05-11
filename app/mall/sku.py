@@ -46,7 +46,7 @@ class SKUApi(Resource):
         获取全部SKU
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(SKU, args['page'], args['current'], args['size'], ['values', 'images']))
+        return success_return(get_table_data(SKU, args, ['values', 'images']))
 
     @mall_ns.doc(body=add_sku_parser)
     @mall_ns.marshal_with(return_json)

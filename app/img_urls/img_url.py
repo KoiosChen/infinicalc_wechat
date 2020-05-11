@@ -28,7 +28,7 @@ class ImageApi(Resource):
         获取所有图片
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(ImgUrl, args['page'], args['current'], args['size']), "")
+        return success_return(get_table_data(ImgUrl, args), "")
 
     @img_ns.doc(body=upload_img_parser)
     @img_ns.marshal_with(return_json)

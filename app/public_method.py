@@ -3,6 +3,7 @@ from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Cl
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
     Benefits, PromotionGroups, Gifts
 from time import sleep
+from sqlalchemy import or_
 
 
 def new_data_obj(table, **kwargs):
@@ -40,13 +41,32 @@ def table_fields(table, appends=[], removes=[]):
     return original_fields
 
 
-def get_table_data(table, page, current, size, appends=[], removes=[]):
+def get_table_data(table, args, appends=[], removes=[]):
+    page = args.get('page')
+    current = args.get('current')
+    size = args.get('size')
+    search = args.get('search')
+    or_fields_list = list()
     fields = table_fields(table, appends, removes)
     r = list()
+    base_sql = table.query
     if page == 'true':
-        table_data = table.query.all()
+        if search:
+            for k, v in search.items():
+                if k in fields:
+                    or_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+            table_data = base_sql.filter(or_(*or_fields_list)).all()
+        else:
+            table_data = base_sql.all()
     else:
-        table_data = table.query.offset(current).limit(size)
+        if search:
+            for k, v in search.items():
+                if k in fields:
+                    or_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+
+            table_data = base_sql.filter(or_(*or_fields_list)).offset(current).limit(size)
+        else:
+            table_data = base_sql.offset(current).limit(size)
     for t in table_data:
         tmp = dict()
         for f in fields:
@@ -84,4 +104,3 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[]):
                 tmp[f] = getattr(t, f)
         r.append(tmp)
     return r
-

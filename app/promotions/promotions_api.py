@@ -142,7 +142,7 @@ class QueryPromotions(Resource):
         查询所有promotions列表
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Promotions, args['page'], args['current'], args['size']), "请求成功")
+        return success_return(get_table_data(Promotions, args), "请求成功")
 
 
 @promotions_ns.route('/enough_reduce')
