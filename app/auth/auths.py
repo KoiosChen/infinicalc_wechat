@@ -134,7 +134,7 @@ def identify(request):
     if auth_header:
         auth_token_arr = auth_header.split(" ")
         if not auth_token_arr or auth_token_arr[0] != 'Bearer' or len(auth_token_arr) != 2:
-            result = code_return(false_return(message='请传递正确的验证头信息'))
+            result = false_return(message='请传递正确的验证头信息')
         else:
             auth_token = auth_token_arr[1]
             payload = decode_auth_token(auth_token)
@@ -142,15 +142,15 @@ def identify(request):
                 data = payload['data']['data']
                 user = Users.query.filter_by(id=data['id']).first()
                 if user is None:
-                    result = code_return(false_return('', '找不到该用户信息'))
+                    result = false_return('', '找不到该用户信息')
                 else:
                     login_info = LoginInfo.query.filter_by(token=auth_token, user=user.id).first()
                     if login_info and login_info.login_time == data['login_time']:
                         result = success_return(data={"user": user, "login_info": login_info}, message='请求成功')
                     else:
-                        result = code_return(false_return(message='Token已更改，请重新登录获取'))
+                        result = false_return(message='Token已更改，请重新登录获取')
             else:
                 result = payload
     else:
-        result = code_return(false_return(message='没有提供认证token'))
+        result = false_return(message='没有提供认证token')
     return result
