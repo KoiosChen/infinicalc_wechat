@@ -643,7 +643,7 @@ class PromotionGroups(db.Model):
     __tablename__ = 'promotion_groups'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     group_id = db.Column(db.SmallInteger, comment="组ID， 0 为特殊组，特殊组和任何组不互斥")
-    priority = db.Column(db.SmallInteger, comment="1-10, 10优先级最低，当有组互斥时，使用优先级最高的，0优先级最高")
+    priority = db.Column(db.SmallInteger, unique=True, comment="优先级不可重复，用于排序")
     name = db.Column(db.String(30))
     desc = db.Column(db.String(100))
     promotions = db.relationship('Promotions', backref='groups', lazy='dynamic')

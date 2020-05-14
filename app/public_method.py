@@ -67,10 +67,13 @@ def get_table_data(table, args, appends=[], removes=[]):
             table_data = base_sql.filter(and_(*and_fields_list)).offset(current).limit(size)
         else:
             table_data = base_sql.offset(current).limit(size)
+
+    page_len = len(table_data)
+
     for t in table_data:
         tmp = dict()
         for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount']:
+            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
                 tmp[f] = str(getattr(t, f))
             elif f == 'roles':
                 tmp[f] = {r.id: r.name for r in t.roles}
@@ -79,28 +82,30 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 tmp[f] = getattr(t, f)
         r.append(tmp)
-    return r
+    return {"records": r, "total": page_len // size + 1, "size": size, "current": page}
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[]):
     fields = table_fields(table, appends, removes)
     r = list()
-    for t in table.query.get(key_id):
-        tmp = dict()
-        for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount']:
-                tmp[f] = str(getattr(t, f))
-            elif f == 'elements':
-                tmp[f] = {e.id: e.name for e in t.elements}
-            elif f == 'sku':
-                tmp[f] = {s.id: s.name for s in t.sku.all()}
-            elif f in ['values', 'images']:
-                tmp1 = list()
-                t1 = getattr(t, f)
-                for value in t1:
-                    tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
-                tmp[f] = tmp1
-            else:
-                tmp[f] = getattr(t, f)
-        r.append(tmp)
+    t = table.query.get(key_id)
+    tmp = dict()
+    for f in fields:
+        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
+            tmp[f] = str(getattr(t, f))
+        elif f == 'elements':
+            tmp[f] = {e.id: e.name for e in t.elements}
+        elif f == 'roles':
+            tmp[f] = {r.id: r.name for r in t.roles}
+        elif f == 'sku':
+            tmp[f] = {s.id: s.name for s in t.sku.all()}
+        elif f in ['values', 'images']:
+            tmp1 = list()
+            t1 = getattr(t, f)
+            for value in t1:
+                tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
+            tmp[f] = tmp1
+        else:
+            tmp[f] = getattr(t, f)
+    r.append(tmp)
     return r
