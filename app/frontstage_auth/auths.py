@@ -6,7 +6,7 @@ from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
 from sqlalchemy import or_
-from ..public_method import table_fields
+from ..public_method import table_fields, get_table_data_by_id
 
 
 def encode_auth_token(user_id, login_time, login_ip, platform):
@@ -91,15 +91,12 @@ def authenticate(username, password, login_ip, platform, method='password'):
         db.session.add(user_info)
         session_commit()
         elements = [{f: getattr(u, f) for f in Elements.__table__.columns.keys() if f != "permission"} for u in
-                      user_info.elements]
-        fields_ = table_fields(Customers, ["roles"], ["password_hash"])
-        ru = dict()
-        for f in fields_:
-            if f == 'roles':
-                ru[f] = [{"id": r.id, "name": r.name} for r in user_info.roles]
-            else:
-                ru[f] = getattr(user_info, f)
-        return success_return(data={'token': token, 'elements': elements, 'user_info': ru}, message='登录成功')
+                    user_info.elements]
+
+        ru = get_table_data_by_id(Customers, user_info.id, ["roles"], ["password_hash"])
+
+        return success_return(data={'token': token, 'elements': elements,
+                                    'user_info': ru}, message='登录成功')
     else:
         return false_return(message=verify_method[method]['msg']), 400
 

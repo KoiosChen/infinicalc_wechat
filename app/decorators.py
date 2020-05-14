@@ -43,7 +43,7 @@ def permission_required(permission):
                 pass
             else:
 
-                abort(make_response(exp_return(message='login fail or expiration'), 403))
+                abort(make_response(exp_return(message=current_user.get("message")), 403))
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
 
