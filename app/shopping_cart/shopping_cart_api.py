@@ -166,13 +166,31 @@ class ProceedCheckOut(Resource):
 
                         if the_benefit is None:
                             pop_list.append(p)
+                        else:
+                            if not isinstance(sp.get('benefits'), list):
+                                sp['benefits'] = list()
+                            if the_benefit != 6:
+                                sp['benefits'].append({p: the_benefit})
                     for p in pop_list:
                         sp['promotions'].remove(p)
 
-            # 开始计算活动后的价格
-            for k, v in eval(s+'_promotions').items():
-                if v['promotions']:
-                    total_price = sum([sku['price'] for sku in v['skus']])
-                    for p in v['promotions']:
+            # 计算促销活动后的价格
+            for k, v in eval(s + '_promotions').items():
+                print(k, v)
+                if v['promotions'] and v['benefits']:
+                    for sku in v['skus']:
+                        price = sku['seckill_price'] if sku.get('seckill_price') else sku['price']
+                        v['order_price'] += price * sku['quantity']
+                    for p, b in v['benefits'].items():
                         if p.promotion_type == 0:
-                            v['order_price']  = total_price - 0
+                            v['order_price'] -= b.reduce_amount
+                        elif p.promotion_type == 1:
+                            pass
+                        elif p.promotion_type == 2:
+                            v['order_price'] *= b.discount_amount
+                        elif p.promotion_type == 3:
+                            pass
+                        elif p.promotion_type == 4:
+                            pass
+                        elif p.promotion_type == 5:
+                            pass
