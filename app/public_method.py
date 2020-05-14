@@ -82,7 +82,7 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 tmp[f] = getattr(t, f)
         r.append(tmp)
-    return {"records": r, "total": page_len // size + 1, "size": size, "current": page}
+    return {"records": r, "total": page_len // size + 1, "size": size, "current": current}
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[]):
