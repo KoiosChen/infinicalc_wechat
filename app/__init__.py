@@ -66,7 +66,7 @@ order_lock = threading.Lock()
 
 def create_app(config_name):
     app = Flask(__name__)
-    CORS(app, supports_credentials=True)
+    CORS(app, supports_credentials=True, resources=r'/*')
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
     db.app = app
