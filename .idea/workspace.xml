@@ -267,11 +267,12 @@
     <state x="578" y="203" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1588513394516" />
     <state x="661" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585788409963" />
     <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1589209660906">
-      <screen x="0" y="0" width="1680" height="1050" />
+    <state x="421" y="23" key="CommitChangelistDialog2" timestamp="1589639892007">
+      <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209660906" />
     <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585615002489" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.970@0.23.1680.970" timestamp="1589639892007" />
     <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -400,12 +401,12 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589626361563">
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589639940876">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209663936" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589626361563" />
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589639940876" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -431,12 +432,12 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783160811" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589626095363">
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589639947032">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586877611771" />
     <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757320651" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589626095363" />
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639947032" />
     <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1588515664657">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
