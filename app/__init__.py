@@ -79,6 +79,10 @@ def create_app(config_name):
     scheduler.init_app(app)
     scheduler.start()
 
+    @default_api.errorhandler(Exception)
+    def generic_exception_handler(e: Exception):
+        return {'message': f'Internal Server Error {e}'}, 500
+
     # @app.after_request
     # def after_request(response):
     #     response.headers.add('Access-Control-Allow-Origin', '*')

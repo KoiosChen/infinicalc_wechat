@@ -27,7 +27,6 @@ update_element_parser.replace_argument('name', required=False, help='新的元�
 update_element_parser.add_argument('type', required=False, help='元素类型，包括menu, button, api等')
 update_element_parser.add_argument('permission', required=False, help='例如：app.elements.elements_api.get_element')
 
-
 page_parser.add_argument('permission', help='搜索permission字段', location='args')
 page_parser.add_argument('name', help='搜索name字段', location='args')
 
