@@ -68,26 +68,26 @@ order_lock = threading.Lock()
 
 def create_app(config_name):
     app = Flask(__name__)
+    CORS(app)
     app.config.from_object(config[config_name])
     app.wsgi_app = ProxyFix(app.wsgi_app)
     config[config_name].init_app(app)
     db.app = app
     db.init_app(app)
-    @app.after_request
-    def after_request(response):
-        response.headers.add('Access-Control-Allow-Origin', '*')
-        if request.method == 'OPTIONS':
-            response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
-            headers = request.headers.get('Access-Control-Request-Headers')
-            if headers:
-                response.headers['Access-Control-Allow-Headers'] = headers
-        return response
-
     default_api.init_app(app)
-
     db.create_scoped_session()
     scheduler.init_app(app)
     scheduler.start()
+
+    # @app.after_request
+    # def after_request(response):
+    #     response.headers.add('Access-Control-Allow-Origin', '*')
+    #     if request.method == 'OPTIONS':
+    #         response.headers['Access-Control-Allow-Methods'] = 'DELETE, GET, POST, PUT'
+    #         headers = request.headers.get('Access-Control-Request-Headers')
+    #         if headers:
+    #             response.headers['Access-Control-Allow-Headers'] = headers
+    #     return response
 
     from .users import users as users_blueprint
     app.register_blueprint(users_blueprint)
