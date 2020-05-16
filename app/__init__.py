@@ -12,6 +12,8 @@ from fdfs_client.client import *
 from qcloudsms_py import SmsSingleSender, SmsMultiSender
 import threading
 from flask_cors import CORS
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 
 class SQLAlchemy(SQLAlchemyBase):
@@ -67,6 +69,7 @@ order_lock = threading.Lock()
 def create_app(config_name):
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+    app.wsgi_app = ProxyFix(app.wsgi_app)
     config[config_name].init_app(app)
     db.app = app
     db.init_app(app)
