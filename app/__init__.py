@@ -68,7 +68,7 @@ order_lock = threading.Lock()
 
 def create_app(config_name):
     app = Flask(__name__)
-    CORS(app)
+    # CORS(app)
     app.config.from_object(config[config_name])
     app.wsgi_app = ProxyFix(app.wsgi_app)
     config[config_name].init_app(app)
