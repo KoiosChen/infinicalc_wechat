@@ -3,8 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/elements/elements_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/elements/elements_api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -174,6 +172,7 @@
       <workItem from="1589189855501" duration="614000" />
       <workItem from="1589626060780" duration="2157000" />
       <workItem from="1589639978943" duration="513000" />
+      <workItem from="1589641627267" duration="378000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -252,7 +251,21 @@
       <option name="project" value="LOCAL" />
       <updated>1589639144593</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="bugs">
+      <created>1589641719397</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1589641719397</updated>
+    </task>
+    <task id="LOCAL-00013" summary="bugs">
+      <created>1589641763394</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1589641763394</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -427,12 +440,12 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589641632926">
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589641776200">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209663936" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589641632926" />
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589641776200" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
