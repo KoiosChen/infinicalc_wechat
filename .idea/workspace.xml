@@ -171,6 +171,7 @@
       <workItem from="1589186484765" duration="188000" />
       <workItem from="1589189855501" duration="614000" />
       <workItem from="1589626060780" duration="2157000" />
+      <workItem from="1589639978943" duration="513000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -422,12 +423,12 @@
     <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
     <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
     <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589639161415">
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589639986590">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209663936" />
     <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589639161415" />
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589639986590" />
     <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
     <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
       <screen x="0" y="0" width="1680" height="1050" />
@@ -454,12 +455,12 @@
     </state>
     <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783160811" />
     <state x="586" y="174" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639599876" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589639157383">
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589639984580">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586877611771" />
     <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757320651" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639157383" />
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639984580" />
     <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1588515664657">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
