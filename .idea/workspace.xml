@@ -56,7 +56,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="beta0.2" />
+        <entry key="$PROJECT_DIR$" value="master" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -285,11 +285,12 @@
     <state x="578" y="203" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1588513394516" />
     <state x="661" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585788409963" />
     <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1589209660906">
-      <screen x="0" y="0" width="1680" height="1050" />
+    <state x="421" y="23" key="CommitChangelistDialog2" timestamp="1589641719258">
+      <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209660906" />
     <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585615002489" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.970@0.23.1680.970" timestamp="1589641719258" />
     <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
@@ -458,12 +459,12 @@
     </state>
     <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783160811" />
     <state x="586" y="174" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639599876" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589639984580">
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589641753152">
       <screen x="0" y="23" width="1680" height="970" />
     </state>
     <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586877611771" />
     <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757320651" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639984580" />
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589641753152" />
     <state x="505" y="233" width="670" height="676" key="search.everywhere.popup" timestamp="1588515664657">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
