@@ -66,16 +66,10 @@ order_lock = threading.Lock()
 
 def create_app(config_name):
     app = Flask(__name__)
-    CORS(app, supports_credentials=True, resources=r'/*')
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
     db.app = app
     db.init_app(app)
-    default_api.init_app(app)
-    db.create_scoped_session()
-    scheduler.init_app(app)
-    scheduler.start()
-
     # @app.after_request
     # def after_request(response):
     #     response.headers.add('Access-Control-Allow-Origin', '*')
@@ -85,6 +79,12 @@ def create_app(config_name):
     #         if headers:
     #             response.headers['Access-Control-Allow-Headers'] = headers
     #     return response
+
+    default_api.init_app(app)
+
+    db.create_scoped_session()
+    scheduler.init_app(app)
+    scheduler.start()
 
     from .users import users as users_blueprint
     app.register_blueprint(users_blueprint)

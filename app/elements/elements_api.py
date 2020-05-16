@@ -1,11 +1,11 @@
-from flask_restplus import Resource, reqparse
+from flask_restplus import Resource, reqparse, cors
 from flask import request
 from ..models import Elements
 from . import elements
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
-from ..decorators import permission_required
+from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 
 elements_ns = default_api.namespace('elements', path='/elements', description='包括元素相关操作')
@@ -35,6 +35,7 @@ page_parser.add_argument('name', help='搜索name字段', location='args')
 @elements_ns.route('')
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
+    @allow_cross_domain
     @elements_ns.marshal_with(return_json)
     @elements_ns.doc(body=page_parser)
     @permission_required("app.elements.elements_api.get_elements")

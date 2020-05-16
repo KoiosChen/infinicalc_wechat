@@ -50,7 +50,7 @@ def get_table_data(table, args, appends=[], removes=[]):
     fields = table_fields(table, appends, removes)
     r = list()
     base_sql = table.query
-    if page == 'true':
+    if page != 'true':
         if search:
             for k, v in search.items():
                 if k in fields:
@@ -82,7 +82,8 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 tmp[f] = getattr(t, f)
         r.append(tmp)
-    return {"records": r, "total": page_len // size + 1, "size": size, "current": current}
+    return {"records": r, "total": page_len // size + 1, "size": size, "current": current} if page == 'true' else {
+        "records": r}
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[]):
