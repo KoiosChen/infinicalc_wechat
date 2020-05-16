@@ -35,7 +35,7 @@ page_parser.add_argument('name', help='搜索name字段', location='args')
 @elements_ns.route('')
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
-    @cors.crossdomain(origin='*')
+    # @cors.crossdomain(origin='*')
     @elements_ns.marshal_with(return_json)
     @elements_ns.doc(body=page_parser)
     @permission_required("app.elements.elements_api.get_elements")
