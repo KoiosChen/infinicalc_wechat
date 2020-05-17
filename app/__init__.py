@@ -88,7 +88,6 @@ def create_app(config_name):
         logger.error(">>>>>" + str(e))
         return {'message': f'Internal Server Error {e}'}, 500
 
-
     @app.after_request
     def after_request(response):
         response.headers.add('Access-Control-Allow-Origin', '*')
