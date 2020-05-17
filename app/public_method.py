@@ -49,41 +49,44 @@ def get_table_data(table, args, appends=[], removes=[]):
     and_fields_list = list()
     fields = table_fields(table, appends, removes)
     r = list()
-    base_sql = table.query
-    if page != 'true':
-        if search:
-            for k, v in search.items():
-                if k in fields:
-                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
-            table_data = base_sql.filter(and_(*and_fields_list)).all()
-        else:
-            table_data = base_sql.all()
-    else:
-        if search:
-            for k, v in search.items():
-                if k in fields:
-                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
-
-            table_data = base_sql.filter(and_(*and_fields_list)).offset((current - 1) * size).limit(size).all()
-        else:
-            table_data = base_sql.offset((current - 1) * size).limit(size).all()
-
-    page_len = len(table_data)
-
-    for t in table_data:
-        tmp = dict()
-        for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
-                tmp[f] = str(getattr(t, f))
-            elif f == 'roles':
-                tmp[f] = {r.id: r.name for r in t.roles}
-            elif f == 'elements':
-                tmp[f] = {e.id: e.name for e in t.elements}
+    try:
+        base_sql = table.query
+        if page != 'true':
+            if search:
+                for k, v in search.items():
+                    if k in fields:
+                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+                table_data = base_sql.filter(and_(*and_fields_list)).all()
             else:
-                tmp[f] = getattr(t, f)
-        r.append(tmp)
-    return {"records": r, "total": page_len // size + 1, "size": size, "current": current} if page == 'true' else {
-        "records": r}
+                table_data = base_sql.all()
+        else:
+            if search:
+                for k, v in search.items():
+                    if k in fields:
+                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+
+                table_data = base_sql.filter(and_(*and_fields_list)).offset((current - 1) * size).limit(size)
+            else:
+                table_data = base_sql.offset((current - 1) * size).limit(size)
+
+        page_len = len(table_data)
+
+        for t in table_data:
+            tmp = dict()
+            for f in fields:
+                if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
+                    tmp[f] = str(getattr(t, f))
+                elif f == 'roles':
+                    tmp[f] = {r.id: r.name for r in t.roles}
+                elif f == 'elements':
+                    tmp[f] = {e.id: e.name for e in t.elements}
+                else:
+                    tmp[f] = getattr(t, f)
+            r.append(tmp)
+        return {"records": r, "total": page_len // size + 1, "size": size, "current": current} if page == 'true' else {
+            "records": r}
+    except Exception as e:
+        raise TypeError(f"?? {e}")
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[]):
