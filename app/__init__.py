@@ -15,7 +15,6 @@ from flask_cors import CORS
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
-
 class SQLAlchemy(SQLAlchemyBase):
     def apply_driver_hacks(self, app, info, options):
         super(SQLAlchemy, self).apply_driver_hacks(app, info, options)
@@ -81,7 +80,14 @@ def create_app(config_name):
 
     @default_api.errorhandler(Exception)
     def generic_exception_handler(e: Exception):
+        logger.error(">>>>>" + str(e))
         return {'message': f'Internal Server Error {e}'}, 500
+
+    @app.errorhandler(Exception)
+    def app_generic_exception_handler(e: Exception):
+        logger.error(">>>>>" + str(e))
+        return {'message': f'Internal Server Error {e}'}, 500
+
 
     @app.after_request
     def after_request(response):
