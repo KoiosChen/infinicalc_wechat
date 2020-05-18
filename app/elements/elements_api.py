@@ -34,7 +34,6 @@ page_parser.add_argument('name', help='搜索name字段', location='args')
 @elements_ns.route('')
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
-    # @cors.crossdomain(origin='*')
     @elements_ns.marshal_with(return_json)
     @elements_ns.doc(body=page_parser)
     @permission_required("app.elements.elements_api.get_elements")
@@ -49,7 +48,7 @@ class QueryElements(Resource):
             args['search']['permission'] = args.get('permission')
         if args.get("name"):
             args['search']['name'] = args.get('name')
-        return success_return(get_table_data(Elements, args), "请求成功")
+        return success_return(get_table_data(Elements, args, ['children']), "请求成功")
 
     @elements_ns.doc(body=add_element_parser)
     @elements_ns.marshal_with(return_json)
@@ -62,10 +61,12 @@ class QueryElements(Resource):
         new_element = new_data_obj("Elements", **{"name": args['name']})
         for key, value in args.items():
             if key != 'name':
+                if key == 'parent_id' and new_element['obj'].id == value:
+                    return false_return(message="父节点不能为自身"), 400
                 setattr(new_element['obj'], key, value)
         db.session.add(new_element['obj'])
         return success_return(data={'id': new_element['obj'].id}, message="元素创建成功") \
-            if session_commit() else false_return(message="元素创建失败")
+            if session_commit() else false_return(message="元素创建失败"), 400
 
 
 @elements_ns.route('/<int:element_id>')

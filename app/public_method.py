@@ -70,18 +70,36 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     page_len = len(table_data)
 
-    for t in table_data:
-        tmp = dict()
-        for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
-                tmp[f] = str(getattr(t, f))
-            elif f == 'roles':
-                tmp[f] = {r.id: r.name for r in t.roles}
-            elif f == 'elements':
-                tmp[f] = {e.id: e.name for e in t.elements}
-            else:
-                tmp[f] = getattr(t, f)
-        r.append(tmp)
+    def _make_data(data):
+        rr = list()
+        for t in data:
+            tmp = dict()
+            for f in fields:
+                if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
+                    tmp[f] = str(getattr(t, f))
+                elif f == 'roles':
+                    tmp[f] = {role.id: role.name for role in t.roles}
+                elif f == 'elements':
+                    tmp[f] = {e.id: e.name for e in t.elements}
+                elif f == 'children':
+                    if t.children:
+                        child_tmp = list()
+                        for child in t.children:
+                            child_tmp.extend(_make_data([child]))
+                        tmp[f] = child_tmp
+                else:
+                    tmp[f] = getattr(t, f)
+
+            rr.append(tmp)
+        return rr
+
+    r = _make_data(table_data)
+    pop_list = list()
+    for record in r:
+        if record['parent_id']:
+            pop_list.append(record)
+    for p in pop_list:
+        r.remove(p)
     return {"records": r, "total": page_len // size + 1, "size": size, "current": current} if page == 'true' else {
         "records": r}
 
