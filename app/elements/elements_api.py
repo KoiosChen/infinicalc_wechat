@@ -63,7 +63,8 @@ class QueryElements(Resource):
             if key != 'name':
                 if key == 'parent_id' and new_element['obj'].id == value:
                     return false_return(message="父节点不能为自身"), 400
-                setattr(new_element['obj'], key, value)
+                if value:
+                    setattr(new_element['obj'], key, value)
         db.session.add(new_element['obj'])
         commit_status = session_commit()
         if commit_status['code'] == 'success':
