@@ -137,6 +137,8 @@ def identify(request):
             result = false_return(message='请传递正确的验证头信息')
         else:
             auth_token = auth_token_arr[1]
+            if not LoginInfo.query.filter_by(token=auth_token).first():
+                return false_return(message='认证失败')
             payload = decode_auth_token(auth_token)
             if payload['code'] == 'success':
                 data = payload['data']['data']

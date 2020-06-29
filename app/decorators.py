@@ -56,7 +56,6 @@ def permission_required(permission):
                                                                        current_user['data']['user'].roles]:
                 pass
             else:
-
                 abort(make_response(exp_return(message=current_user.get("message")), 403))
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
