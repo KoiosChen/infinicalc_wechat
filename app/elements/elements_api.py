@@ -65,8 +65,10 @@ class QueryElements(Resource):
                     return false_return(message="父节点不能为自身"), 400
                 setattr(new_element['obj'], key, value)
         db.session.add(new_element['obj'])
-        return success_return(data={'id': new_element['obj'].id}, message="元素创建成功") \
-            if session_commit() else false_return(message="元素创建失败"), 400
+        if session_commit():
+            return success_return(data={'id': new_element['obj'].id}, message="元素创建成功")
+        else:
+            false_return(message="元素创建失败"), 400
 
 
 @elements_ns.route('/<int:element_id>')
