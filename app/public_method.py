@@ -106,7 +106,6 @@ def get_table_data(table, args, appends=[], removes=[]):
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[]):
     fields = table_fields(table, appends, removes)
-    r = list()
     t = table.query.get(key_id)
     tmp = dict()
     for f in fields:
@@ -126,5 +125,4 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[]):
             tmp[f] = tmp1
         else:
             tmp[f] = getattr(t, f)
-    r.append(tmp)
-    return r
+    return tmp
