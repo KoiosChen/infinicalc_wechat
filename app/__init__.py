@@ -78,15 +78,15 @@ def create_app(config_name):
     scheduler.init_app(app)
     scheduler.start()
 
-    @default_api.errorhandler(Exception)
-    def generic_exception_handler(e: Exception):
-        logger.error(">>>>>" + str(e))
-        return {'message': f'Internal Server Error {e}'}, 500
-
-    @app.errorhandler(Exception)
-    def app_generic_exception_handler(e: Exception):
-        logger.error(">>>>>" + str(e))
-        return {'message': f'Internal Server Error {e}'}, 500
+    # @default_api.errorhandler(Exception)
+    # def generic_exception_handler(e: Exception):
+    #     logger.error(">>>>>" + str(e))
+    #     return {'message': f'Internal Server Error {e}'}, 500
+    #
+    # @app.errorhandler(Exception)
+    # def app_generic_exception_handler(e: Exception):
+    #     logger.error(">>>>>" + str(e))
+    #     return {'message': f'Internal Server Error {e}'}, 500
 
     @app.after_request
     def after_request(response):
