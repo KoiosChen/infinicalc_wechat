@@ -98,7 +98,7 @@ class QueryElement(Resource):
 
         try:
             for key, value in args.items():
-                if key == 'name' and Elements.query.filter_by(name=value).first():
+                if key == 'name' and Elements.query.filter(Elements.name.__eq__(value), Elements.id.__ne__(kwargs['element_id'])).first():
                     return false_return(message="元素名已存在")
                 elif value:
                     setattr(the_element, key, value)
