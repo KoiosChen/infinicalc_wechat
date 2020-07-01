@@ -11,6 +11,7 @@ roles_ns = default_api.namespace('roles', path='/roles', description='包括角�
 role_add_parser = reqparse.RequestParser()
 role_add_parser.add_argument('name', required=True, help='新的角色名称', location='json')
 role_add_parser.add_argument('elements', required=True, type=list, help='该角色可用的权限ID，list。例如，[1,3,4,5]', location='json')
+role_add_parser.add_argument('Authorization', required=True, location='headers')
 
 role_change_parser = reqparse.RequestParser()
 role_change_parser.add_argument('name', required=True, help='新的角色名称')
@@ -49,7 +50,6 @@ class RoleApi(Resource):
             "请求成功"
         )
 
-    @roles_ns.expect(head_parser)
     @roles_ns.doc(body=role_add_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.add_roles")
