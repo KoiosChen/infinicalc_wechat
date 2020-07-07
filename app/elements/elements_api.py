@@ -106,7 +106,7 @@ class QueryElement(Resource):
             if session_commit():
                 return success_return(message="元素修改成功")
             else:
-                false_return(message=f"元素修改数据提交失败"), 400
+                return false_return(message=f"元素修改数据提交失败"), 400
         except Exception as e:
             db.session.rollback()
             return false_return(message=f"更新元素失败：{e}"), 400
@@ -122,10 +122,10 @@ class QueryElement(Resource):
             roles = tobe_delete.elements_roles.all()
             if not roles:
                 db.session.delete(tobe_delete)
-                if session_commit():
+                if session_commit().get("code") == 'success':
                     return success_return(message="元素删除成功")
                 else:
-                    false_return(message="元素删除失败"), 400
+                    return false_return(message="元素删除失败"), 400
             else:
                 return false_return(message=f"此元素被占用，不可删除：{roles}"), 400
         else:
