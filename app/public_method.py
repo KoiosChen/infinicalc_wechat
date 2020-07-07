@@ -96,7 +96,7 @@ def get_table_data(table, args, appends=[], removes=[]):
     r = _make_data(table_data)
     pop_list = list()
     for record in r:
-        if record['parent_id']:
+        if record.get('parent_id'):
             pop_list.append(record)
     for p in pop_list:
         r.remove(p)
