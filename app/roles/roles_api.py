@@ -17,15 +17,13 @@ role_change_parser = reqparse.RequestParser()
 role_change_parser.add_argument('name', required=True, help='新的角色名称')
 
 role_bind_elements_parser = reqparse.RequestParser()
+role_bind_elements_parser.add_argument('name', required=True, help='修改角色名称(Roles.name)')
 role_bind_elements_parser.add_argument('elements', required=True, type=list,
                                        help='该角色可用的权限ID，list。例如，[1,3,4,5]，从/roles/query_elements获取',
                                        location='json')
 
 role_delete_parser = reqparse.RequestParser()
 role_delete_parser.add_argument('role_id', required=True, help='要删除的角色ID(Roles.id)')
-
-role_change_parser = reqparse.RequestParser()
-role_change_parser.add_argument('name', required=True, help='修改角色名称(Roles.name)')
 
 query_element_parser = reqparse.RequestParser()
 query_element_parser.add_argument('role_id', help='要查询的角色ID(Roles.id)， 若此字段为空，则返回所有')
@@ -65,9 +63,10 @@ class RoleApi(Resource):
             db.session.add(new_role)
             for element_ in elements_list:
                 new_role.elements.append(element_)
-            return success_return(data={"new_role_id": new_role.id},
-                                  message="角色添加成功") \
-                       if session_commit() else false_return(message="角色添加失败"), 400
+            if session_commit().get("code") == 'success':
+                return success_return(data={"new_role_id": new_role.id}, message="角色添加成功")
+            else:
+                return false_return(message="角色添加失败"), 400
         else:
             return false_return(message=f"{args['name']}已经存在"), 400
 
@@ -83,26 +82,6 @@ class RoleID(Resource):
             get_table_data_by_id(Roles, kwargs['role_id'], ['elements'])
         )
 
-    @roles_ns.doc(body=role_change_parser)
-    @roles_ns.marshal_with(return_json)
-    @permission_required("app.users.roles_api.change_role")
-    def put(self, **kwargs):
-        """
-        修改角色
-        """
-        args = role_change_parser.parse_args(strict=True)
-        name_tobe = args['name']
-        role_id = kwargs['role_id']
-        role = Roles.query.get(role_id)
-        if not Roles.query.filter_by(name=name_tobe).first():
-            old_name = role.name
-            role.name = name_tobe
-            db.session.add(role)
-            return success_return(message=f"角色修改成功{old_name}->{name_tobe}") if session_commit() else false_return(
-                message="角色添加失败"), 400
-        else:
-            return false_return(message=f"{name_tobe}已经存在"), 400
-
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.delete_role")
     def delete(self, **kwargs):
@@ -115,18 +94,26 @@ class RoleID(Resource):
 class RoleElements(Resource):
     @roles_ns.doc(body=role_bind_elements_parser)
     @roles_ns.marshal_with(return_json)
-    @permission_required("app.users.roles_api.bind_element_by_role_id")
+    @permission_required("app.users.roles_api.change_role_with_elements")
     def put(self, **kwargs):
         """
-        修改制定角色（role_id）对应的权限列表
+        修改指定角色（role_id）对应的权限列表及role的名字
         """
-        args = role_bind_elements_parser.parse_args()
-        role_id = kwargs['role_id']
-        role_ = Roles.query.get(role_id)
-        fail_change_element_name = list()
+        args = role_bind_elements_parser.parse_args(strict=True)
+        name_tobe = args['name']
         now_elements = args['elements']
-        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(
-            Roles.id.__eq__(role_id)).all()
+        role_id = kwargs['role_id']
+
+        role_ = Roles.query.get(role_id)
+
+        if not Roles.query.filter(Roles.name.__eq__(name_tobe), Roles.id.__ne__(role_id)).first():
+            role_.name = name_tobe
+            db.session.add(role_)
+        else:
+            return false_return(message=f"{name_tobe}已经存在"), 400
+
+        fail_change_element_name = list()
+        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(Roles.id.__eq__(role_id)).all()
         old_elements = [e.id for e in elements_in_db]
         elements_tobe_added = set(now_elements) - set(old_elements)
         elements_tobe_deleted = set(old_elements) - set(now_elements)
