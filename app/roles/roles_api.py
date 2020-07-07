@@ -65,9 +65,10 @@ class RoleApi(Resource):
             db.session.add(new_role)
             for element_ in elements_list:
                 new_role.elements.append(element_)
-            return success_return(data={"new_role_id": new_role.id},
-                                  message="角色添加成功") \
-                       if session_commit() else false_return(message="角色添加失败"), 400
+            if session_commit().get("code") == 'success':
+                return success_return(data={"new_role_id": new_role.id}, message="角色添加成功")
+            else:
+                return false_return(message="角色添加失败"), 400
         else:
             return false_return(message=f"{args['name']}已经存在"), 400
 
@@ -98,8 +99,10 @@ class RoleID(Resource):
             old_name = role.name
             role.name = name_tobe
             db.session.add(role)
-            return success_return(message=f"角色修改成功{old_name}->{name_tobe}") if session_commit() else false_return(
-                message="角色添加失败"), 400
+            if session_commit().get("code") == "success":
+                return success_return(message=f"角色修改成功{old_name}->{name_tobe}")
+            else:
+                return false_return(message="角色添加失败"), 400
         else:
             return false_return(message=f"{name_tobe}已经存在"), 400
 
