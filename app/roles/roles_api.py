@@ -109,6 +109,7 @@ class RoleElements(Resource):
         if not Roles.query.filter(Roles.name.__eq__(name_tobe), Roles.id.__ne__(role_id)).first():
             role_.name = name_tobe
             db.session.add(role_)
+
         else:
             return false_return(message=f"{name_tobe}已经存在"), 400
 
@@ -118,18 +119,25 @@ class RoleElements(Resource):
         elements_tobe_added = set(now_elements) - set(old_elements)
         elements_tobe_deleted = set(old_elements) - set(now_elements)
         if role_:
-            for element_ in [Elements.query.get(m) for m in elements_tobe_added]:
-                if element_ not in role_.elements:
-                    role_.elements.append(element_)
-                else:
-                    fail_change_element_name.append(element_.name)
+            elements_tobe_added_list = [Elements.query.get(m) for m in elements_tobe_added]
+            elements_tobe_deleted_list = [Elements.query.get(m) for m in elements_tobe_deleted]
+            for element_ in elements_tobe_added_list:
+                if element_:
+                    if element_ not in role_.elements:
+                        role_.elements.append(element_)
+                    else:
+                        fail_change_element_name.append(element_.name)
 
-            for element_ in [Elements.query.get(m) for m in elements_tobe_deleted]:
-                if element_ in role_.elements:
-                    role_.elements.remove(element_)
-                else:
-                    fail_change_element_name.append(element_.name)
-            return success_return(
-                message="角色对应权限成功" if not fail_change_element_name else f"权限修改部分成功，其中{fail_change_element_name}已存在")
+            for element_ in elements_tobe_deleted_list:
+                if element_:
+                    if element_ in role_.elements:
+                        role_.elements.remove(element_)
+                    else:
+                        fail_change_element_name.append(element_.name)
+            if session_commit().get("code") == "success":
+                return success_return(
+                    message="角色对应权限成功" if not fail_change_element_name else f"权限修改部分成功，其中{fail_change_element_name}已存在")
+            else:
+                return false_return(message="角色修改失败"), 400
         else:
             return false_return(message="角色不存在"), 400
