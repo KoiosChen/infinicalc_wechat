@@ -80,7 +80,7 @@ def get_table_data(table, args, appends=[], removes=[]):
                 elif f == 'roles':
                     tmp[f] = {role.id: role.name for role in t.roles}
                 elif f == 'elements':
-                    tmp[f] = [e.id for e in t.elements]
+                    tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
                 elif f == 'children':
                     if t.children:
                         child_tmp = list()
@@ -112,7 +112,7 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[]):
         if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
             tmp[f] = str(getattr(t, f))
         elif f == 'elements':
-            tmp[f] = [e.id for e in t.elements]
+            tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
         elif f == 'roles':
             tmp[f] = {r.id: r.name for r in t.roles}
         elif f == 'sku':
