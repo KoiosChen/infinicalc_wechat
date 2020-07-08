@@ -52,5 +52,14 @@ def register(table_obj, **kwargs):
         db.session.rollback()
         return false_return(data={}, message=str(e)), 400
 
-def login():
-    pass
+
+def modify_user_profile(args, user, fields_):
+    for f in fields_:
+        if f == 'role_id' and args.get(f):
+            user.roles = []
+            for r in args.get(f):
+                role = Roles.query.get(r)
+                user.roles.append(role)
+        elif args.get(f):
+            setattr(user, f, args.get(f))
+    return success_return(message="更新成功")

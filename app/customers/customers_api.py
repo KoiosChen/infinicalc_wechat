@@ -9,7 +9,7 @@ from ..public_method import table_fields, get_table_data
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-from ..public_user_func import register
+from ..public_user_func import register, modify_user_profile
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -80,15 +80,7 @@ class CustomersAPI(Resource):
         args = update_customer_parser.parse_args()
         user = kwargs['info']['user']
         fields_ = table_fields(Customers, appends=['role_id', 'password'], removes=['password_hash'])
-        for f in fields_:
-            if f == 'role_id' and args.get(f):
-                user.roles = []
-                for r in args.get(f):
-                    role = Roles.query.get(r)
-                    user.roles.append(role)
-            elif args.get(f):
-                setattr(user, f, args.get(f))
-        return success_return(message="更新成功")
+        return modify_user_profile(args, user, fields_)
 
 
 @customers_ns.route('/login')

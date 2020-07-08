@@ -6,7 +6,7 @@ from app.auth import auths
 from .. import db, default_api
 from ..common import success_return, false_return, session_commit
 from ..public_method import table_fields
-from ..public_user_func import create_user
+from ..public_user_func import create_user, modify_user_profile
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from ..public_method import get_table_data
@@ -76,16 +76,8 @@ class QueryUsers(Resource):
         """
         args = update_user_parser.parse_args()
         user = kwargs['info']['user']
-        fields_ = table_fields(Users, appends=['role_id'])
-        for f in fields_:
-            if f == 'role_id' and args.get(f):
-                user.roles = []
-                for r in args.get(f):
-                    role = Roles.query.get(r)
-                    user.roles.append(role)
-            elif args.get(f):
-                setattr(user, f, args.get(f))
-        return success_return(message="更新成功")
+        fields_ = table_fields(Users, appends=['role_id', 'password'], removes=['password_hash'])
+        return modify_user_profile(args, user, fields_)
 
 
 @users_ns.route('/login')
