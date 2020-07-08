@@ -69,10 +69,10 @@ class QueryUsers(Resource):
 
     @users_ns.doc(body=update_user_parser)
     @users_ns.marshal_with(return_json)
-    @permission_required("app.users.users_api.update_user_attributes")
+    @permission_required("app.users.users_api.modify_self_attributes")
     def put(self, **kwargs):
         """
-        修改用户属性
+        修改登陆用户自己的属性
         """
         args = update_user_parser.parse_args()
         user = kwargs['info']['user']
@@ -111,6 +111,23 @@ class Logout(Resource):
         result = success_return(message="登出成功") if session_commit().get("code") == 'success' else false_return(
             message='登出失败'), 400
         return result
+
+
+@users_ns.route('/<string:user_id>')
+@users_ns.expect(head_parser)
+@users_ns.param("user_id", "后台用户ID")
+class ModifyUser(Resource):
+    @users_ns.doc(body=update_user_parser)
+    @users_ns.marshal_with(return_json)
+    @permission_required("app.users.users_api.modify_user_attributes")
+    def put(self, **kwargs):
+        """
+        修改用户属性
+        """
+        args = update_user_parser.parse_args()
+        user = kwargs['user_id']
+        fields_ = table_fields(Users, appends=['role_id', 'password'], removes=['password_hash'])
+        return modify_user_profile(args, user, fields_)
 
 
 @users_ns.route('/<string:user_id>/roles')
