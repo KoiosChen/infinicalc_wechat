@@ -85,7 +85,23 @@ class RoleID(Resource):
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.delete_role")
     def delete(self, **kwargs):
-        pass
+        """
+        删除角色
+        """
+        tobe_delete = Roles.query.get(kwargs['role_id'])
+        if tobe_delete:
+            users = tobe_delete.users
+            customers = tobe_delete.customers
+            if not users and not customers:
+                db.session.delete(tobe_delete)
+                if session_commit().get("code") == 'success':
+                    return success_return(message="角色删除成功")
+                else:
+                    return false_return(message="角色删除失败"), 400
+            else:
+                return false_return(message=f"此角色被占用，不可删除：{users} {customers}"), 400
+        else:
+            return false_return(message=f"角色不存在"), 400
 
 
 @roles_ns.route('/<int:role_id>/elements')
@@ -114,7 +130,8 @@ class RoleElements(Resource):
             return false_return(message=f"{name_tobe}已经存在"), 400
 
         fail_change_element_name = list()
-        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(Roles.id.__eq__(role_id)).all()
+        elements_in_db = Elements.query.outerjoin(roles_elements).outerjoin(Roles).filter(
+            Roles.id.__eq__(role_id)).all()
         old_elements = [e.id for e in elements_in_db]
         elements_tobe_added = set(now_elements) - set(old_elements)
         elements_tobe_deleted = set(old_elements) - set(now_elements)

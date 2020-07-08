@@ -55,7 +55,7 @@ class QueryUsers(Resource):
         获取后端用户信息
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Users, args, ['role'], ['password_hash']), "请求成功")
+        return success_return(get_table_data(Users, args, ['roles'], ['password_hash']), "请求成功")
 
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
