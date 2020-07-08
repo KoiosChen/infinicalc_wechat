@@ -78,7 +78,7 @@ def get_table_data(table, args, appends=[], removes=[]):
                 if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
                     tmp[f] = str(getattr(t, f))
                 elif f == 'roles':
-                    tmp[f] = {role.id: role.name for role in t.roles}
+                    tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
                 elif f == 'elements':
                     tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
                 elif f == 'children':
@@ -114,9 +114,9 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[]):
         elif f == 'elements':
             tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
         elif f == 'roles':
-            tmp[f] = {r.id: r.name for r in t.roles}
+            tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
         elif f == 'sku':
-            tmp[f] = {s.id: s.name for s in t.sku.all()}
+            tmp[f] = [{"id": s.id, "name": s.name} for s in t.sku.all()]
         elif f in ['values', 'images']:
             tmp1 = list()
             t1 = getattr(t, f)
