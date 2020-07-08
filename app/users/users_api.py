@@ -20,6 +20,8 @@ register_parser.add_argument('username', help='用户名，非真名，选填', 
 register_parser.add_argument('password', help='用户密码，选填', location='json')
 register_parser.add_argument('email', help='用户注册用的邮箱，选填', location='json')
 register_parser.add_argument('role_id', help='用户角色, 可多个，用list来传递', location='json', type=list)
+register_parser.add_argument('Authorization', required=True, location='headers')
+
 
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('username', required=True, help='可以是用户名、邮箱、手机号、微信ID等')
@@ -64,7 +66,7 @@ class QueryUsers(Resource):
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.users_register_without_verify")
-    def post(self):
+    def post(self, **kwargs):
         """
         后端用户注册 - 后台提交
         """
