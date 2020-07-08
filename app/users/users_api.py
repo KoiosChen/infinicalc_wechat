@@ -3,19 +3,19 @@ from flask_restplus import Resource, reqparse
 from ..models import Users, Roles
 from . import users
 from app.auth import auths
-from .. import db, redis_db, default_api, logger
+from .. import db, default_api
 from ..common import success_return, false_return, session_commit
 from ..public_method import table_fields
+from ..public_user_func import create_user
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-from ..public_method import new_data_obj, get_table_data
+from ..public_method import get_table_data
 
 users_ns = default_api.namespace('users', path='/users',
                                  description='包括注册、登陆、登出、获取用户信息、用户与角色操作等')
 
 register_parser = reqparse.RequestParser()
 register_parser.add_argument('phone', required=True, help='用户注册用的手机', location='json')
-register_parser.add_argument('verify_code', required=True, help='验证码', location='json')
 register_parser.add_argument('username', help='用户名，非真名，选填', location='json')
 register_parser.add_argument('password', help='用户密码，选填', location='json')
 register_parser.add_argument('email', help='用户注册用的邮箱，选填', location='json')
@@ -59,53 +59,13 @@ class QueryUsers(Resource):
 
     @users_ns.doc(body=register_parser)
     @users_ns.marshal_with(return_json)
+    @permission_required("app.users.users_api.users_register_without_verify")
     def post(self):
         """
-        后端用户注册
+        后端用户注册 - 后台提交
         """
         args = register_parser.parse_args()
-        phone = args['phone']
-        username = args.get('username')
-        password = args.get('password')
-        email = args.get('email')
-        verify_code = args['verify_code']
-        role_ids = args.get('role_id')
-        key = f'back::verification_code::{phone}'
-        try:
-            if redis_db.exists(key) and redis_db.get(key) == verify_code:
-                new_user = new_data_obj('Users', **{"phone": phone, "status": 1})
-                if new_user and new_user.get('status'):
-                    user = new_user['obj']
-                    if username:
-                        user.username = username
-                    if password:
-                        user.password = password
-                    if email:
-                        user.email = email
-                else:
-                    return false_return(message=f"<{phone}>已经存在"), 400
-
-                if not role_ids:
-                    role_ids = list()
-                    role_ids.append(new_data_obj("Roles", **{"name": "normal_user"})['obj'].id)
-
-                for id_ in role_ids:
-                    user.roles.append(Roles.query.get(id_))
-                db.session.add(user)
-                if session_commit().get("code") == 'success':
-                    return_user = {
-                        'id': user.id,
-                        'phone': user.phone
-                    }
-                    return success_return(return_user, "用户注册成功")
-                else:
-                    return false_return({}, '用户注册失败'), 400
-            else:
-                return false_return(message='验证码错误'), 400
-        except Exception as e:
-            logger.error(f"customers::register::db_commit()::error --> {str(e)}")
-            db.session.rollback()
-            return false_return(data={}, message=str(e)), 400
+        return create_user("Users", **args)
 
     @users_ns.doc(body=update_user_parser)
     @users_ns.marshal_with(return_json)

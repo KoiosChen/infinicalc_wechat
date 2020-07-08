@@ -1,14 +1,15 @@
-from flask import jsonify, request
-from flask_restplus import Resource, fields, reqparse
-from ..models import Users, Roles, Customers
+from flask import request
+from flask_restplus import Resource, reqparse
+from ..models import Roles, Customers
 from . import customers
 from app.frontstage_auth import auths
-from .. import db, redis_db, default_api, logger
+from .. import db, default_api
 from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj, get_table_data
+from ..public_method import table_fields, get_table_data
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
+from ..public_user_func import register
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -67,39 +68,7 @@ class CustomersAPI(Resource):
         前端用户注册
         """
         args = register_parser.parse_args()
-        phone = args['phone']
-        verify_code = args['verify_code']
-        role_ids = args.get('role_id')
-        key = f'front::verification_code::{phone}'
-        try:
-            if redis_db.exists(key) and redis_db.get(key) == verify_code:
-                new_customer = new_data_obj('Customers', **{"phone": phone, "status": 1})
-                if new_customer and new_customer.get('status'):
-                    user = new_customer['obj']
-                else:
-                    return false_return(message=f"<{phone}>已经存在"), 400
-
-                if not role_ids:
-                    role_ids = list()
-                    role_ids.append(new_data_obj("Roles", **{"name": "normal_customer"})['obj'].id)
-
-                for id_ in role_ids:
-                    user.roles.append(Roles.query.get(id_))
-                db.session.add(user)
-                if session_commit().get("code") == 'success':
-                    return_user = {
-                        'id': user.id,
-                        'phone': user.phone
-                    }
-                    return success_return(return_user, "用户注册成功")
-                else:
-                    return false_return({}, '用户注册失败'), 400
-            else:
-                return false_return(message='验证码错误'), 400
-        except Exception as e:
-            logger.error(f"customers::register::db_commit()::error --> {str(e)}")
-            db.session.rollback()
-            return false_return(data={}, message=str(e)), 400
+        return register("Customers", **args)
 
     @customers_ns.marshal_with(return_json)
     @permission_required("frontstage.app.customers.customers_api.update_customer_attributes")
