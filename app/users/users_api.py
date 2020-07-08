@@ -43,6 +43,7 @@ update_user_parser.add_argument('address', location='json', help='用户地址')
 return_json = users_ns.model('ReturnRegister', return_dict)
 
 page_parser.add_argument('Authorization', required=True, location='headers')
+page_parser.add_argument('phone', help='搜索phone字段', location='args')
 
 
 @users_ns.route('')
@@ -55,6 +56,9 @@ class QueryUsers(Resource):
         获取后端用户信息
         """
         args = page_parser.parse_args()
+        args['search'] = dict()
+        if args.get("phone"):
+            args['search']['phone'] = args.get('phone')
         return success_return(get_table_data(Users, args, ['roles'], ['password_hash']), "请求成功")
 
     @users_ns.doc(body=register_parser)

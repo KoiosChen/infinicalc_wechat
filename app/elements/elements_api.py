@@ -29,6 +29,7 @@ update_element_parser.add_argument('permission', required=False, help='例如：
 
 page_parser.add_argument('permission', help='搜索permission字段', location='args')
 page_parser.add_argument('name', help='搜索name字段', location='args')
+page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @elements_ns.route('')
