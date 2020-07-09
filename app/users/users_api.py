@@ -9,7 +9,7 @@ from ..public_method import table_fields
 from ..public_user_func import create_user, modify_user_profile
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-from ..public_method import get_table_data
+from ..public_method import get_table_data, get_table_data_by_id
 
 users_ns = default_api.namespace('users', path='/users',
                                  description='包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -41,6 +41,7 @@ update_user_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:femal
 update_user_parser.add_argument('password', help='密码', location='json')
 update_user_parser.add_argument('role_id', type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
 update_user_parser.add_argument('address', location='json', help='用户地址')
+update_user_parser.add_argument('Authorization', required=True, location='headers')
 
 return_json = users_ns.model('ReturnRegister', return_dict)
 
@@ -122,7 +123,7 @@ class Logout(Resource):
 @users_ns.route('/<string:user_id>')
 @users_ns.expect(head_parser)
 @users_ns.param("user_id", "后台用户ID")
-class ModifyUser(Resource):
+class UserById(Resource):
     @users_ns.doc(body=update_user_parser)
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.modify_user_attributes")
@@ -131,9 +132,20 @@ class ModifyUser(Resource):
         修改用户属性
         """
         args = update_user_parser.parse_args()
-        user = kwargs['user_id']
-        fields_ = table_fields(Users, appends=['role_id', 'password'], removes=['password_hash'])
-        return modify_user_profile(args, user, fields_)
+        user = Users.query.get(kwargs['user_id'])
+        if user:
+            fields_ = table_fields(Users, appends=['role_id', 'password'], removes=['password_hash'])
+            return modify_user_profile(args, user, fields_)
+        else:
+            return false_return(message="用户不存在"), 400
+
+    @users_ns.marshal_with(return_json)
+    @permission_required("app.users.users_api.user_info")
+    def get(self, **kwargs):
+        """
+        通过user id获取后端用户信息
+        """
+        return success_return(get_table_data_by_id(Users, kwargs['user_id'], ['roles'], ['password_hash']), "请求成功")
 
 
 @users_ns.route('/<string:user_id>/roles')
