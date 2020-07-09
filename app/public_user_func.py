@@ -54,6 +54,8 @@ def register(table_obj, **kwargs):
 
 
 def modify_user_profile(args, user, fields_):
+    unique_list = ["username", "phone", "email"]
+    user_class_name = user.__class__.__name__
     for f in fields_:
         if f == 'role_id' and args.get(f):
             user.roles = []
@@ -61,5 +63,21 @@ def modify_user_profile(args, user, fields_):
                 role = Roles.query.get(r)
                 user.roles.append(role)
         elif args.get(f):
-            setattr(user, f, args.get(f))
-    return success_return(message="更新成功")
+            u = eval(user_class_name)
+            if f in unique_list:
+                tmp = getattr(getattr(getattr(u, 'query'), "filter")(getattr(getattr(u, 'status'), '__eq__')(1),
+                                                                     getattr(getattr(u, f), '__eq__')(args.get(f)),
+                                                                     getattr(getattr(u, 'id'), '__ne__')(user.id)),
+                              'first')()
+                logger.debug(tmp)
+                if not tmp:
+                    setattr(user, f, args.get(f))
+                else:
+                    db.session.rollback()
+                    return false_return(f"{f} 已存在"), 400
+            else:
+                setattr(user, f, args.get(f))
+    if session_commit().get('code') == 'success':
+        return success_return(message="更新成功")
+    else:
+        return false_return(message="更新失败")
