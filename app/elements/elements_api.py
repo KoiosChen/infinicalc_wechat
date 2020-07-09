@@ -82,7 +82,7 @@ class QueryElement(Resource):
         """
         通过element id查询element
         """
-        result = get_table_data_by_id(Elements, kwargs['element_id'])
+        result = get_table_data_by_id(Elements, kwargs['element_id'], appends=['children'])
         return false_return(message=f"无对应资源") if not result else success_return(result, "请求成功")
 
     @elements_ns.doc(body=update_element_parser)

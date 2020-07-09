@@ -30,6 +30,13 @@ def session_commit():
         return false_return(message=reason)
 
 
+def submit_return(success_msg, false_msg):
+    if session_commit().get("code") == "success":
+        return success_return(message=success_msg)
+    else:
+        return false_return(message=false_msg + ", " + session_commit().get('message')), 400
+
+
 def nesteddict():
     """
     构造一个嵌套的字典

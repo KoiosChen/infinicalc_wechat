@@ -41,6 +41,48 @@ def table_fields(table, appends=[], removes=[]):
     return original_fields
 
 
+def _make_data(data, fields, strainer=None):
+    rr = list()
+    for t in data:
+        tmp = dict()
+        for f in fields:
+            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price']:
+                tmp[f] = str(getattr(t, f))
+            elif f == 'roles':
+                tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
+            elif f == 'elements':
+                tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
+            elif f == 'sku':
+                tmp[f] = [{"id": e.id, "name": e.name} for e in t.sku]
+            elif f == 'children':
+                if t.children:
+                    child_tmp = list()
+                    for child in t.children:
+                        if strainer is not None:
+                            if child.type == strainer[0] and child.id in strainer[1]:
+                                child_tmp.extend(_make_data([child], fields, strainer))
+                        else:
+                            child_tmp.extend(_make_data([child], fields, strainer))
+                    tmp[f] = child_tmp
+            elif f == 'images':
+                tmp1 = list()
+                t1 = getattr(t, f)
+                for value in t1:
+                    tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
+                tmp[f] = tmp1
+            elif f == 'values':
+                tmp1 = list()
+                t1 = getattr(t, f)
+                for value in t1:
+                    tmp1.append({'value': value.value, 'standard_name': value.standards.name})
+                tmp[f] = tmp1
+            else:
+                tmp[f] = getattr(t, f)
+
+        rr.append(tmp)
+    return rr
+
+
 def get_table_data(table, args, appends=[], removes=[]):
     page = args.get('page')
     current = args.get('current')
@@ -70,30 +112,7 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     page_len = len(table_data)
 
-    def _make_data(data):
-        rr = list()
-        for t in data:
-            tmp = dict()
-            for f in fields:
-                if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
-                    tmp[f] = str(getattr(t, f))
-                elif f == 'roles':
-                    tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
-                elif f == 'elements':
-                    tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
-                elif f == 'children':
-                    if t.children:
-                        child_tmp = list()
-                        for child in t.children:
-                            child_tmp.extend(_make_data([child]))
-                        tmp[f] = child_tmp
-                else:
-                    tmp[f] = getattr(t, f)
-
-            rr.append(tmp)
-        return rr
-
-    r = _make_data(table_data)
+    r = _make_data(table_data, fields)
     pop_list = list()
     for record in r:
         if record.get('parent_id'):
@@ -104,24 +123,62 @@ def get_table_data(table, args, appends=[], removes=[]):
         "records": r}
 
 
-def get_table_data_by_id(table, key_id, appends=[], removes=[]):
+def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
     fields = table_fields(table, appends, removes)
     t = table.query.get(key_id)
     tmp = dict()
+
+    def find_id(elements_list):
+        id_ = list()
+        for el in elements_list:
+            if el.get('children'):
+                id_.extend(find_id(el['children']))
+                id_.append(el['id'])
+                return id_
+            else:
+                return [el['id']]
+
     for f in fields:
-        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday']:
+        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price']:
             tmp[f] = str(getattr(t, f))
         elif f == 'elements':
             tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
+        elif f == 'menus':
+            elements_list = t.elements
+            elements_list_id = [elid.id for elid in elements_list]
+            tmp[f] = list()
+            exist_elements = list()
+            for e in elements_list:
+                if e.id not in exist_elements and e.type == 'menu':
+                    tmp[f].append(get_table_data_by_id(Elements, e.id, appends=['children'], removes=['permission'],
+                                                       strainer=['menu', elements_list_id]))
+                    exist_elements.extend(find_id([tmp[f][-1]]))
+
         elif f == 'roles':
             tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
         elif f == 'sku':
             tmp[f] = [{"id": s.id, "name": s.name} for s in t.sku.all()]
-        elif f in ['values', 'images']:
+        elif f == 'images':
             tmp1 = list()
             t1 = getattr(t, f)
             for value in t1:
                 tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
+            tmp[f] = tmp1
+        elif f == 'children':
+            if t.children:
+                child_tmp = list()
+                for child in t.children:
+                    if strainer is not None:
+                        if child.type == strainer[0] and child.id in strainer[1]:
+                            child_tmp.extend(_make_data([child], fields, strainer))
+                    else:
+                        child_tmp.extend(_make_data([child], fields, strainer))
+                tmp[f] = child_tmp
+        elif f == 'values':
+            tmp1 = list()
+            t1 = getattr(t, f)
+            for value in t1:
+                tmp1.append({'value': value.value, 'standard_name': value.standards.name})
             tmp[f] = tmp1
         else:
             tmp[f] = getattr(t, f)

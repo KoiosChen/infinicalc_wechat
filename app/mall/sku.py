@@ -2,8 +2,8 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Brands, SKU, sku_standardvalue, ImgUrl, PurchaseInfo
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
-from ..public_method import table_fields, new_data_obj, get_table_data
+from ..common import success_return, false_return, session_commit, submit_return
+from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
@@ -14,7 +14,7 @@ add_sku_parser.add_argument('name', required=True, help='sku名称，例如 国�
 add_sku_parser.add_argument('price', required=True, help='SKU价格')
 add_sku_parser.add_argument('discount', help='将会用Decimal处理 0 ~ 1')
 add_sku_parser.add_argument('member_price', help='会员价，小于等于price')
-add_sku_parser.add_argument('score_types', help='是否可以用机房0：不可以，1：可以')
+add_sku_parser.add_argument('score_types', help='是否可以用积分 0：不可以，1：可以')
 add_sku_parser.add_argument('contents', help='富文本内容')
 add_sku_parser.add_argument('status', help='是否上架 1：上架 0：下架')
 add_sku_parser.add_argument("unit", required=True, help='SKU单位')
@@ -67,7 +67,8 @@ class SKUApi(Resource):
                                          "status": args['status'],
                                          "spu_id": args['spu_id'],
                                          "unit": args['unit']})
-        return success_return(message=f"SKU {args['name']} 添加到SPU ID: {args['spu_id']}成功，id：{new_one['obj'].id}")
+        return submit_return(f"SKU {args['name']} 添加到SPU ID: {args['spu_id']}成功，id：{new_one['obj'].id}",
+                             f"SKU {args['name']} 添加失败")
 
 
 @mall_ns.route('/sku/<string:sku_id>')
@@ -80,29 +81,8 @@ class PerSKUApi(Resource):
         """
         获取指定sku数据
         """
-        fields_ = table_fields(SKU)
-        fields_.extend(["values", "images"])
-        tmp = dict()
-        p = SKU.query.get(kwargs.get('sku_id'))
-        for f in fields_:
-            v = getattr(p, f)
-            if f in ['price', 'discount', 'member_price', 'create_at', 'update_at']:
-                tmp[f] = str(v)
-            elif f == 'images':
-                tmp1 = list()
-                t1 = getattr(p, f)
-                for value in t1:
-                    tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
-                tmp[f] = tmp1
-            elif f == 'values':
-                tmp1 = list()
-                t1 = getattr(p, f)
-                for value in t1:
-                    tmp1.append({'value': value.value, 'standard_name': value.standards.name})
-                tmp[f] = tmp1
-            else:
-                tmp[f] = getattr(p, f)
-        return success_return(tmp, "")
+
+        return success_return(get_table_data_by_id(SKU, kwargs['sku_id'], appends=['values', 'images']))
 
     @mall_ns.doc(body=update_sku_parser)
     @mall_ns.marshal_with(return_json)
@@ -136,7 +116,7 @@ class SKUStandardsValues(Resource):
     @mall_ns.doc(body=standards_values_parser)
     @mall_ns.marshal_with(return_json)
     @permission_required("app.mall.standards.set_sku_standards_values")
-    def put(self, **kwargs):
+    def post(self, **kwargs):
         """SKU新增规格对应的值"""
         sku_id = kwargs.get('sku_id')
         args = standards_values_parser.parse_args()
@@ -145,8 +125,11 @@ class SKUStandardsValues(Resource):
         if sku:
             for s_v in data:
                 new_value = new_data_obj("StandardValue", **{"standard_id": s_v['standard'], "value": s_v["value"]})
-                sku.values.append(new_value['obj'])
-            return success_return(message=f"<{sku_id}>添加规则值成功")
+                if new_value:
+                    sku.values.append(new_value['obj'])
+                else:
+                    return false_return(message=f"<{sku_id}>添加规则值{s_v['standard']}失败")
+            return submit_return(f"<{sku_id}>添加规则值成功", f"<{sku_id}>添加规则值失败")
         else:
             return false_return(message=f"<{sku_id}>不存在"), 400
 
@@ -189,15 +172,14 @@ class SKUPurchase(Resource):
         sku = SKU.query.get(sku_id)
         if sku and not sku.status:
             new_one = new_data_obj("PurchaseInfo", **{"sku_id": sku_id,
-                                                      "unit": args['unit'],
                                                       "amount": eval(args['amount']),
                                                       "operator": kwargs['info']['user'].id})
             if new_one:
                 sku.quantity += eval(args['amount'])
                 db.session.add(sku)
-                return success_return(
-                    message=f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>") \
-                           if session_commit() else false_return(message=f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败"), 400
+                db.session.flush()
+                return submit_return(f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>",
+                                     f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")
             else:
                 false_return(message="进货数据添加失败"), 400
         elif sku and sku.status:
