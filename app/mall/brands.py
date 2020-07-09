@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Brands
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
@@ -42,7 +42,13 @@ class BrandsApi(Resource):
             return false_return(message=f"<{args['name']}>已经存在"), 400
 
         new_one = new_data_obj("Brands", **{"name": args['name']})
-        return success_return(message=f"品牌{args['name']}添加成功，id：{new_one['obj'].id}")
+
+        for f in ("company_name", "company_address"):
+            if f in args.keys():
+                setattr(new_one['obj'], f, args[f])
+
+        return submit_return(f"品牌{args['name']}添加成功，id：{new_one['obj'].id}", f"品牌{args['name']}添加失败")
+
 
 
 @mall_ns.route('/brands/<string:brand_id>')

@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import SPU, Standards
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, submit_return
 from ..public_method import table_fields, new_data_obj
 from ..decorators import permission_required
 from ..swagger import head_parser
@@ -40,4 +40,4 @@ class StandardsApi(Resource):
 
         new_one = new_data_obj("Standards", **{"name": args['name']})
 
-        return success_return(message=f"产品规格<{args['name']}>添加成功，id：{new_one['obj'].id}")
+        return submit_return(f"产品规格<{args['name']}>添加成功，id：{new_one['obj'].id}", f"产品规格<{args['name']}>添加失败")

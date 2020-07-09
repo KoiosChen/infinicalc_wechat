@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import SPU, Standards, spu_standards
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
@@ -52,8 +52,8 @@ class SPUApi(Resource):
                                          "sub_name": args.get('sub_name'),
                                          "brand_id": args['brand_id'],
                                          "classify_id": args['classify_id']})
-
-        return success_return(message=f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}")
+        return submit_return(f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}",
+                             f"SPU {args['name']} 添加失败")
 
 
 @mall_ns.route('/spu/<string:spu_id>')

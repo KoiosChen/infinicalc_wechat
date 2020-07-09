@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Classifies, SKU, ImgUrl, StandardValue
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
@@ -39,7 +39,8 @@ class ClassifiesApi(Resource):
             return false_return(message=f"<{args['name']}>已经存在"), 400
 
         new_one = new_data_obj("Classifies", **{"name": args['name']})
-        return success_return(message=f"分类<{args['name']}>添加成功，id：{new_one['ojb'].id}")
+
+        return submit_return(f"分类<{args['name']}>添加成功，id：{new_one['obj'].id}", f"分类<{args['name']}>添加失败")
 
 
 @mall_ns.route('/classifies/<string:classify_id>')
