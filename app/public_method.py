@@ -152,7 +152,7 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
             tmp[f] = list()
             exist_elements = list()
             for e in elements_list:
-                if e.id not in exist_elements and e.type == 'menu':
+                if e.id not in exist_elements and e.type == 'menu' and e.parent_id is None:
                     tmp[f].append(get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
 

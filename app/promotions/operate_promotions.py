@@ -62,8 +62,10 @@ class AddPromotions:
                 if new_benefit.get('status'):
                     for gift in gifts:
                         # {'sku': sku.id, 'discount': float, 'benefit': benefits.id}
-                        gift['benefit'] = new_benefit.get('obj').id
-                        new_data_obj('Gifts', **gift)
+                        tmp_gift = dict()
+                        tmp_gift['sku'] = gift
+                        tmp_gift['benefit'] = new_benefit.get('obj').id
+                        new_data_obj('Gifts', **tmp_gift)
                     obj.benefits.append(new_benefit['obj'])
                 else:
                     return false_return(message=f"活动利益表添加失败，{benefit}已存在")

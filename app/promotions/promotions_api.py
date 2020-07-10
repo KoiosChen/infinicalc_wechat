@@ -25,14 +25,16 @@ add_promotion_parser.add_argument('gender', type=int, choices=[0, 1, 2], default
 add_promotion_parser.add_argument('age_min', type=int, default=0, help='最小可参与年龄，默认为0')
 add_promotion_parser.add_argument('age_max', type=int, default=200, help='最大可参与年龄，默认为200')
 add_promotion_parser.add_argument('accumulation', type=int, choices=[0, 1], default=0,
-                                  help='是否允许累积，默认为0，不允许。如果允许累加则为1。如果可以累加，则利益规则数量会大于. 默认为0')
+                                  help='是否允许累计，默认为0，不允许；如果允许累计则为1。如果可以累计，则利益规则数量会大于1. 默认为0')
 add_promotion_parser.add_argument('scope', type=int, choices=[0, 1, 2], default=1, help='0：非全场，1: 全场， 2：线下, 默认为1')
 add_promotion_parser.add_argument('with_special', type=int, choices=[0, 1], default=0,
                                   help='1: 可用于特价商品 0: 不能。默认不能(商品优惠卷除外)')
-add_promotion_parser.add_argument('start_time', required=True, type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
-                                  help='活动开始时间')
-add_promotion_parser.add_argument('end_time', required=True, type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
-                                  help='活动结束时间')
+add_promotion_parser.add_argument('start_time', required=True,
+                                  type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
+                                  help='活动开始时间 %Y-%m-%d %H:%M:%S')
+add_promotion_parser.add_argument('end_time', required=True,
+                                  type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
+                                  help='活动结束时间 %Y-%m-%d %H:%M:%S')
 add_promotion_parser.add_argument('brands', type=list, help='参与活动的品牌,传递brands表的ID, 可为空[]', location='json',
                                   default=[{}])
 add_promotion_parser.add_argument('classifies', type=list, help='参与活动的分类,传递classifies表的ID, 可为空[]', location='json',
@@ -63,8 +65,12 @@ add_pay_more_parser.remove_argument('accumulation')
 
 add_combo_parser = add_promotion_parser.copy()
 add_combo_parser.add_argument('benefits', required=True, type=combo_type, location='json', default=[{}],
-                              help='accumulation为1，list中只允许多个json. list中json为：'
-                                   '{"combo_price": float, "gifts": list}')
+                              help='传递套餐价格，以及套餐中捆绑产品的sku list。list中只允许多个json. '
+                                   'list中json格式为：{"combo_price": float, "gifts": list}')
+add_combo_parser.replace_argument('sku', type=list,
+                                      help='套餐SKU,传递sku表的ID, 举例：[{"id":"730aa99e-1fe8-425c-b44e-6c82100dd53f"}]',
+                                      required=True, location='json')
+
 add_combo_parser.remove_argument('accumulation')
 add_combo_parser.remove_argument('brands')
 add_combo_parser.remove_argument('classifies')
@@ -98,7 +104,7 @@ add_coupon_parser.remove_argument('group')
 add_coupon_parser.add_argument('icon', help='优惠券图片')
 add_coupon_parser.add_argument('desc', help='优惠券说明')
 add_coupon_parser.add_argument('quota', required=True, type=int, help='优惠券发放数量')
-add_combo_parser.add_argument('per_user', required=True, default=1, type=int, help='每用户允许领取数量')
+add_coupon_parser.add_argument('per_user', required=True, default=1, type=int, help='每用户允许领取数量')
 add_coupon_parser.add_argument('valid_type', required=True, default=2, type=int, choices=[1, 2],
                                help='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
 add_coupon_parser.add_argument('valid_days', default=1, type=int, help='自领取之日起有效天数')
