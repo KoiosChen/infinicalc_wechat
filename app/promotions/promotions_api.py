@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse
 from ..models import Promotions
 from .. import default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, get_table_data
 from ..decorators import permission_required
 import datetime
@@ -122,7 +122,7 @@ def _add(args):
     if new_base.get('code') == 'success':
         new_one.new_scopes()
         new_one.new_benefits()
-        return success_return(message="活动新增成功") if session_commit() else false_return(message="活动新增失败")
+        return submit_return("活动新增成功", "活动新增失败")
     else:
         return new_base
 
@@ -142,7 +142,11 @@ class QueryPromotions(Resource):
         查询所有promotions列表
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Promotions, args), "请求成功")
+        result = get_table_data(Promotions, args)
+        if result:
+            return success_return(result, "请求成功")
+        else:
+            return false_return("活动获取失败")
 
 
 @promotions_ns.route('/enough_reduce')

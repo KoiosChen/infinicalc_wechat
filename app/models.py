@@ -182,6 +182,7 @@ class MemberCards(db.Model):
     __tablename__ = 'member_cards'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
+    member_type = db.Column(db.SmallInteger, default=0, comment='会员类型， 0为普通C端会员； 1 为代理商')
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
     grade = db.Column(db.SmallInteger, default=1,
@@ -233,6 +234,8 @@ class Customers(db.Model):
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
     member_card = db.relationship('MemberCards', backref='card_owner', lazy='dynamic')
+    parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    parent = db.relationship('Customers', backref="children", remote_side=[id])
 
     @property
     def permissions(self):
@@ -296,7 +299,7 @@ class Users(db.Model):
     @property
     def permissions(self):
         return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(user_role).outerjoin(Users). \
-            filter(Users.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
+            filter(Users.id == self.id, Elements.permission != None).order_by(Elements.order).all()
 
     @property
     def elements(self):

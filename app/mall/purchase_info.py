@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Brands, SKU, sku_standardvalue, ImgUrl, PurchaseInfo
 from . import mall
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj
 from ..decorators import permission_required
 from ..swagger import head_parser
@@ -33,12 +33,12 @@ class PerPurchase(Resource):
             sku = SKU.query.get(purchase_info.sku_id)
             if not sku.status:
                 sku.quantity -= purchase_info.amount
+                db.session.flush()
                 db.session.add(purchase_info)
                 db.session.add(sku)
-                return success_return(
-                    f'作废进货单<{buy_id}>成功，'
-                    f'SKU<{purchase_info.sku_id}>数量减少<{purchase_info.amount}>，'
-                    f'现在为<{sku.quantity}>') if session_commit() else false_return(message=f"作废进货单失败"), 400
+                return submit_return(
+                    f'作废进货单<{buy_id}>成功，SKU<{purchase_info.sku_id}>数量减少<{purchase_info.amount}>，现在为<{sku.quantity}>',
+                    f"作废进货单失败")
             else:
                 return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法删除进货单，请先下架"), 400
         elif purchase_info and not purchase_info.status:

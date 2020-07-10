@@ -1,6 +1,6 @@
 from ..models import SKU, SPU, Classifies, Brands, Gifts, Benefits, Promotions
 from .. import db
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj
 
 
@@ -32,6 +32,7 @@ class AddPromotions:
             return false_return(message='活动已存在')
 
     def new_scopes(self):
+        """促销活动范围"""
         obj = self.new_promotion.get('obj')
         for k, v in self.promotion_scope_dict.items():
             if k in self.args.keys():
@@ -90,10 +91,9 @@ class AddPromotions:
             elif self.args.get('valid_type') not in (1, 2):
                 return false_return(message=f"valid_type 错误")
             obj.coupons = new_coupon['obj']
-            return success_return(message=f'create coupon setting success') if session_commit() else false_return(
-                message="create coupon fail")
+            return submit_return('create coupon setting success', "create coupon fail")
         else:
-            return false_return(message=f"coupon already exist")
+            return false_return(message=f"coupon already exist"), 400
 
 
 class UpdatePromotions:

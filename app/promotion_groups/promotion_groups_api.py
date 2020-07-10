@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse
 from ..models import PromotionGroups, Promotions, Coupons, CouponReady, Benefits
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
@@ -55,8 +55,10 @@ class QueryPromotionGroups(Resource):
         else:
             return false_return(message=f'{args} 已存在')
         db.session.add(new_group['obj'])
-        return success_return(data={'id': new_group['obj'].id}, message="促销活动组创建成功") \
-            if session_commit() else false_return(message="促销活动组创建失败")
+        if session_commit().get("code") == "success":
+            return success_return(data={'id': new_group['obj'].id}, message="促销活动组创建成功")
+        else:
+            return false_return(message="促销活动组创建失败")
 
 
 @promotion_groups_ns.route('/<int:promotion_group_id>')
@@ -92,8 +94,8 @@ class QueryPromotionGroup(Resource):
                 elif value:
                     setattr(the_group, key, value)
             db.session.add(the_group)
-            return success_return(message="促销活动组修改成功") if session_commit() else false_return(
-                message=f"促销活动组修改数据提交失败"), 400
+            return submit_return("促销活动组修改成功", "促销活动组修改数据提交失败")
+
         except Exception as e:
             db.session.rollback()
             return false_return(message=f"更新促销活动组失败：{e}"), 400
@@ -109,8 +111,7 @@ class QueryPromotionGroup(Resource):
             promotions = tobe_delete.promotions.all()
             if not promotions:
                 db.session.delete(tobe_delete)
-                return success_return(message="促销活动组删除成功") if session_commit() else false_return(
-                    message="促销活动组删除失败"), 400
+                return submit_return("促销活动组删除成功", "促销活动组删除失败")
             else:
                 return false_return(message=f"此促销活动组被占用，不可删除：{promotions}"), 400
         else:

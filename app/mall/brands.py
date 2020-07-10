@@ -50,7 +50,6 @@ class BrandsApi(Resource):
         return submit_return(f"品牌{args['name']}添加成功，id：{new_one['obj'].id}", f"品牌{args['name']}添加失败")
 
 
-
 @mall_ns.route('/brands/<string:brand_id>')
 @mall_ns.param('brand_id', '品牌ID')
 @mall_ns.expect(head_parser)
