@@ -1,14 +1,12 @@
-from flask_restplus import Resource, fields, reqparse
-from app.models import Users, Coupons, CouponReady
-from app import db, redis_db, logger, coupon_lock
+from flask_restplus import Resource, reqparse
+from app.models import Coupons, CouponReady
+from app import redis_db, logger, coupon_lock
 from app.common import success_return, false_return, session_commit
-import datetime
 from app.decorators import permission_required
-from app.swagger import return_dict, head_parser
+from app.swagger import head_parser
 from .promotions_api import promotions_ns, return_json
-from app.public_method import get_table_data, new_data_obj, table_fields
+from app.public_method import new_data_obj
 import uuid
-from time import sleep
 import threading
 import json
 

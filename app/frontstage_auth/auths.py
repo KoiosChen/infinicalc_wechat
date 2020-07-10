@@ -88,14 +88,14 @@ def authenticate(username, password, login_ip, platform, method='password'):
                          'status': True
                      }
                      )
-        db.session.add(user_info)
+        # db.session.add(user_info)
         session_commit()
-        elements = [{f: getattr(u, f) for f in Elements.__table__.columns.keys() if f != "permission"} for u in
-                    user_info.elements]
+        permissions = [u.permission for u in user_info.permissions if u.permission is not None]
 
-        ru = get_table_data_by_id(Customers, user_info.id, ["roles"], ["password_hash"])
+        ru = get_table_data_by_id(Customers, user_info.id, ["roles", "menus"], ["password_hash"])
+        menus = ru.pop('menus')
 
-        return success_return(data={'token': token, 'elements': elements,
+        return success_return(data={'token': token, 'elements': menus, 'permissions': permissions,
                                     'user_info': ru}, message='登录成功')
     else:
         return false_return(message=verify_method[method]['msg']), 400

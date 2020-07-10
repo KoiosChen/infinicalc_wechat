@@ -10,5 +10,5 @@ return_dict = {'code': fields.String(required=True, description='success | false
 
 page_parser = reqparse.RequestParser()
 page_parser.add_argument('page', help='true | false, 是否分页', location='args')
-page_parser.add_argument('current', type=int, help='当前页', location='args')
-page_parser.add_argument('size', type=int, help='当前页行数', location='args')
+page_parser.add_argument('current', type=int, help='当前页, 第一页为1， 必须传大于0的整数', location='args')
+page_parser.add_argument('size', type=int, help='当前页行数, 大于0的整数', location='args')
