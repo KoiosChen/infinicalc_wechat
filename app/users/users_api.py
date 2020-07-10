@@ -4,7 +4,7 @@ from ..models import Users, Roles
 from . import users
 from app.auth import auths
 from .. import db, default_api
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields
 from ..public_user_func import create_user, modify_user_profile
 from ..decorators import permission_required
@@ -28,6 +28,10 @@ login_parser.add_argument('username', required=True, help='可以是用户名、
 login_parser.add_argument('password', required=True, help='当username传递的是手机号时，password对应为发送的验证码')
 login_parser.add_argument('method', required=True, help='可以是password 或 code。 当username传递手机号时为code')
 login_parser.add_argument('platform', required=True, help='平台字段吗， pc | mobile')
+
+pwd_parser = reqparse.RequestParser()
+pwd_parser.add_argument('old_password', required=True, help='当前密码')
+pwd_parser.add_argument('new_password', required=True, help='新密码')
 
 bind_role_parser = reqparse.RequestParser()
 bind_role_parser.add_argument('role_id', required=True, type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
@@ -147,6 +151,25 @@ class UserById(Resource):
         """
         return success_return(get_table_data_by_id(Users, kwargs['user_id'], ['roles'], ['password_hash']), "请求成功")
 
+
+@users_ns.route('/<string:user_id>/password')
+@users_ns.expect(head_parser)
+@users_ns.param("user_id", "后台用户ID")
+class ChangePassword(Resource):
+    @users_ns.doc(body=pwd_parser)
+    @users_ns.marshal_with(return_json)
+    @permission_required("app.users.users_api.modify_user_attributes")
+    def put(self, **kwargs):
+        """
+        修改用户密码
+        """
+        args = pwd_parser.parse_args()
+        user = Users.query.get(kwargs['user_id'])
+        if user and user.verify_password(args.get('old_password')):
+            user.password = args.get('new_password')
+            return submit_return("密码修改成功","密码修改失败")
+        else:
+            return false_return(message="旧密码错误"), 400
 
 @users_ns.route('/<string:user_id>/roles')
 @users_ns.expect(head_parser)
