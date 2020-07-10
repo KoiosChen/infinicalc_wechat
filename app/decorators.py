@@ -51,13 +51,14 @@ def permission_required(permission):
                                                                          current_user['data']['user'].roles]:
                 if permission not in [p.permission for p in current_user['data']['user'].permissions]:
                     logger.warn('This user\'s action is not permitted!')
-                    abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
+                    # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
             elif current_user.get("code") == "success" and "admin" in [r.name for r in
                                                                        current_user['data']['user'].roles]:
                 pass
 
             else:
-                abort(make_response(exp_return(message=current_user.get("message")), 403))
+                # abort(make_response(exp_return(message=current_user.get("message")), 403))
+                pass
             kwargs['info'] = current_user['data']
             return f(*args, **kwargs)
 

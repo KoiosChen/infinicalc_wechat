@@ -95,6 +95,16 @@ def authenticate(username, password, login_ip, platform, method='password'):
 
         ru = get_table_data_by_id(Users, user_info.id, ["roles", "menus"], ["password_hash"])
         menus = ru.pop('menus')
+
+        def sort_menus(ms):
+            for el in ms:
+                if el.get('children'):
+                    sort_menus(el['children'])
+                    el["children"].sort(key=lambda x: x['order'])
+
+
+        sort_menus(menus)
+
         # permissions = ru.pop['permissions']
         return success_return(data={'token': token, 'menus': menus, 'permissions': permissions, 'user': ru},
                               message='登录成功')

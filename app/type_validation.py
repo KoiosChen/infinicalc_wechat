@@ -46,7 +46,7 @@ def enough_pay_more_type(value):
 
 def combo_type(value):
     parse_keys = {'combo_price': {'required': True, 'type': float},
-                  'combo_sku': {'required': True, 'type': list}}
+                  'gifts': {'required': True, 'type': list}}
     return type_base(parse_keys, value)
 
 
