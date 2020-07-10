@@ -46,7 +46,8 @@ def _make_data(data, fields, strainer=None):
     for t in data:
         tmp = dict()
         for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price', 'start_time', 'end_time']:
+            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
+                     'start_time', 'end_time']:
                 tmp[f] = str(getattr(t, f))
             elif f == 'roles':
                 tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
@@ -113,10 +114,9 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 return False
 
-    page_len = len(base_sql.all())
+    page_len = len(base_sql.filter(table.permission.__ne__(None)).all())
     if page == 'true':
         page_more = 1 if page_len % size else 0
-        total = page_len // size + page_more
 
     r = _make_data(table_data, fields)
     pop_list = list()
@@ -125,7 +125,8 @@ def get_table_data(table, args, appends=[], removes=[]):
             pop_list.append(record)
     for p in pop_list:
         r.remove(p)
-    return {"records": r, "total": total, "size": size, "current": current} if page == 'true' else {"records": r}
+    return {"records": r, "total": page_len // size + page_more, "size": size,
+            "current": current} if page == 'true' else {"records": r}
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
@@ -144,7 +145,8 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
                 return [el['id']]
 
     for f in fields:
-        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price', 'start_time', 'end_time']:
+        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
+                 'start_time', 'end_time']:
             tmp[f] = str(getattr(t, f))
         elif f == 'elements':
             tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
@@ -155,7 +157,8 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
             exist_elements = list()
             for e in elements_list:
                 if e.id not in exist_elements and e.type == 'menu' and e.parent_id is None:
-                    tmp[f].append(get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
+                    tmp[f].append(
+                        get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
 
         elif f == 'roles':
