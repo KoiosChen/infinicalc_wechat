@@ -114,8 +114,10 @@ def get_table_data(table, args, appends=[], removes=[]):
                 return False
 
     page_len = len(base_sql.all())
-    page_more = 1 if page_len % size else 0
-    total = page_len // size + page_more
+    if page == 'true':
+        page_more = 1 if page_len % size else 0
+        total = page_len // size + page_more
+
     r = _make_data(table_data, fields)
     pop_list = list()
     for record in r:
