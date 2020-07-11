@@ -92,7 +92,13 @@ def get_table_data(table, args, appends=[], removes=[]):
     and_fields_list = list()
     fields = table_fields(table, appends, removes)
     r = list()
-    base_sql = table.query
+    if 'parent_id' in fields:
+        base_sql = table.query.filter(table.parent_id.__eq__(None))
+    else:
+        base_sql = table.query
+
+    page_len = len(base_sql.all())
+
     if page != 'true':
         if search:
             for k, v in search.items():
@@ -102,6 +108,7 @@ def get_table_data(table, args, appends=[], removes=[]):
         else:
             table_data = base_sql.all()
     else:
+        page_more = 1 if page_len % size else 0
         if search:
             for k, v in search.items():
                 if k in fields:
@@ -113,13 +120,6 @@ def get_table_data(table, args, appends=[], removes=[]):
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()
             else:
                 return False
-
-    if 'parent_id' in fields:
-        page_len = len(base_sql.filter(table.parent_id.__eq__(None)).all())
-    else:
-        page_len = len(base_sql.all())
-    if page == 'true':
-        page_more = 1 if page_len % size else 0
 
     r = _make_data(table_data, fields)
     pop_list = list()
