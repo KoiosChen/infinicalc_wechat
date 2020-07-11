@@ -114,7 +114,7 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 return False
 
-    page_len = len(base_sql.filter(table.permission.__ne__(None)).all())
+    page_len = len(base_sql.filter(table.permission.__eq__(None)).all())
     if page == 'true':
         page_more = 1 if page_len % size else 0
 
