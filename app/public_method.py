@@ -108,7 +108,7 @@ def get_table_data(table, args, appends=[], removes=[]):
         else:
             table_data = base_sql.all()
     else:
-        page_more = 1 if page_len % size else 0
+        # page_more = 1 if page_len % size else 0
         if search:
             for k, v in search.items():
                 if k in fields:
@@ -128,8 +128,7 @@ def get_table_data(table, args, appends=[], removes=[]):
             pop_list.append(record)
     for p in pop_list:
         r.remove(p)
-    return {"records": r, "total": page_len // size + page_more, "size": size,
-            "current": current} if page == 'true' else {"records": r}
+    return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
 
 def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
