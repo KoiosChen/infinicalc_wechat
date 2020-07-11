@@ -114,7 +114,10 @@ def get_table_data(table, args, appends=[], removes=[]):
             else:
                 return False
 
-    page_len = len(base_sql.filter(table.permission.__eq__(None)).all())
+    if 'parent_id' in fields:
+        page_len = len(base_sql.filter(table.parent_id.__eq__(None)).all())
+    else:
+        page_len = len(base_sql.all())
     if page == 'true':
         page_more = 1 if page_len % size else 0
 
