@@ -415,6 +415,7 @@ class SPU(db.Model):
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
     express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
+    contents = db.Column(db.Text(length=(2 ** 32) - 1))
     standards = db.relationship(
         'Standards',
         secondary=spu_standards,
@@ -472,7 +473,6 @@ class SKU(db.Model):
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
     member_price = db.Column(db.DECIMAL(7, 2), default=0.00)
     score_types = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
-    contents = db.Column(db.Text(length=(2 ** 32) - 1))
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
