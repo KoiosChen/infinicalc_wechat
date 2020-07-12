@@ -474,6 +474,7 @@ class SKU(db.Model):
     unit = db.Column(db.String(6), nullable=False)
     special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售")
     per_user = db.Column(db.SmallInteger, default=0, comment="设置限购量，默认为0不限购，一般在特价，秒杀折扣时使用")
+    express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
     values = db.relationship(
         'StandardValue',
         secondary=sku_standardvalue,
