@@ -414,6 +414,7 @@ class SPU(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
+    express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
     standards = db.relationship(
         'Standards',
         secondary=spu_standards,
@@ -424,6 +425,9 @@ class SPU(db.Model):
     brand_id = db.Column(db.String(64), db.ForeignKey('brands.id'))
     classify_id = db.Column(db.String(64), db.ForeignKey('classifies.id'))
     sku = db.relationship('SKU', backref='the_spu', lazy='dynamic')
+    status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
 
 class ImgUrl(db.Model):
