@@ -1,7 +1,7 @@
 from . import db, logger
 from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
-    Benefits, PromotionGroups, Gifts
+    Benefits, PromotionGroups, Gifts, ObjStorage, Banners
 from time import sleep
 from sqlalchemy import or_, and_
 
@@ -77,6 +77,9 @@ def _make_data(data, fields, strainer=None):
                 for value in t1:
                     tmp1.append({'value': value.value, 'standard_name': value.standards.name})
                 tmp[f] = tmp1
+            elif f == 'banner_contents':
+                t1 = getattr(t, f)
+                tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
             else:
                 tmp[f] = getattr(t, f)
 

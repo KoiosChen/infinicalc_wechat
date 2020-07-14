@@ -131,4 +131,7 @@ def create_app(config_name):
     from .shopping_cart import shopping_cart as shopping_cart_blueprint
     app.register_blueprint(shopping_cart_blueprint)
 
+    from .banners import banners as banners_blueprint
+    app.register_blueprint(banners_blueprint)
+
     return app

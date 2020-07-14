@@ -1,0 +1,52 @@
+from qcloud_cos import CosConfig
+from qcloud_cos import CosS3Client
+from qcloud_cos import CosClientError
+from qcloud_cos import CosServiceError
+import sys
+from ..common import success_return, false_return
+from .. import logger
+
+
+class QcloudCOS:
+    def __init__(self, **kwargs):
+        # -*- coding=utf-8
+        # appid 已在配置中移除,请在参数 Bucket 中带上 appid。Bucket 由 BucketName-APPID 组成
+        # 1. 设置用户配置, 包括 secretId，secretKey 以及 Region
+        secret_id = kwargs.get("secret_id")
+        secret_key = kwargs.get("secret_key")
+        region = kwargs.get("region")
+        bucket_id = kwargs.get("bucket_id")
+        self.__secret_id = 'AKIDLFsFKBs34oMcbJJ4XibFBpBG7hz0Ostb' if not secret_id else secret_id
+        self.__secret_key = 'av0oKejeId3B1bsa08zg7IAkaFdnesra' if not secret_key else secret_key
+        self.__region = 'ap-shanghai' if not region else region
+        self.__bucket_id = 'wine-1301791406' if not bucket_id else bucket_id
+        self.url = f"{self.__bucket_id}.cos.{self.__region}.myqcloud.com"
+        token = None  # 使用临时密钥需要传入 Token，默认为空，可不填
+        self.scheme = 'https'  # 指定使用 http/https 协议来访问 COS，默认为 https，可不填
+        config = CosConfig(Region=self.__region, SecretId=self.__secret_id, SecretKey=self.__secret_key, Token=token,
+                           Scheme=self.scheme)
+        # 2. 获取客户端对象
+        self.client = CosS3Client(config)
+
+    def upload(self, object_key, body, acl="public-read", storage_class="STANDARD"):
+        try:
+            response = self.client.put_object(
+                Bucket=self.__bucket_id,
+                Body=body,
+                Key=object_key,
+                ACL=acl,
+                StorageClass=storage_class
+            )
+            logger.debug(f">>> cos upload response {response}")
+            result = {'bucket': self.__bucket_id, 'region': self.__region, 'obj_key': object_key,
+                      'url': self.scheme + "://" + self.url + '/' + object_key}
+            return success_return(data=result, message=f"{response}")
+        except CosServiceError as e:
+            return false_return(e.get_digest_msg(), f"{e.get_error_msg()}"), e.get_status_code()
+
+    def delete(self, object_key):
+        response = self.client.delete_object(
+            Bucket=self.__bucket_id,
+            Key=object_key
+        )
+        return success_return(message=f">>> cos delete response {response}")

@@ -66,3 +66,8 @@ def seckill_type(value):
 def checkout_sku_type(value):
     parse_keys = {'id': {'required': True, 'type': str}, 'quantity': {'required': True, 'type': int}}
     return type_base(parse_keys, value)
+
+
+def upload_file_type(type_id, mime_type):
+    type_dict = {"0": "image", "1": "video", "2": "application"}
+    return True if type_dict[str(type_id)] in mime_type else False

@@ -1,6 +1,6 @@
 from flask_restplus import Resource, fields, reqparse
 from ..models import Brands, SKU, sku_standardvalue, ImgUrl, PurchaseInfo
-from . import mall
+from . import mall, image_operate
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
@@ -18,6 +18,7 @@ add_sku_parser.add_argument('score_types', help='是否可以用积分 0：不�
 add_sku_parser.add_argument('contents', help='富文本内容')
 add_sku_parser.add_argument('status', help='是否上架 1：上架 0：下架')
 add_sku_parser.add_argument("unit", required=True, help='SKU单位')
+add_sku_parser.add_argument('images', type=list, help='sku对应的所有图片', location='json')
 
 update_sku_parser = add_sku_parser.copy()
 update_sku_parser.replace_argument("spu_id", required=False)
@@ -67,8 +68,12 @@ class SKUApi(Resource):
                                          "status": args['status'],
                                          "spu_id": args['spu_id'],
                                          "unit": args['unit']})
-        return submit_return(f"SKU {args['name']} 添加到SPU ID: {args['spu_id']}成功，id：{new_one['obj'].id}",
-                             f"SKU {args['name']} 添加失败")
+        append_image = image_operate.operate(new_one['obj'], args['images'], "append")
+        if append_image.get("code") == 'success':
+            return submit_return(f"SKU {args['name']} 添加到SPU ID: {args['spu_id']}成功，id：{new_one['obj'].id}",
+                                 f"SKU {args['name']} 添加失败")
+        else:
+            return false_return("图片添加失败")
 
 
 @mall_ns.route('/sku/<string:sku_id>')
@@ -145,17 +150,14 @@ class SKUImages(Resource):
         sku_id = kwargs.get('sku_id')
         args = sku_img_parser.parse_args()
         sku = SKU.query.get(sku_id)
-        if sku:
-            for img in args['images']:
-                if img not in sku.images:
-                    image = ImgUrl.query.get(img)
-                    if image:
-                        sku.images.append(image)
-                    else:
-                        return false_return(message="图片不存在"), 400
-            return success_return(message=f"<{sku_id}>增加图片成功")
-        else:
-            return false_return(message=f"<{sku_id}>不存在"), 400
+        return image_operate.operate(obj=sku, imgs=args['images'], action="append")
+
+    def delete(self, **kwargs):
+        """指定SKU 删除相应图片"""
+        sku_id = kwargs.get('sku_id')
+        args = sku_img_parser.parse_args()
+        sku = SKU.query.get(sku_id)
+        return image_operate.operate(obj=sku, imgs=args['images'], action="remove")
 
 
 @mall_ns.route('/sku/<string:sku_id>/purchase_info')
@@ -178,8 +180,9 @@ class SKUPurchase(Resource):
                 sku.quantity += eval(args['amount'])
                 db.session.add(sku)
                 db.session.flush()
-                return submit_return(f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>",
-                                     f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")
+                return submit_return(
+                    f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>",
+                    f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")
             else:
                 false_return(message="进货数据添加失败"), 400
         elif sku and sku.status:
