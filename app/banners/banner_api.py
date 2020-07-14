@@ -24,7 +24,43 @@ add_banner_parser.add_argument('order', type=int, help='banner顺序，大于等
 add_banner_parser.add_argument('url', help='点击跳转的URL，空值表示不可点击')
 
 update_banner_parser = add_banner_parser.copy()
-update_banner_parser.replace_argument('name', required=False)
+update_banner_parser.replace_argument('name', required=False, help='Banner名称')
+update_banner_parser.replace_argument('object', required=False, type=FileStorage, help='上传对象', location='files')
+update_banner_parser.replace_argument('type', required=False, type=int, choices=[0, 1, 2], help='0 图片 1 视频 2 文本',
+                                      default=0)
+
+
+def banner_object_upload(upload_object, **args):
+    cos_client = QcloudCOS()
+    if upload_file_type(args['type'], upload_object.mimetype):
+        ext_name = upload_object.filename.split('.')[-1]
+        object_key = 'banners/' + str(uuid.uuid4()) + '.' + ext_name
+        store_result = cos_client.upload(object_key, upload_object.stream)
+        store_result['obj_type'] = args['type']
+        logger.debug(store_result)
+        if store_result.get("code") == "success":
+            new_object = new_data_obj("ObjStorage", **store_result.get("data"))
+            if not args.get('new_banner'):
+                new_banner = new_data_obj("Banners", **{"name": args['name'], "order": args['order']})
+            else:
+                now_banner = args.get('new_banner')
+                new_banner = {"obj": now_banner, "status": True}
+                if now_banner.banner_contents:
+                    cos_client.delete(now_banner.banner_contents.obj_key)
+                    db.session.delete(now_banner.banner_contents)
+                    db.session.flush()
+
+            if new_object and new_banner and new_banner.get('status') and new_banner.get('status'):
+                new_banner['obj'].objects = new_object['obj'].id
+                return submit_return("新增banner成功", "新增banner失败")
+            else:
+                logger.error(f">>> {new_banner} {new_object}")
+                cos_client.delete(object_key)
+                return false_return(f"新增banner失败")
+        else:
+            return false_return(message="COS上传对象失败"), 400
+    else:
+        return false_return(message="上传文件格式和所选格式不同"), 400
 
 
 @banner_ns.route('')
@@ -51,30 +87,8 @@ class BannersApi(Resource):
         if banner_db:
             return false_return(message=f"<{args['name']}>已经存在"), 400
 
-        cos_client = QcloudCOS()
-
         logger.debug(upload_object.mimetype)
-
-        if upload_file_type(args['type'], upload_object.mimetype):
-            ext_name = upload_object.filename.split('.')[-1]
-            object_key = 'banners/' + str(uuid.uuid4()) + '.' + ext_name
-            store_result = cos_client.upload(object_key, upload_object.stream)
-            store_result['obj_type'] = args['type']
-            logger.debug(store_result)
-            if store_result.get("code") == "success":
-                new_object = new_data_obj("ObjStorage", **store_result.get("data"))
-                new_banner = new_data_obj("Banners", **{"name": args['name'], "order": args['order']})
-                if new_object and new_banner and new_banner.get('status') and new_banner.get('status'):
-                    new_banner['obj'].objects = new_object['obj'].id
-                    return submit_return("新增banner成功", "新增banner失败")
-                else:
-                    logger.error(f">>> {new_banner} {new_object}")
-                    cos_client.delete(object_key)
-                    return false_return(f"新增banner失败")
-            else:
-                return false_return(message="COS上传对象失败"), 400
-        else:
-            return false_return(message="上传文件格式和所选格式不同"), 400
+        return banner_object_upload(upload_object, **args)
 
 
 @banner_ns.route('/<string:banner_id>')
@@ -96,10 +110,22 @@ class BannerApi(Resource):
         """更新banner"""
         args = update_banner_parser.parse_args()
         __banner = Banners.query.get(kwargs['banner_id'])
-        for k, v in args.items():
-            if hasattr(__banner, k) and v:
-                setattr(__banner, k, v)
-        return success_return(message=f"banner更新成功{args.keys()}")
+        args['new_banner'] = __banner
+        if __banner:
+            for k, v in args.items():
+                if k == 'type' and args.get('type') and not args.get('object'):
+                    return false_return('文件类型不可单独修改')
+                elif k == 'object' and args.get('object'):
+
+                    update_objects_result = banner_object_upload(args['object'], **args)
+                    if update_objects_result.get('code') == 'false':
+                        return update_objects_result
+                else:
+                    if hasattr(__banner, k) and v:
+                        setattr(__banner, k, v)
+            return submit_return(f"banner更新成功{args.keys()}", f"banner更新失败{args.keys()}")
+        else:
+            return false_return(message=f"{kwargs['banner_id']} 不存在")
 
     @banner_ns.marshal_with(return_json)
     @permission_required("app.mall.banners.delete_banner")
