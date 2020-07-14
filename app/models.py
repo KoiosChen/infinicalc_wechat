@@ -50,6 +50,11 @@ sku_img = db.Table('sku_img',
                    db.Column('img_id', db.String(64), db.ForeignKey('img_url.id'), primary_key=True),
                    db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+spu_img = db.Table('spu_img',
+                   db.Column('spu_id', db.String(64), db.ForeignKey('spu.id'), primary_key=True),
+                   db.Column('img_id', db.String(64), db.ForeignKey('img_url.id'), primary_key=True),
+                   db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 sku_shoporders = db.Table('sku_shoporders',
                           db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
                           db.Column('shoporders_id', db.String(64), db.ForeignKey('shop_orders.id'), primary_key=True),
@@ -414,6 +419,8 @@ class SPU(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
+    express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
+    contents = db.Column(db.Text(length=(2 ** 32) - 1))
     standards = db.relationship(
         'Standards',
         secondary=spu_standards,
@@ -421,9 +428,17 @@ class SPU(db.Model):
             'spu'
         )
     )
+    images = db.relationship(
+        'ImgUrl',
+        secondary=spu_img,
+        backref=db.backref('img_spu')
+    )
     brand_id = db.Column(db.String(64), db.ForeignKey('brands.id'))
     classify_id = db.Column(db.String(64), db.ForeignKey('classifies.id'))
     sku = db.relationship('SKU', backref='the_spu', lazy='dynamic')
+    status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
 
 
 class ImgUrl(db.Model):
@@ -468,7 +483,6 @@ class SKU(db.Model):
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
     member_price = db.Column(db.DECIMAL(7, 2), default=0.00)
     score_types = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
-    contents = db.Column(db.Text(length=(2 ** 32) - 1))
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
@@ -725,6 +739,36 @@ class Promotions(db.Model):
 
     def __repr__(self):
         return '<Promotion name %r>' % self.name
+
+
+class Banners(db.Model):
+    """
+    Banners内容存储
+    """
+    __tablename__ = 'banners'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64), index=True, nullable=False, comment="banner的名称")
+    order = db.Column(db.SmallInteger, default=0, comment="排序，若相同则无序")
+    objects = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
+    url = db.Column(db.String(200), comment="用于存放点击后跳转的链接")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+
+
+class ObjStorage(db.Model):
+    """
+    存放对象存储的结果
+    """
+    __tablename__ = 'obj_storage'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    bucket = db.Column(db.String(64), nullable=False, index=True)
+    region = db.Column(db.String(64), nullable=False, index=True)
+    obj_key = db.Column(db.String(64), nullable=False, index=True)
+    obj_type = db.Column(db.SmallInteger, default=0, comment="0 图片，1 视频， 2 文本")
+    url = db.Column(db.String(150), nullable=False, index=True)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    banners = db.relationship('Banners', backref='banner_contents', lazy='dynamic')
 
 
 aes_key = 'koiosr2d2c3p0000'
