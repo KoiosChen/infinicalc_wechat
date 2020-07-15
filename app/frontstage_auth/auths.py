@@ -79,7 +79,7 @@ def authenticate(login_ip, **kwargs):
 
     ru = get_table_data_by_id(Customers, customer.id, ["role"], ["role_id"])
 
-    return success_return(data={'customer_info': ru}, message='登录成功')
+    return success_return(data={'customer_info': ru, 'session_key': session_key}, message='登录成功')
 
 
 def decode_auth_token(auth_token):
