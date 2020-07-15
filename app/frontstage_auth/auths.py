@@ -77,7 +77,7 @@ def authenticate(login_ip, **kwargs):
     db.session.add(customer)
     session_commit()
 
-    ru = get_table_data_by_id(Customers, customer.id, ["role"])
+    ru = get_table_data_by_id(Customers, customer.id, ["role"], ["role_id"])
 
     return success_return(data={'customer_info': ru}, message='登录成功')
 
