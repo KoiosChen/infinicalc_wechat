@@ -45,13 +45,13 @@ class CustomersAPI(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
     @customers_ns.expect(page_parser)
-    def get(self, info):
+    def get(self, **kwargs):
         """
         获取前端用户信息
         """
         args = page_parser.parse_args()
         return success_return(
-            get_table_data(Customers, args, ['roles'], ['password_hash']), "请求成功")
+            get_table_data(Customers, args, ['role'], ['role_id']), "请求成功")
 
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
