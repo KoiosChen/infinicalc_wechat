@@ -53,7 +53,7 @@ def authenticate(login_ip, **kwargs):
     """
     open_id = kwargs['openid']
     session_key = kwargs['session_key']
-    new_customer = new_data_obj("Customers", **{"open_id": open_id, "delete_at": None, "status": 1})
+    new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
     customer = new_customer['obj']
 
     # 查询并删除已经登陆的信息
