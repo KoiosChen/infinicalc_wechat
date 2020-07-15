@@ -5,6 +5,7 @@ from .common import false_return, exp_return
 from app.auth.auths import identify
 from app.frontstage_auth import auths
 from flask import make_response
+from app.models import Customers
 
 
 def allow_cross_domain(fun):
@@ -37,29 +38,47 @@ def permission_required(permission):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # 区分前后台
-            if permission.split('.')[0] == 'frontstage':
-                current_user = auths.identify(request)
+
+            def __check(permit):
+                # 区分前后台，前端传递的permission为int类型，并且header中的Authorization 不包括Bearer关键字
+                # 后端传递的permission为str类型，并且必须在header中的Authorization包括Bearer
+                if isinstance(permit, int) and 'Bearer' not in request.headers.get('Authorization'):
+                    open_id = request.headers.get('Authorization')
+                    customer = Customers.query.filter_by(open_id=open_id, status=1, delete_at=None).first()
+                    if not customer or not customer.can(permit):
+                        logger.warn('This user\'s action is not permitted!')
+                        # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
+                    kwargs['current_user'] = customer
+                elif isinstance(permit, str) and 'Bearer' in request.headers.get('Authorization'):
+                    current_user = identify(request)
+
+                    if current_user.get('code') == 'success' and 'logout' in permit:
+                        kwargs['info'] = current_user['data']
+                        return f(*args, **kwargs)
+
+                    if current_user.get("code") == "success" and "admin" not in [r.name for r in
+                                                                                 current_user['data']['user'].roles]:
+                        if permit not in [p.permission for p in current_user['data']['user'].permissions]:
+                            logger.warn('This user\'s action is not permitted!')
+                            # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
+                    elif current_user.get("code") == "success" and "admin" in [r.name for r in
+                                                                               current_user['data']['user'].roles]:
+                        pass
+
+                    else:
+                        # abort(make_response(exp_return(message=current_user.get("message")), 403))
+                        pass
+                    kwargs['info'] = current_user['data']
+                else:
+                    # abort(make_response(exp_return(message=current_user.get("message")), 403))
+                    pass
+
+            if isinstance(permission, list):
+                # 当permission为list时，表示这个接口是公共接口
+                for p in permission:
+                    __check(p)
             else:
-                current_user = identify(request)
-
-            if current_user.get('code') == 'success' and 'logout' in permission:
-                kwargs['info'] = current_user['data']
-                return f(*args, **kwargs)
-
-            if current_user.get("code") == "success" and "admin" not in [r.name for r in
-                                                                         current_user['data']['user'].roles]:
-                if permission not in [p.permission for p in current_user['data']['user'].permissions]:
-                    logger.warn('This user\'s action is not permitted!')
-                    # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
-            elif current_user.get("code") == "success" and "admin" in [r.name for r in
-                                                                       current_user['data']['user'].roles]:
-                pass
-
-            else:
-                # abort(make_response(exp_return(message=current_user.get("message")), 403))
-                pass
-            kwargs['info'] = current_user['data']
+                __check(permission)
             return f(*args, **kwargs)
 
         return decorated_function
