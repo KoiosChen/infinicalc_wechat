@@ -2,9 +2,18 @@ from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from qcloud_cos import CosClientError
 from qcloud_cos import CosServiceError
-import sys
-from ..common import success_return, false_return
-from .. import logger
+from ..common import success_return, false_return, submit_return
+from .. import logger, db
+
+
+def delete_object(obj):
+    cos_client = QcloudCOS()
+    try:
+        cos_client.delete(obj.obj_key)
+    except Exception as e:
+        return false_return(message=f"删除cos中图片失败"), 400
+    db.session.delete(obj)
+    return submit_return("已删除图片", "删除图片失败")
 
 
 class QcloudCOS:

@@ -95,6 +95,17 @@ promotions_classifies = db.Table('promotions_classifies',
                                  db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 
+class Permission:
+    READER = 0x01
+    USER = 0x02
+    MEMBER = 0x04
+    REGIONAL_AGENT = 0x08
+    NATIONAL_AGENT = 0x10
+    CUSTOMER_SERVICE = 0x20
+    OPERATOR = 0x40
+    ADMINISTER = 0x80
+
+
 class OptionsDict(db.Model):
     __tablename__ = 'options_dic'
     id = db.Column(db.Integer, primary_key=True)
@@ -131,6 +142,53 @@ class Roles(db.Model):
         return '<Role %r>' % self.name
 
 
+class CustomerRoles(db.Model):
+    __tablename__ = 'customer_roles'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), unique=True)
+    default = db.Column(db.Boolean, default=False, index=True)
+    permissions = db.Column(db.Integer)
+    customers = db.relationship('Customers', backref='role', lazy='dynamic')
+
+    @staticmethod
+    def insert_roles():
+        roles = {
+            'User': (Permission.READER |
+                     Permission.USER, True),
+            'Member': (Permission.READER |
+                       Permission.USER |
+                       Permission.MEMBER, False),
+            'REGIONAL_AGENT': (Permission.READER |
+                               Permission.USER |
+                               Permission.MEMBER |
+                               Permission.REGIONAL_AGENT, False),
+            'NATIONAL_AGENT': (Permission.READER |
+                               Permission.USER |
+                               Permission.MEMBER |
+                               Permission.REGIONAL_AGENT |
+                               Permission.NATIONAL_AGENT, False),
+            'OPERATOR': (Permission.READER |
+                         Permission.USER |
+                         Permission.MEMBER |
+                         Permission.REGIONAL_AGENT |
+                         Permission.NATIONAL_AGENT |
+                         Permission.OPERATOR, False),
+            'CUSTOMER_SERVICE': (Permission.CUSTOMER_SERVICE, False),
+            'Administrator': (0xff, False)
+        }
+        for r in roles:
+            role = CustomerRoles.query.filter_by(name=r).first()
+            if role is None:
+                role = CustomerRoles(name=r)
+            role.permissions = roles[r][0]
+            role.default = roles[r][1]
+            db.session.add(role)
+        db.session.commit()
+
+    def __repr__(self):
+        return '<Role %r>' % self.name
+
+
 class Elements(db.Model):
     __tablename__ = 'elements'
     id = db.Column(db.Integer, primary_key=True)
@@ -159,6 +217,8 @@ class LoginInfo(db.Model):
     customer = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.Boolean, default=True)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class PointRecords(db.Model):
@@ -208,7 +268,7 @@ class MemberCards(db.Model):
 class Customers(db.Model):
     __tablename__ = 'customers'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    phone = db.Column(db.String(15), nullable=False, index=True)
+    phone = db.Column(db.String(15), index=True)
     email = db.Column(db.String(64), index=True)
     openid = db.Column(db.String(64), index=True)
     unionid = db.Column(db.String(64), index=True)
@@ -219,19 +279,11 @@ class Customers(db.Model):
     total_points = db.Column(db.Integer, default=0, comment="用户积分")
     total_consumption = db.Column(db.DECIMAL(7, 2), default=0.00, comment='累积消费')
     total_count = db.Column(db.Integer, default=0, comment='累积消费次数')
-
+    role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
     # 0 unknown, 1 male, 2 female
     gender = db.Column(db.SmallInteger)
     birthday = db.Column(db.Date)
-    roles = db.relationship(
-        'Roles',
-        secondary=customer_role,
-        backref=db.backref(
-            'customers'
-        )
-    )
-    password_hash = db.Column(db.String(128))
-    status = db.Column(db.SmallInteger, comment='1: 正常 0: 删除')
+    status = db.Column(db.SmallInteger, comment='1: 正常 0: 删除', default=1)
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_customer', lazy='dynamic')
     orders = db.relationship("ShopOrders", backref='consumer', lazy='dynamic')
@@ -241,29 +293,17 @@ class Customers(db.Model):
     member_card = db.relationship('MemberCards', backref='card_owner', lazy='dynamic')
     parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     parent = db.relationship('Customers', backref="children", remote_side=[id])
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
-    @property
-    def permissions(self):
-        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(
-            Customers).filter(Customers.id == self.id, Elements.type == 'api').order_by(Elements.order).all()
-
-    @property
-    def elements(self):
-        return Elements.query.outerjoin(roles_elements).outerjoin(Roles).outerjoin(customer_role).outerjoin(
-            Customers).filter(Customers.id == self.id, Elements.type != 'api').order_by(Elements.order).all()
-
-    @property
-    def password(self):
-        raise AttributeError('password is not a readable attribute')
-
-    @password.setter
-    def password(self, password):
-        self.password_hash = generate_password_hash(password)
-
-    def verify_password(self, password):
-        if not self.password_hash:
-            return False
-        return check_password_hash(self.password_hash, password)
+    def __init__(self, **kwargs):
+        super(Customers, self).__init__(**kwargs)
+        if self.role is None:
+            if self.phone == current_app.config['FLASKY_ADMIN']:
+                self.role = CustomerRoles.query.filter_by(permissions=0xff).first()
+            if self.role is None:
+                self.role = CustomerRoles.query.filter_by(default=True).first()
 
     def verify_code(self, message):
         """
@@ -273,6 +313,9 @@ class Customers(db.Model):
         """
         login_key = f"front::verification_code::{self.phone}"
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
+
+    def can(self, permissions):
+        return self.role is not None and (self.role.permissions & permissions) == permissions
 
     def __repr__(self):
         return '<Customer %r>' % self.phone
@@ -300,6 +343,9 @@ class Users(db.Model):
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_user', lazy='dynamic')
     member_card = db.relationship('MemberCards', backref='cards_creator', lazy='dynamic')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
     @property
     def permissions(self):

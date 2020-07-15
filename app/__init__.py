@@ -110,9 +110,6 @@ def create_app(config_name):
     from .elements import elements as elements_blueprint
     app.register_blueprint(elements_blueprint)
 
-    from .img_urls import img_urls as img_urls_blueprint
-    app.register_blueprint(img_urls_blueprint)
-
     from .layout import layout as layout_blueprint
     app.register_blueprint(layout_blueprint)
 
@@ -133,5 +130,8 @@ def create_app(config_name):
 
     from .banners import banners as banners_blueprint
     app.register_blueprint(banners_blueprint)
+
+    from .obj_storage import obj_storage as obj_storage_blueprint
+    app.register_blueprint(obj_storage_blueprint)
 
     return app

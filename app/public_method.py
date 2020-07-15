@@ -37,7 +37,8 @@ def table_fields(table, appends=[], removes=[]):
     for a in appends:
         original_fields.append(a)
     for r in removes:
-        original_fields.remove(r)
+        if r in original_fields:
+            original_fields.remove(r)
     return original_fields
 
 
@@ -193,6 +194,9 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
             for value in t1:
                 tmp1.append({'value': value.value, 'standard_name': value.standards.name})
             tmp[f] = tmp1
+        elif f == 'banner_contents':
+            t1 = getattr(t, f)
+            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
         else:
             tmp[f] = getattr(t, f)
     return tmp
