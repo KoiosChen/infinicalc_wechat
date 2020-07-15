@@ -85,7 +85,7 @@ class Login(Resource):
         response = r.json()
         logger.debug(response)
         if response.get('errcode') != 0:
-            return false_return(response.get("openid"), "请求失败")
+            return false_return(response, "请求失败"), 400
         return auths.authenticate(user_ip, **response)
 
 
