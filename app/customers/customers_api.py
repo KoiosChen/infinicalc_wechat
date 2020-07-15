@@ -84,7 +84,7 @@ class Login(Resource):
         r = requests.get(url, params=params)
         response = r.json()
         logger.debug(response)
-        if response.get('errcode') != 0:
+        if 'errcode' in response.keys():
             return false_return(response, "请求失败"), 400
         return auths.authenticate(user_ip, **response)
 
