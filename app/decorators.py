@@ -44,7 +44,7 @@ def permission_required(permission):
                 # 后端传递的permission为str类型，并且必须在header中的Authorization包括Bearer
                 if isinstance(permit, int) and 'Bearer' not in request.headers.get('Authorization'):
                     open_id = request.headers.get('Authorization')
-                    customer = Customers.query.filter_by(open_id=open_id, status=1, delete_at=None).first()
+                    customer = Customers.query.filter_by(openid=open_id, status=1, delete_at=None).first()
                     if not customer or not customer.can(permit):
                         logger.warn('This user\'s action is not permitted!')
                         # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))

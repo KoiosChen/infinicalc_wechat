@@ -48,10 +48,16 @@ def _make_data(data, fields, strainer=None):
         tmp = dict()
         for f in fields:
             if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
-                     'start_time', 'end_time']:
+                     'start_time', 'end_time', 'total_consumption']:
                 tmp[f] = str(getattr(t, f))
             elif f == 'roles':
                 tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
+            elif f == 'role':
+                try:
+                    tmp[f] = {"id": t.role.id, "name": t.role.name}
+                except Exception as e:
+                    logger.error(f"get role fail {e}")
+                    tmp[f] = {}
             elif f == 'elements':
                 tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
             elif f == 'sku':
