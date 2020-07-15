@@ -32,7 +32,7 @@ update_customer_parser.add_argument('password', help='密码', location='json')
 update_customer_parser.add_argument('address', location='json', help='用户地址')
 update_customer_parser.add_argument('profile_photo', location='json', help='用户头像对应的obj_storage中的ID')
 update_customer_parser.add_argument('Authorization', required=True, location='headers')
-update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime.strftime(x, '%Y-%m-%d'),
+update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                                     help="生日，格式'%Y-%m-%d")
 
 return_json = customers_ns.model('ReturnResult', return_dict)
@@ -61,7 +61,7 @@ class CustomersAPI(Resource):
         修改前端用户属性
         """
         args = update_customer_parser.parse_args()
-        user = kwargs['info']['user']
+        user = kwargs['current_user']
         fields_ = table_fields(Customers, appends=[], removes=['role_id'])
         return modify_user_profile(args, user, fields_)
 
