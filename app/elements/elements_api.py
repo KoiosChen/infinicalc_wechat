@@ -3,7 +3,7 @@ from flask import request
 from ..models import Elements
 from . import elements
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, sort_by_order
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
@@ -27,28 +27,33 @@ update_element_parser.replace_argument('name', required=False, help='新的元�
 update_element_parser.add_argument('type', required=False, help='元素类型，包括menu, button, api等')
 update_element_parser.add_argument('permission', required=False, help='例如：app.elements.elements_api.get_element')
 
-page_parser.add_argument('permission', help='搜索permission字段', location='args')
-page_parser.add_argument('name', help='搜索name字段', location='args')
-page_parser.add_argument('Authorization', required=True, location='headers')
+element_page_parser = page_parser.copy()
+element_page_parser.add_argument('permission', help='搜索permission字段', location='args')
+element_page_parser.add_argument('name', help='搜索name字段', location='args')
+element_page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @elements_ns.route('')
 @elements_ns.expect(head_parser)
 class QueryElements(Resource):
     @elements_ns.marshal_with(return_json)
-    @elements_ns.doc(body=page_parser)
+    @elements_ns.doc(body=element_page_parser)
     @permission_required("app.elements.elements_api.get_elements")
     def get(self, **kwargs):
         """
         查询所有Elements列表
         """
-        args = page_parser.parse_args()
+        args = element_page_parser.parse_args()
         args['search'] = dict()
         if args.get("permission"):
             args['search']['permission'] = args.get('permission')
         if args.get("name"):
             args['search']['name'] = args.get('name')
-        return success_return(get_table_data(Elements, args, ['children']), "请求成功")
+        element_table = get_table_data(Elements, args, ['children'])
+
+        sort_by_order(element_table.get('records'))
+
+        return success_return(element_table, "请求成功")
 
     @elements_ns.doc(body=add_element_parser)
     @elements_ns.marshal_with(return_json)

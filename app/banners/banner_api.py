@@ -1,16 +1,12 @@
 from ..swagger import return_dict
 from flask_restplus import Resource, reqparse
-from .. import default_api, logger, db
-from ..common import success_return, false_return, submit_return
-from ..public_method import new_data_obj, get_table_data, table_fields, get_table_data_by_id
+from .. import default_api, db
+from ..common import success_return, false_return, submit_return, sort_by_order
+from ..public_method import new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from ..models import Banners, Permission, ObjStorage
-from werkzeug.datastructures import FileStorage
-from ..obj_storage.qqcos import QcloudCOS, delete_object
-from ..type_validation import upload_file_type
-import uuid
-import datetime
+from app.wechat.qqcos import QcloudCOS, delete_object
 
 banner_ns = default_api.namespace('banners', path='/banners', description='首页Banner')
 
@@ -38,7 +34,9 @@ class BannersApi(Resource):
         获取全部Banner
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(Banners, args, appends=['banner_contents']))
+        banner_result = get_table_data(Banners, args, appends=['banner_contents'])
+        sort_by_order(banner_result['records'])
+        return success_return(banner_result)
 
     @banner_ns.doc(body=add_banner_parser)
     @banner_ns.marshal_with(return_json)

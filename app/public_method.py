@@ -1,9 +1,12 @@
 from . import db, logger
-from .models import LoginInfo, Elements, ImgUrl, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
+from .models import LoginInfo, Elements, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
     Benefits, PromotionGroups, Gifts, ObjStorage, Banners
 from time import sleep
 from sqlalchemy import or_, and_
+
+str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
+            'start_time', 'end_time', 'total_consumption', 'express_fee']
 
 
 def new_data_obj(table, **kwargs):
@@ -42,55 +45,92 @@ def table_fields(table, appends=[], removes=[]):
     return original_fields
 
 
+def find_id(elements_list):
+    id_ = list()
+    for el in elements_list:
+        if el.get('children'):
+            id_.extend(find_id(el['children']))
+            id_.append(el['id'])
+            return id_
+        else:
+            return [el['id']]
+
+
+def __make_table(fields, table, strainer=None):
+    tmp = dict()
+    for f in fields:
+        if f in str_list:
+            tmp[f] = str(getattr(table, f))
+        elif f == 'elements':
+            tmp[f] = [{"id": e.id, "name": e.name} for e in table.elements]
+        elif f == 'roles':
+            tmp[f] = [get_table_data_by_id(eval(role.__class__.__name__), role.id, ['elements']) for role in
+                      table.roles]
+        elif f == 'role':
+            try:
+                tmp[f] = {"id": table.role.id, "name": table.role.name}
+            except Exception as e:
+                logger.error(f"get role fail {e}")
+                tmp[f] = {}
+        elif f == 'menus':
+            elements_list = table.elements
+            elements_list_id = [elid.id for elid in elements_list]
+            tmp[f] = list()
+            exist_elements = list()
+            for e in elements_list:
+                if e.id not in exist_elements and e.type == 'menu' and e.parent_id is None:
+                    tmp[f].append(
+                        get_table_data_by_id(Elements, e.id, appends=['children'],
+                                             strainer=['menu', elements_list_id]))
+                    exist_elements.extend(find_id([tmp[f][-1]]))
+        elif f == 'sku':
+            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
+                      table.sku]
+        elif f == 'spu':
+            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['sku', 'objects']) for e in table.spu.all()]
+        elif f == 'children':
+            if table.children:
+                child_tmp = list()
+                for child in table.children:
+                    if strainer is not None:
+                        if child.type == strainer[0] and child.id in strainer[1]:
+                            child_tmp.extend(_make_data([child], fields, strainer))
+                    else:
+                        child_tmp.extend(_make_data([child], fields, strainer))
+                tmp[f] = child_tmp
+        elif f == 'objects':
+            tmp1 = list()
+            t1 = getattr(table, f)
+            for value in t1:
+                tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
+            tmp[f] = tmp1
+        elif f == 'values':
+            tmp1 = list()
+            t1 = getattr(table, f)
+            for value in t1:
+                tmp1.append({'value': value.value, 'standard_name': value.standards.name})
+            tmp[f] = tmp1
+        elif f == 'banner_contents':
+            t1 = getattr(table, f)
+            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
+        elif f == 'brand':
+            tmp[f] = get_table_data_by_id(Brands, table.brand.id)
+        elif f == 'classifies':
+            tmp[f] = get_table_data_by_id(Classifies, table.classifies.id)
+        elif f == 'standards':
+            if table.standards:
+                tmp[f] = [{"id": e.id, "name": e.name} for e in table.standards]
+            else:
+                tmp[f] = []
+        else:
+            tmp[f] = getattr(table, f)
+    return tmp
+
+
 def _make_data(data, fields, strainer=None):
     rr = list()
     for t in data:
-        tmp = dict()
-        for f in fields:
-            if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
-                     'start_time', 'end_time', 'total_consumption']:
-                tmp[f] = str(getattr(t, f))
-            elif f == 'roles':
-                tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
-            elif f == 'role':
-                try:
-                    tmp[f] = {"id": t.role.id, "name": t.role.name}
-                except Exception as e:
-                    logger.error(f"get role fail {e}")
-                    tmp[f] = {}
-            elif f == 'elements':
-                tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
-            elif f == 'sku':
-                tmp[f] = [{"id": e.id, "name": e.name} for e in t.sku]
-            elif f == 'children':
-                if t.children:
-                    child_tmp = list()
-                    for child in t.children:
-                        if strainer is not None:
-                            if child.type == strainer[0] and child.id in strainer[1]:
-                                child_tmp.extend(_make_data([child], fields, strainer))
-                        else:
-                            child_tmp.extend(_make_data([child], fields, strainer))
-                    tmp[f] = child_tmp
-            elif f == 'images':
-                tmp1 = list()
-                t1 = getattr(t, f)
-                for value in t1:
-                    tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
-                tmp[f] = tmp1
-            elif f == 'values':
-                tmp1 = list()
-                t1 = getattr(t, f)
-                for value in t1:
-                    tmp1.append({'value': value.value, 'standard_name': value.standards.name})
-                tmp[f] = tmp1
-            elif f == 'banner_contents':
-                t1 = getattr(t, f)
-                tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
-            else:
-                tmp[f] = getattr(t, f)
-
-        rr.append(tmp)
+        rr.append(__make_table(fields, t, strainer))
     return rr
 
 
@@ -118,7 +158,6 @@ def get_table_data(table, args, appends=[], removes=[]):
         else:
             table_data = base_sql.all()
     else:
-        # page_more = 1 if page_len % size else 0
         if search:
             for k, v in search.items():
                 if k in fields:
@@ -132,6 +171,7 @@ def get_table_data(table, args, appends=[], removes=[]):
                 return False
 
     r = _make_data(table_data, fields)
+
     pop_list = list()
     for record in r:
         if record.get('parent_id'):
@@ -145,70 +185,4 @@ def get_table_data(table, args, appends=[], removes=[]):
 def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
     fields = table_fields(table, appends, removes)
     t = table.query.get(key_id)
-    tmp = dict()
-
-    def find_id(elements_list):
-        id_ = list()
-        for el in elements_list:
-            if el.get('children'):
-                id_.extend(find_id(el['children']))
-                id_.append(el['id'])
-                return id_
-            else:
-                return [el['id']]
-
-    for f in fields:
-        if f in ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
-                 'start_time', 'end_time', 'total_consumption']:
-            tmp[f] = str(getattr(t, f))
-        elif f == 'elements':
-            tmp[f] = [{"id": e.id, "name": e.name} for e in t.elements]
-        elif f == 'menus':
-            elements_list = t.elements
-            elements_list_id = [elid.id for elid in elements_list]
-            tmp[f] = list()
-            exist_elements = list()
-            for e in elements_list:
-                if e.id not in exist_elements and e.type == 'menu' and e.parent_id is None:
-                    tmp[f].append(
-                        get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
-                    exist_elements.extend(find_id([tmp[f][-1]]))
-
-        elif f == 'roles':
-            tmp[f] = [{"id": role.id, "name": role.name} for role in t.roles]
-        elif f == 'role':
-            try:
-                tmp[f] = {"id": t.role.id, "name": t.role.name}
-            except Exception as e:
-                logger.error(f"get role fail {e}")
-                tmp[f] = {}
-        elif f == 'sku':
-            tmp[f] = [{"id": s.id, "name": s.name} for s in t.sku.all()]
-        elif f == 'images':
-            tmp1 = list()
-            t1 = getattr(t, f)
-            for value in t1:
-                tmp1.append({'id': value.id, 'path': value.path, 'type': value.attribute})
-            tmp[f] = tmp1
-        elif f == 'children':
-            if t.children:
-                child_tmp = list()
-                for child in t.children:
-                    if strainer is not None:
-                        if child.type == strainer[0] and child.id in strainer[1]:
-                            child_tmp.extend(_make_data([child], fields, strainer))
-                    else:
-                        child_tmp.extend(_make_data([child], fields, strainer))
-                tmp[f] = child_tmp
-        elif f == 'values':
-            tmp1 = list()
-            t1 = getattr(t, f)
-            for value in t1:
-                tmp1.append({'value': value.value, 'standard_name': value.standards.name})
-            tmp[f] = tmp1
-        elif f == 'banner_contents':
-            t1 = getattr(t, f)
-            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
-        else:
-            tmp[f] = getattr(t, f)
-    return tmp
+    return __make_table(fields, t, strainer)

@@ -7,7 +7,7 @@ from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
 from werkzeug.datastructures import FileStorage
 from .. import default_api
-from .qqcos import QcloudCOS
+from app.wechat.qqcos import QcloudCOS
 import uuid
 from ..type_validation import upload_file_type
 

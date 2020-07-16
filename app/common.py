@@ -43,3 +43,10 @@ def nesteddict():
     :return:
     """
     return defaultdict(nesteddict)
+
+
+def sort_by_order(ms):
+    for el in ms:
+        if el.get('children'):
+            sort_by_order(el['children'])
+            el["children"].sort(key=lambda x: x['order'])

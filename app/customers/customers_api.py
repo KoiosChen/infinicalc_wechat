@@ -11,6 +11,7 @@ from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from ..public_user_func import modify_user_profile
 import requests
+from app.wechat.wx_login import WxLogin
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -74,15 +75,11 @@ class Login(Resource):
         """
         用户登陆，获取OPEN_ID
         """
-        app_id = "wxbd90eb9673088c7b"
-        app_secret = "3aa0c3296b1ee4ef09bf9f3c0a43b7ff"
         args = login_parser.parse_args()
         user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-        url = "https://api.weixin.qq.com/sns/jscode2session"
-        params = {"appid": app_id, "secret": app_secret, "js_code": args['js_code'],
-                  "grant_type": "authorization_code"}
-        r = requests.get(url, params=params)
-        response = r.json()
+
+        wx_login = WxLogin(args['js_code'])
+        response = wx_login.response
         logger.debug(response)
         if 'errcode' in response.keys():
             return false_return(response, "请求失败"), 400
