@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+from .. import logger, db, redis_db
+from app.models import ShopOrders
 import traceback
 import logging
 import uuid
@@ -9,20 +9,9 @@ import requests
 import json
 import xmltodict
 import time
-import pymysql
 import datetime
 import random
-
 from hashlib import md5
-
-MYSQL = dict(
-    host='127.0.0.1', user='mysql_user', passwd='mysql_pwd', db='mydb', charset="utf8mb4"
-)
-logger = logging.getLogger(__name__)
-conn = pymysql.connect(**MYSQL)
-cur_dict = conn.cursor(pymysql.cursors.DictCursor)
-cur = conn.cursor()
-
 
 # 微信支付APP_ID
 WEIXIN_APP_ID = 'wx91f04ffbf8a23431'
@@ -31,7 +20,7 @@ WEIXIN_MCH_ID = '1535411231'
 # 微信支付sign_type
 WEIXIN_SIGN_TYPE = 'MD5'
 # 服务器IP地址
-WEIXIN_SPBILL_CREATE_IP = '32.23.11.34'
+WEIXIN_SPBILL_CREATE_IP = 'www.winestar.com'
 # 微信支付用途
 WEIXIN_BODY = '费用充值'
 # 微信KEY值 【API密钥】
@@ -41,7 +30,7 @@ WEIXIN_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
 # 微信查询订单URL
 WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
 # 微信支付回调API
-WEIXIN_CALLBACK_API = 'http://xxxx.com/weixinpay_rollback/'
+WEIXIN_CALLBACK_API = 'https://wechat.winestar.club/weixinpay_callback/'
 
 
 def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None):
@@ -72,12 +61,13 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee):
         """
         客户端APP的数据参数包装
         """
-        request_order_info = {'appid': params_dict['appid'],
-                              'partnerid': params_dict['mch_id'],
-                              'prepayid': prepay_id,
-                              'package': 'Sign=WXPay',
-                              'noncestr': generate_nonce_str(),
-                              'timestamp': str(int(time.time()))}
+        request_order_info = {
+            'appId': params_dict['appid'],
+            'nonceStr': generate_nonce_str(),
+            'package': "prepay_id=" + prepay_id,
+            'signType': 'MD5',
+            'timeStamp': str(int(time.time()))
+        }
         request_order_info['sign'] = generate_sign(request_order_info)
         return request_order_info
 
@@ -113,11 +103,14 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee):
         res = requests.post(unified_order_url, data=data, headers=headers)
         if res.status_code == 200:
             result = json.loads(json.dumps(xmltodict.parse(res.content)))
-            if result['xml']['return_code'] == 'SUCCESS':
+            xml_content = result['xml']
+            if xml_content['return_code'] == 'SUCCESS' and xml_content['result_code'] == 'SUCCESS':
                 prepay_id = result['xml']['prepay_id']
                 return generate_call_app_data(params_dict, prepay_id), result['xml']
-            else:
+            elif xml_content['return_code'] == 'SUCCESS':
                 return result['xml']['return_msg'], None
+            else:
+                return result['xml']['err_code'] + ': ' + result['xml']['err_code_des'], None
         return None, None
 
     if float(total_fee) < 0.01:

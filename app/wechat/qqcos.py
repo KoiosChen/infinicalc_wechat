@@ -2,8 +2,8 @@ from qcloud_cos import CosConfig
 from qcloud_cos import CosS3Client
 from qcloud_cos import CosClientError
 from qcloud_cos import CosServiceError
-from ..common import success_return, false_return, submit_return
-from .. import logger, db
+from app.common import success_return, false_return, submit_return
+from app import logger, db
 
 
 def delete_object(obj):

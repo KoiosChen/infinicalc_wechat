@@ -49,15 +49,16 @@ update_user_parser.add_argument('Authorization', required=True, location='header
 
 return_json = users_ns.model('ReturnRegister', return_dict)
 
-page_parser.add_argument('Authorization', required=True, location='headers')
-page_parser.add_argument('phone', help='搜索phone字段', location='args')
+user_page_parser = page_parser.copy()
+user_page_parser.add_argument('Authorization', required=True, location='headers')
+user_page_parser.add_argument('phone', help='搜索phone字段', location='args')
 
 
 @users_ns.route('')
 class QueryUsers(Resource):
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.users_info")
-    @users_ns.expect(page_parser)
+    @users_ns.expect(user_page_parser)
     def get(self, info):
         """
         获取后端用户信息
