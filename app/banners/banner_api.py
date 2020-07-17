@@ -30,7 +30,7 @@ banner_page_parser.add_argument("name", help='根据banner名称查询')
 @banner_ns.expect(head_parser)
 class BannersApi(Resource):
     @banner_ns.marshal_with(return_json)
-    @banner_ns.doc(body=banner_page_parser)
+    @banner_ns.expect(banner_page_parser)
     @permission_required([Permission.USER, "app.banners.query_banners"])
     def get(self, **kwargs):
         """

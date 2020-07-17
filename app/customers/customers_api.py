@@ -38,19 +38,20 @@ update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime
 
 return_json = customers_ns.model('ReturnResult', return_dict)
 
-page_parser.add_argument('Authorization', required=True, location='headers')
+customer_page_parser = page_parser.copy()
+customer_page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @customers_ns.route('')
 class CustomersAPI(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
-    @customers_ns.expect(page_parser)
+    @customers_ns.expect(customer_page_parser)
     def get(self, **kwargs):
         """
         获取前端用户信息
         """
-        args = page_parser.parse_args()
+        args = customer_page_parser.parse_args()
         return success_return(
             get_table_data(Customers, args, ['role'], ['role_id']), "请求成功")
 
