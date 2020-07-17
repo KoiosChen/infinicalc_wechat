@@ -24,23 +24,22 @@ update_banner_parser.replace_argument('object', required=False, type=str, help='
 
 banner_page_parser = page_parser.copy()
 banner_page_parser.add_argument("name", help='根据banner名称查询')
-banner_page_parser.remove_argument('Authorization', required=False, location='headers')
 
 
 @banner_ns.route('')
-# @banner_ns.expect(head_parser)
+@banner_ns.expect(head_parser)
 class BannersApi(Resource):
     @banner_ns.marshal_with(return_json)
     @banner_ns.doc(body=banner_page_parser)
-    # @permission_required([Permission.USER, "app.banners.query_banners"])
+    @permission_required([Permission.USER, "app.banners.query_banners"])
     def get(self, **kwargs):
         """
         获取全部Banner
         """
         args = banner_page_parser.parse_args()
-        args['search'] = dict()
-        if args.get("name"):
-            args['search']['name'] = args.get('name')
+        # args['search'] = dict()
+        # if args.get("name"):
+        #     args['search']['name'] = args.get('name')
         banner_result = get_table_data(Banners, args, appends=['banner_contents'], removes=['objects'])
         sort_by_order(banner_result['records'])
 
