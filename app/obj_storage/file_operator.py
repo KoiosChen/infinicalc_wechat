@@ -47,7 +47,7 @@ class ObjectStorageApi(Resource):
         cos_client = QcloudCOS()
         if upload_file_type(args['obj_type'], upload_object.mimetype):
             ext_name = upload_object.filename.split('.')[-1]
-            object_key = 'banners/' + str(uuid.uuid4()) + '.' + ext_name
+            object_key = args['prefix'] + '/' + str(uuid.uuid4()) + '.' + ext_name
             store_result = cos_client.upload(object_key, upload_object.read())
             store_result['obj_type'] = args['obj_type']
             logger.debug(store_result)
