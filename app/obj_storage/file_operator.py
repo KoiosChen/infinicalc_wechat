@@ -17,8 +17,8 @@ cos_ns = default_api.namespace('object_storage', path='/object_storage',
 return_json = cos_ns.model('ReturnRegister', return_dict)
 
 upload_parser = reqparse.RequestParser()
-upload_parser.add_argument('prefix', type=str)
-upload_parser.add_argument('obj_type', type=int, choices=[0, 1, 2], help='0 图片 1 视频 2 文本')
+upload_parser.add_argument('prefix', type=str, help='用于区分类型，譬如banners， logo')
+upload_parser.add_argument('obj_type', type=int, choices=[0, 1, 2], required=True, help='0 图片 1 视频 2 文本')
 upload_parser.add_argument('file', required=True, type=FileStorage, location='files')
 
 
@@ -47,7 +47,8 @@ class ObjectStorageApi(Resource):
         cos_client = QcloudCOS()
         if upload_file_type(args['obj_type'], upload_object.mimetype):
             ext_name = upload_object.filename.split('.')[-1]
-            object_key = args['prefix'] + '/' + str(uuid.uuid4()) + '.' + ext_name
+            object_key = args['prefix'] + '/' if args['prefix'] else ""
+            object_key += str(uuid.uuid4()) + '.' + ext_name
             store_result = cos_client.upload(object_key, upload_object.read())
             store_result['obj_type'] = args['obj_type']
             logger.debug(store_result)
