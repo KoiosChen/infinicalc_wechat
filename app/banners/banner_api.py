@@ -34,7 +34,7 @@ class BannersApi(Resource):
         获取全部Banner
         """
         args = page_parser.parse_args()
-        banner_result = get_table_data(Banners, args, appends=['banner_contents'])
+        banner_result = get_table_data(Banners, args, appends=['banner_contents'], removes=['objects'])
         sort_by_order(banner_result['records'])
         return success_return(banner_result)
 
