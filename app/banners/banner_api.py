@@ -22,20 +22,27 @@ update_banner_parser = add_banner_parser.copy()
 update_banner_parser.replace_argument('name', required=False, help='Banner名称')
 update_banner_parser.replace_argument('object', required=False, type=str, help='上传对象')
 
+banner_page_parser = page_parser.copy()
+banner_page_parser.add_argument("name", help='根据banner名称查询')
+
 
 @banner_ns.route('')
 @banner_ns.expect(head_parser)
 class BannersApi(Resource):
     @banner_ns.marshal_with(return_json)
-    @banner_ns.doc(body=page_parser)
+    @banner_ns.doc(body=banner_page_parser)
     @permission_required([Permission.USER, "app.banners.query_banners"])
     def get(self, **kwargs):
         """
         获取全部Banner
         """
-        args = page_parser.parse_args()
+        args = banner_page_parser.parse_args()
+        args['search'] = dict()
+        if args.get("name"):
+            args['search']['name'] = args.get('name')
         banner_result = get_table_data(Banners, args, appends=['banner_contents'], removes=['objects'])
         sort_by_order(banner_result['records'])
+
         return success_return(banner_result)
 
     @banner_ns.doc(body=add_banner_parser)
@@ -69,7 +76,8 @@ class BannerApi(Resource):
         """
         获取指定品牌数据
         """
-        return success_return(get_table_data_by_id(Banners, kwargs['banner_id'],appends=['banner_contents']))
+        return success_return(
+            get_table_data_by_id(Banners, kwargs['banner_id'], appends=['banner_contents'], removes=['objects']))
 
     @banner_ns.doc(body=update_banner_parser)
     @banner_ns.marshal_with(return_json)
