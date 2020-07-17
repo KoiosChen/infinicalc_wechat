@@ -24,7 +24,7 @@ update_banner_parser.replace_argument('object', required=False, type=str, help='
 
 banner_page_parser = page_parser.copy()
 banner_page_parser.add_argument("name", help='根据banner名称查询')
-banner_page_parser.remove_argument("Authoriztion")
+banner_page_parser.remove_argument("Authorization")
 
 
 @banner_ns.route('')
