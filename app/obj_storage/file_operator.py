@@ -41,7 +41,9 @@ class ObjectStorageApi(Resource):
     def post(self, **kwargs):
         """上传对象"""
         args = upload_parser.parse_args()
+        logger.debug(f"upload object to storage {ars}")
         upload_object = args['file']
+        logger.debug(upload_object)
         cos_client = QcloudCOS()
         if upload_file_type(args['obj_type'], upload_object.mimetype):
             ext_name = upload_object.filename.split('.')[-1]
