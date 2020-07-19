@@ -44,7 +44,7 @@ update_user_parser.add_argument('true_name', help='真实姓名', location='json
 update_user_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
 update_user_parser.add_argument('password', help='密码', location='json')
 update_user_parser.add_argument('role_id', type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
-update_user_parser.add_argument('address', location='json', help='用户地址')
+update_user_parser.add_argument('global_address', location='json', help='用户地址')
 update_user_parser.add_argument('Authorization', required=True, location='headers')
 
 return_json = users_ns.model('ReturnRegister', return_dict)

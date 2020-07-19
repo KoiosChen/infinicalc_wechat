@@ -1,9 +1,9 @@
 from flask_restplus import Resource, fields, reqparse
-from ..models import Classifies, SKU, ImgUrl, StandardValue
+from ..models import Classifies, SKU, StandardValue, ObjStorage
 from . import mall
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj, get_table_data
+from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
@@ -34,13 +34,15 @@ class ClassifiesApi(Resource):
     def post(self, **kwargs):
         """新增分类"""
         args = add_classify_parser.parse_args()
-        classify_db = Classifies.query.filter_by(name=args['name']).first()
-        if classify_db:
-            return false_return(message=f"<{args['name']}>已经存在"), 400
-
         new_one = new_data_obj("Classifies", **{"name": args['name']})
 
-        return submit_return(f"分类<{args['name']}>添加成功，id：{new_one['obj'].id}", f"分类<{args['name']}>添加失败")
+        if new_one:
+            if not new_one.get('status'):
+                return false_return(message=f"<{args['name']}>已经存在"), 400
+            else:
+                return submit_return(f"分类<{args['name']}>添加成功，id：{new_one['obj'].id}", f"分类<{args['name']}>添加失败")
+        else:
+            return false_return(message=f"分类<{args['name']}>添加失败"), 400
 
 
 @mall_ns.route('/classifies/<string:classify_id>')
@@ -53,9 +55,7 @@ class ClassifyApi(Resource):
         """
         获取指定分类数据
         """
-        fields_ = table_fields(Classifies)
-        b = Classifies.query.get(kwargs['brand_id'])
-        return success_return({f: getattr(b, f) for f in fields_}, "")
+        return success_return(get_table_data_by_id(Classifies, kwargs['classify_id']))
 
     @mall_ns.doc(body=update_classify_parser)
     @mall_ns.marshal_with(return_json)
@@ -76,8 +76,11 @@ class ClassifyApi(Resource):
     def delete(self, **kwargs):
         """删除分类"""
         classify = Classifies.query.get(kwargs['classify_id'])
-        db.session.delete(classify)
-        return success_return() if session_commit() else false_return(message="删除分类失败"), 400
+        if classify and not classify.spu.all():
+            db.session.delete(classify)
+            return success_return() if session_commit() else false_return(message="删除分类失败"), 400
+        else:
+            return false_return(message=f"此分类{kwargs['classify_id']}被占用{classify}")
 
 
 @mall_ns.route('/classifies/<string:classify_id>/items')
@@ -90,34 +93,4 @@ class ClassifyItemsApi(Resource):
         """
         获取指定分类的所有商品信息
         """
-        c = Classifies.query.get(kwargs['classify_id'])
-        spu = c.spu.all()
-        r = list()
-        sku_fields = table_fields(SKU, appends=['images', 'values'], removes=['create_at', 'update_at'])
-        image_fields = table_fields(ImgUrl)
-        standard_value_fields = table_fields(StandardValue, appends=['standards'], removes=['id', 'standard_id'])
-        for s in spu:
-            tmp = dict()
-            for u in s.sku.all():
-                for f in sku_fields:
-                    if f in ('price', 'discount', 'member_price'):
-                        tmp[f] = str(getattr(u, f))
-                    elif f == 'images':
-                        tmp[f] = [{image_field: getattr(image, image_field) for image_field in image_fields if
-                                   getattr(image, image_field) is not None} for image in getattr(u, f)]
-                    elif f == 'values':
-                        value_tmp = list()
-                        for sv in getattr(u, f):
-                            tmp_dict = dict()
-                            for sv_field in standard_value_fields:
-                                if getattr(sv, sv_field) is not None:
-                                    if sv_field == 'standards':
-                                        tmp_dict['standard_name'] = sv.standards.name
-                                    else:
-                                        tmp_dict[sv_field] = getattr(sv, sv_field)
-                            value_tmp.append(tmp_dict)
-                        tmp[f] = value_tmp
-                    else:
-                        tmp[f] = getattr(u, f)
-                r.append({'spu': s.name, 'sku': tmp})
-        return success_return(data=r)
+        return success_return(get_table_data_by_id(Classifies, kwargs['classify_id'], ['spu']))
