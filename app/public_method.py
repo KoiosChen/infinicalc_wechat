@@ -1,7 +1,7 @@
 from . import db, logger
 from .models import LoginInfo, Elements, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
     PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
-    Benefits, PromotionGroups, Gifts, ObjStorage, Banners
+    Benefits, PromotionGroups, Gifts, ObjStorage, Banners, ExpressAddress, Countries, Provinces, Cities
 from time import sleep
 from sqlalchemy import or_, and_
 
@@ -87,7 +87,8 @@ def __make_table(fields, table, strainer=None):
             tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
                       table.sku]
         elif f == 'spu':
-            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['sku', 'objects']) for e in table.spu.all()]
+            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['sku', 'objects']) for e in
+                      table.spu.all()]
         elif f == 'children':
             if table.children:
                 child_tmp = list()
@@ -122,6 +123,12 @@ def __make_table(fields, table, strainer=None):
                 tmp[f] = [{"id": e.id, "name": e.name} for e in table.standards]
             else:
                 tmp[f] = []
+        elif f == 'express_addresses':
+            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, ['buyer_district'],
+                                           ['sender', 'city_id', 'district']) for e in
+                      table.express_addresses.all()]
+        elif f == 'buyer_district':
+            tmp['address0'] = table.buyer_district.included_cities.provinces.countries.name + table.buyer_district.included_cities.provinces.name + '省' + table.buyer_district.included_cities.name + '市' + table.buyer_district.name
         else:
             tmp[f] = getattr(table, f)
     return tmp
