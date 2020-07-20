@@ -23,14 +23,14 @@ bind_role_parser = reqparse.RequestParser()
 bind_role_parser.add_argument('role_id', required=True, type=int, help='customer_role表中的id')
 
 bind_express_addr_parser = reqparse.RequestParser()
-bind_express_addr_parser.add_argument('city_id', type=int, required=True)
-bind_express_addr_parser.add_argument('district', type=int, required=True)
-bind_express_addr_parser.add_argument('address1', required=True)
-bind_express_addr_parser.add_argument('address2')
-bind_express_addr_parser.add_argument('postcode', help='邮编')
+bind_express_addr_parser.add_argument('address1', required=True, help='地图中定位的地址')
+bind_express_addr_parser.add_argument('address2', help='门牌号')
+bind_express_addr_parser.add_argument('postcode', help='邮编, 可为空')
 bind_express_addr_parser.add_argument('recipients', required=True, help='收件人姓名')
 bind_express_addr_parser.add_argument('recipients_phone', required=True, help='收件人电话')
 bind_express_addr_parser.add_argument('is_default', required=True, type=int, choices=[0, 1], default=0, help='是否为默认地址')
+bind_express_addr_parser.add_argument('force_default', required=True, type=int, choices=[0, 1], default=0,
+                                      help='是否强制为默认地址')
 
 update_express_addr_parser = bind_express_addr_parser.copy()
 update_express_addr_parser.replace_argument('city_id', type=int)
@@ -39,6 +39,8 @@ update_express_addr_parser.replace_argument('address1')
 update_express_addr_parser.replace_argument('recipients', help='收件人')
 update_express_addr_parser.replace_argument('recipients_phone', help='收件人电话')
 update_express_addr_parser.replace_argument('is_default', type=int, choices=[0, 1], default=0, help='是否为默认地址')
+update_express_addr_parser.add_argument('force_default', required=True, type=int, choices=[0, 1], default=0,
+                                        help='是否强制为默认地址')
 
 update_customer_parser = reqparse.RequestParser()
 update_customer_parser.add_argument('phone', help='用户手机号，如需更改，需要发送验证码认证，调用<string:phone>/verify_code 验证',
@@ -58,6 +60,19 @@ return_json = customers_ns.model('ReturnResult', return_dict)
 
 customer_page_parser = page_parser.copy()
 customer_page_parser.add_argument('Authorization', required=True, location='headers')
+
+
+def if_default(sender, force_default):
+    now_default = ExpressAddress.query.filter_by(sender=sender, is_default=1, status=1).first()
+    if now_default:
+        if not force_default:
+            return False
+        else:
+            now_default.is_default = False
+            db.session.add(now_default)
+            db.session.flush()
+
+    return True
 
 
 @customers_ns.route('')
@@ -153,10 +168,12 @@ class CustomerExpressAddress(Resource):
         """
         args = bind_express_addr_parser.parse_args()
         args['sender'] = kwargs['customer_id']
+        if not if_default(kwargs['customer_id'], args['force_default']):
+            return false_return("已存在默认地址")
         new_express_address = ExpressAddress()
         db.session.flush()
         for k, v in args.items():
-            if hasattr(new_express_address, k) and v:
+            if hasattr(new_express_address, k) and v is not None:
                 setattr(new_express_address, k, v)
         db.session.add(new_express_address)
         return submit_return("添加地址成功", "添加地址失败")
@@ -177,6 +194,8 @@ class UpdateCustomerExpressAddress(Resource):
         args = update_express_addr_parser.parse_args()
         express_address = ExpressAddress.query.filter_by(id=kwargs['express_address_id'],
                                                          sender=kwargs['customer_id']).first()
+        if not if_default(kwargs['customer_id'], args['force_default']):
+            return false_return("已存在默认地址")
 
         for k, v in args.items():
             if hasattr(express_address, k) and v:

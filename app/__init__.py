@@ -134,7 +134,4 @@ def create_app(config_name):
     from .obj_storage import obj_storage as obj_storage_blueprint
     app.register_blueprint(obj_storage_blueprint)
 
-    from .global_address import global_address as global_address_blueprint
-    app.register_blueprint(global_address_blueprint)
-
     return app
