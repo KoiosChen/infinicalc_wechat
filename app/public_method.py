@@ -1,9 +1,8 @@
 from . import db, logger
-from .models import LoginInfo, Elements, Brands, SPU, SKU, Standards, Classifies, StandardValue, \
-    PurchaseInfo, Layout, SKULayout, SMSTemplate, SMSApp, Coupons, CouponReady, Customers, Roles, Users, Promotions, \
-    Benefits, PromotionGroups, Gifts, ObjStorage, Banners, ExpressAddress, Countries, Provinces, Cities
+from .models import *
 from time import sleep
 from sqlalchemy import or_, and_
+import datetime
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -59,9 +58,7 @@ def find_id(elements_list):
 def __make_table(fields, table, strainer=None):
     tmp = dict()
     for f in fields:
-        if f in str_list:
-            tmp[f] = str(getattr(table, f))
-        elif f == 'elements':
+        if f == 'elements':
             tmp[f] = [{"id": e.id, "name": e.name} for e in table.elements]
         elif f == 'roles':
             tmp[f] = [get_table_data_by_id(eval(role.__class__.__name__), role.id, ['elements']) for role in
@@ -103,7 +100,13 @@ def __make_table(fields, table, strainer=None):
             tmp1 = list()
             t1 = getattr(table, f)
             for value in t1:
-                tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
+                if value.thumbnails:
+                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type,
+                                 'thumbnail': {'id': value.thumbnails[0].id,
+                                               'url': value.thumbnails[0].url,
+                                               'obj_type': value.thumbnails[0].obj_type}})
+                else:
+                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
             tmp[f] = tmp1
         elif f == 'values':
             tmp1 = list()
@@ -124,13 +127,20 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = []
         elif f == 'express_addresses':
-            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, ['buyer_district'],
-                                           ['sender', 'city_id', 'district']) for e in
+            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, [], ['sender', 'city_id', 'district']) for
+                      e in
                       table.express_addresses.all()]
-        elif f == 'buyer_district':
-            tmp['address0'] = table.buyer_district.included_cities.provinces.countries.name + table.buyer_district.included_cities.provinces.name + '省' + table.buyer_district.included_cities.name + '市' + table.buyer_district.name
+        elif '_promotions' in f:
+            tmp[f] = [{'id': p.id, 'name': p.name, 'type': p.promotion_type} for p in getattr(table, f) if
+                      p.start_time <= datetime.datetime.now() <= p.end_time]
         else:
-            tmp[f] = getattr(table, f)
+            r = getattr(table, f)
+            if isinstance(r, int) or isinstance(r, float):
+                tmp[f] = r
+            elif r is None:
+                tmp[f] = ''
+            else:
+                tmp[f] = str(r)
     return tmp
 
 

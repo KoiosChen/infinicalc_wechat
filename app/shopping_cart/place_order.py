@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import SKU, ShopOrders, Promotions
+from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Benefits
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, nesteddict
 from ..decorators import permission_required
@@ -8,6 +8,7 @@ from app.type_validation import checkout_sku_type
 from collections import defaultdict
 import datetime
 from decimal import Decimal
+from sqlalchemy import and_, or_
 
 shopping_cart_ns = default_api.namespace('购物车', path='/shopping_cart', description='购物车API')
 
@@ -24,15 +25,14 @@ shopping_cart_parser.add_argument('sku', required=True, type=checkout_sku_type,
 
 @shopping_cart_ns.route('')
 @shopping_cart_ns.expect(head_parser)
-class ProceedCheckOut(Resource):
-    @shopping_cart_ns.doc(body=shopping_cart_parser)
+class PlaceAnOrder(Resource):
     @shopping_cart_ns.marshal_with(return_json)
-    @permission_required("frontstage.app.shopping_cart.check_out")
+    @permission_required(Permission.USER)
     def post(self, **kwargs):
         """显示购物车"""
-        args = shopping_cart_parser.parse_args().get("sku")
         all_p = defaultdict(list)
-        customer = kwargs['info']['user']
+        customer = kwargs['current_user']
+        args = [{'id': c.sku_id, 'quantity': c.quantity, 'combo': c.combo} for c in customer.shopping_cart.all()]
         member_card = None
         member_cards = customer.member_card
         for card in member_cards:
@@ -42,7 +42,14 @@ class ProceedCheckOut(Resource):
         brand_promotions = nesteddict()
         spu_promotions = nesteddict()
         sku_promotions = nesteddict()
-        global_promotions = {"global": {"skus": [], "promotions": Promotions.query.filter_by(scope=1, status=1).all()}}
+        global_promotions = {"global": {
+            "skus": [],
+            "promotions": Promotions.query.filter(Promotions.scope == 1,
+                                                  Promotions.status == 1,
+                                                  and_(Promotions.promotion_type != 4,
+                                                       Promotions.promotion_type != 7,
+                                                       Promotions.promotion_type != 8)).all()}
+        }
 
         def _check_promotions(the_promotions, key_, sku_, obj_, arg):
             """
@@ -55,18 +62,34 @@ class ProceedCheckOut(Resource):
             for k in ('skus', 'promotions'):
                 if not isinstance(the_promotions[obj_][k], list):
                     the_promotions[obj_][k] = list()
-            price = sku_.price * sku_.discount if member_card is None else sku_.member_price * member_card.discount
+
+            # 如果有套餐，则按照套餐价格计算
+            if arg.get('combo'):
+                combo_benefit = Benefits.query.get(arg.get('combo'))
+                price = combo_benefit.combo_price
+
+            # 如果没有会员折扣，按照原价计算
+            elif member_card is None:
+                price = sku_.price * sku_.discount
+
+            # 如果没有套餐，如果有会员卡切有会员折扣，则按照会员折扣价计算
+            else:
+                price = sku_.member_price * member_card.discount
+
             tmp = {"sku": sku_, "quantity": arg['quantity'], "price": price, "combo": arg.get('combo')}
             # 判断促销活动是否是秒杀
             if sku_.seckill_price:
                 tmp['seckill_price'] = sku_.seckill_price
 
             if obj_ != 'global':
+                # 20200725 需要修改，不比较套餐 优惠券活动
                 promotions = getattr(obj_, key_ + '_promotions')
+                if promotions:
+                    promotions = [promotion_ for promotion_ in promotions if promotion_.promotion_type not in (4, 7, 8)]
             else:
                 promotions = the_promotions[obj_]['promotions']
-            for pro in promotions:
 
+            for pro in promotions:
                 # 检查促销活动中和客户相关的条件是否符合
                 c1 = pro.status != 1
                 c2 = pro.first_order == 1 and not ShopOrders.query.filter_by(customer_id=customer.id, is_pay=1).first()
@@ -93,11 +116,15 @@ class ProceedCheckOut(Resource):
         #
         for sku in args:
             sku_obj = SKU.query.get(sku['id'])
+
+            # 活动字典 promotion dict
             pdict = {'sku': sku_obj,
                      'spu': sku_obj.the_spu,
                      'brand': sku_obj.the_spu.brand,
                      'classifies': sku_obj.the_spu.classifies,
                      'global': 'global'}
+
+            # 检查这个SKU 及对应的SPU 分类 品牌 或者全局是否有活动
             for key, obj in pdict.items():
                 _check_promotions(eval(key + '_promotions'), key, sku_obj, obj, sku)
 
@@ -194,3 +221,13 @@ class ProceedCheckOut(Resource):
                             pass
                         elif p.promotion_type == 5:
                             pass
+
+        return_result = list()
+        for skus in sku_promotions.values():
+            for sku in skus['skus']:
+                return_result.append({"sku_id": sku['sku'].id,
+                                      "quantity": sku['quantity'],
+                                      'price': str(sku['price']),
+                                      'total_price': str(sku['price'] * sku['quantity']),
+                                      'combo': sku['combo']})
+        return success_return(data=return_result)

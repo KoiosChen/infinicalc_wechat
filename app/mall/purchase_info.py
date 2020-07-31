@@ -1,9 +1,8 @@
-from flask_restplus import Resource, fields, reqparse
-from ..models import Brands, SKU, sku_standardvalue, ImgUrl, PurchaseInfo
+from flask_restplus import Resource, reqparse
+from ..models import SKU, PurchaseInfo
 from . import mall
-from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj
+from .. import db, logger
+from ..common import false_return, submit_return
 from ..decorators import permission_required
 from ..swagger import head_parser
 from .mall_api import mall_ns, return_json

@@ -1,11 +1,11 @@
 from flask import request
 from flask_restplus import Resource, reqparse
-from ..models import Customers, Permission, ExpressAddress
+from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards
 from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger
 from ..common import success_return, false_return, submit_return
-from ..public_method import table_fields, get_table_data, get_table_data_by_id
+from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
@@ -18,6 +18,7 @@ customers_ns = default_api.namespace('customers', path='/customers',
 
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('js_code', required=True, help='前端获取的临时code')
+login_parser.add_argument('shared_id', help="分享链接中分享者的customer id")
 
 bind_role_parser = reqparse.RequestParser()
 bind_role_parser.add_argument('role_id', required=True, type=int, help='customer_role表中的id')
@@ -114,6 +115,7 @@ class Login(Resource):
 
         wx_login = WxLogin(args['js_code'])
         response = wx_login.response
+        response['shared_id'] = args['shared_id']
         logger.debug(response)
         if 'errcode' in response.keys():
             return false_return(response, "请求失败"), 400
@@ -146,9 +148,8 @@ class CustomerRole(Resource):
             return false_return(f'变更目标角色ID: {args["role_id"]}不存在'), 400
 
 
-@customers_ns.route('/<string:customer_id>/express_address')
+@customers_ns.route('/express_address')
 @customers_ns.expect(head_parser)
-@customers_ns.param("customer_id", "customer's id")
 class CustomerExpressAddress(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.OPERATOR)
@@ -156,8 +157,9 @@ class CustomerExpressAddress(Resource):
         """
         指定ID用户快递地址
         """
+        current_user = kwargs['current_user']
         return success_return(
-            get_table_data_by_id(Customers, kwargs['customer_id'], ["express_addresses"], table_fields(Customers)))
+            get_table_data_by_id(Customers, current_user.id, ["express_addresses"], table_fields(Customers)))
 
     @customers_ns.doc(body=bind_express_addr_parser)
     @customers_ns.marshal_with(return_json)
@@ -179,9 +181,8 @@ class CustomerExpressAddress(Resource):
         return submit_return("添加地址成功", "添加地址失败")
 
 
-@customers_ns.route('/<string:customer_id>/<string:express_address_id>')
+@customers_ns.route('/<string:express_address_id>')
 @customers_ns.expect(head_parser)
-@customers_ns.param("customer_id", "customer's id")
 @customers_ns.param("express_address_id", "express global_address's id")
 class UpdateCustomerExpressAddress(Resource):
     @customers_ns.doc(body=update_express_addr_parser)
@@ -192,9 +193,10 @@ class UpdateCustomerExpressAddress(Resource):
         指定ID用户修改快递地址
         """
         args = update_express_addr_parser.parse_args()
+        current_user = kwargs['current_user']
         express_address = ExpressAddress.query.filter_by(id=kwargs['express_address_id'],
-                                                         sender=kwargs['customer_id']).first()
-        if not if_default(kwargs['customer_id'], args['force_default']):
+                                                         sender=current_user.id).first()
+        if not if_default(current_user.id, args['force_default']):
             return false_return("已存在默认地址")
 
         for k, v in args.items():
@@ -202,3 +204,4 @@ class UpdateCustomerExpressAddress(Resource):
                 setattr(express_address, k, v)
         db.session.add(express_address)
         return submit_return("修改地址成功", "修改地址失败")
+
