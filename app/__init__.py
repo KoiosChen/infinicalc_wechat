@@ -134,4 +134,10 @@ def create_app(config_name):
     from .obj_storage import obj_storage as obj_storage_blueprint
     app.register_blueprint(obj_storage_blueprint)
 
+    from .invitation_code import invitation_code as invitation_code_blueprint
+    app.register_blueprint(invitation_code_blueprint)
+
+    from .member_cards import member_cards as member_cards_blueprint
+    app.register_blueprint(member_cards_blueprint)
+
     return app

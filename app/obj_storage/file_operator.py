@@ -38,7 +38,8 @@ class OperateObject:
         self.store_result = self.cos_client.upload(self.object_key,
                                                    self.upload_object.stream if hasattr(self.upload_object,
                                                                                         'stream') else self.upload_object)
-        self.store_result['obj_type'] = args['obj_type']
+        if self.store_result['code'] != 'false':
+            self.store_result['obj_type'] = args['obj_type']
         logger.debug(self.store_result)
 
     def do_upload(self):
@@ -86,9 +87,11 @@ class ObjectStorageApi(Resource):
                 return false_return(message='非图片不可生成缩略图')
 
             original_obj = OperateObject(**args)
+            if original_obj.store_result.get('code') == 'false':
+                return false_return(message=str(original_obj.store_result)), 400
             upload_result = original_obj.do_upload()
             if upload_result.get("code") == 'false':
-                return upload_result
+                return false_return(data=upload_result), 400
 
             if args['thumbnail'] == 0:
                 return upload_result
@@ -102,7 +105,7 @@ class ObjectStorageApi(Resource):
             in_mem_file = io.BytesIO()
             im.save(in_mem_file, format=im.format)
             thumbnail_prefix = args['prefix'] + '/' if args['prefix'] else ""
-            thumbnail_prefix += 'thumbnails/'
+            thumbnail_prefix += 'thumbnails'
             upload_object_name = upload_object.filename.split('.')
             im.filename = '.'.join(upload_object_name[0:-1]) + '_thumbnail.' + upload_object_name[-1]
             thumbnail_args = {'file': in_mem_file.getvalue(), 'filename': im.filename, 'prefix': thumbnail_prefix,
@@ -113,7 +116,10 @@ class ObjectStorageApi(Resource):
                 upload_result['data']['thumbnail'] = thumbnail_upload_result['data']
                 original_data = ObjStorage.query.get(upload_result['data']['object_id'])
                 original_data.thumbnails.append(ObjStorage.query.get(thumbnail_upload_result['data']['object_id']))
-                return upload_result
+                if session_commit().get('code') == 'success':
+                    return upload_result
+                else:
+                    return false_return(message="缩略图添加数据库失败"), 400
             else:
                 original_obj.do_delete()
                 return false_return(message="缩略图上传失败，撤销所有上传")

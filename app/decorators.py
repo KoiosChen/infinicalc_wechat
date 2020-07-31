@@ -54,6 +54,7 @@ def permission_required(permission):
 
                     if current_user.get('code') == 'success' and 'logout' in permit:
                         kwargs['info'] = current_user['data']
+                        kwargs['current_user'] = current_user['data']['user']
                         return f(*args, **kwargs)
 
                     if current_user.get("code") == "success" and "admin" not in [r.name for r in

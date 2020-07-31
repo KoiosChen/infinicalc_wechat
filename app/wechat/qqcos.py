@@ -37,13 +37,12 @@ class QcloudCOS:
         # 2. 获取客户端对象
         self.client = CosS3Client(config)
 
-    def upload(self, object_key, body, acl="global_address-read", storage_class="STANDARD"):
+    def upload(self, object_key, body, storage_class="STANDARD"):
         try:
             response = self.client.put_object(
                 Bucket=self.__bucket_id,
                 Body=body,
                 Key=object_key,
-                ACL=acl,
                 StorageClass=storage_class
             )
             logger.debug(f">>> cos upload response {response}")
@@ -51,7 +50,7 @@ class QcloudCOS:
                       'url': self.scheme + "://" + self.url + '/' + object_key}
             return success_return(data=result, message=f"{response}")
         except Exception as e:
-            return false_return(e), 400
+            return false_return(e)
 
     def delete(self, object_key):
         response = self.client.delete_object(

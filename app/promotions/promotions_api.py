@@ -68,8 +68,8 @@ add_combo_parser.add_argument('benefits', required=True, type=combo_type, locati
                               help='传递套餐价格，以及套餐中捆绑产品的sku list。list中只允许多个json. '
                                    'list中json格式为：{"combo_price": float, "gifts": list}')
 add_combo_parser.replace_argument('sku', type=list,
-                                      help='套餐SKU,传递sku表的ID, 举例：[{"id":"730aa99e-1fe8-425c-b44e-6c82100dd53f"}]',
-                                      required=True, location='json')
+                                  help='套餐SKU,传递sku表的ID, 举例：[{"id":"730aa99e-1fe8-425c-b44e-6c82100dd53f"}]',
+                                  required=True, location='json')
 
 add_combo_parser.remove_argument('accumulation')
 add_combo_parser.remove_argument('brands')

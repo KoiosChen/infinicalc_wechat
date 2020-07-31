@@ -56,6 +56,10 @@ def authenticate(login_ip, **kwargs):
     new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
     customer = new_customer['obj']
 
+    # 如果父级id为空，那么将此次父级id作为自己的父级
+    if not customer.parent_id and kwargs.get('shared_id'):
+        customer.parent_id = Customers.query.filter(openid=kwargs['shared_id']).first().id
+
     # 查询并删除已经登陆的信息
     logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()
     for lg in logged_in_info:
