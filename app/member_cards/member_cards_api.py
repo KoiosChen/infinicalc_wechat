@@ -22,6 +22,21 @@ def create_member_card_num():
         random.randint(1000, 9999))
 
 
+member_cards_parser = page_parser.copy()
+
+
+@members_ns.route("")
+@members_ns.expect(head_parser)
+class MemberCards(Resource):
+    @members_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """
+        提交邀请码，升级用户类型
+        """
+        return success_return(get_table_data(MemberCards))
+
+
 @members_ns.route("/<string:invitation_code>")
 @members_ns.expect(head_parser)
 @members_ns.param("invitation_code", "邀请码")
@@ -30,7 +45,7 @@ class InviteToBeMember(Resource):
     @permission_required(Permission.USER)
     def post(self, **kwargs):
         """
-        提交邀请码，升级用户类型
+        提交邀请码，升级用户类型。若原先没有会员卡，升级成功后会自动生成一张会员卡，且等级为邀请码对应的等级
         """
         current_user = kwargs['current_user']
         today = datetime.datetime.now()

@@ -586,18 +586,41 @@ class SKU(db.Model):
     shopping_cart = db.relationship('ShoppingCart', backref='desire_skus', lazy='dynamic')
 
 
+# class RebatesGroup(db.Model):
+#     """一组返佣表，与SKU关联。返佣表group中的与rebates表多对多关系"""
+#     pass
+
+
 class Rebates(db.Model):
+    """
+    invitor 指提供邀请码的用户，可以是公司市场部，也可以是一级代理。 邀请码都由后台统一生成
+    parent 用来关联分享链接的上下级关系，用来锁定上下级；
+    例如：
+    1. 一级代理A 分享给未使用过商城的B， B成为商城的直客，成为A的下游，所有B的消费，A提成30%
+    2. A某日说服B成为二级代理，A提供B升级邀请码，B成为二级后，A获取B销售额的10%
+    3. B 某日想成为一级代理，A向总公司申请一级代理邀请码，分配给B，B的销售提成和A脱钩， A获取一次性费用3万元。此处预留，以后可能不脱钩，留1%的提成
+    4. A的直客封坛，A返佣10%； B（二级）的用户或者自己封坛，B返佣10%， A也同样有销售额的10%提成（符合销售管理奖金10%的规则）
+    5. B某日发展了用户C为二级， B提成C的销售额的5%， A也同样提成C的销售额的5% 。 C的提成政策按照二级代理计算
+    6. C某日发展了用户D为二级， C提成D的销售额的5%， B没有提成，A提成D的销售额的5% 。
+    7. B邀请C，C邀请D的邀请码，平台默认给每个二级代理10个二级代理邀请码
+    8. B某日邀请用户E为一级， B或者E 直接咨询客户，客户联系对接E，进行沟通审核后分配一级代理邀请码 成功后B获取一次性佣金3万元
+    9. 总部路演等方式，招的一级代理，或者二级代理，都挂在市场部账号下。市场部账号为一级代理。市场部拓展的渠道始终由市场部管理。
+    10. 二级代理自己消费，或者其下游直客消费，提成20%， 封坛佣金10% 。
+    11. 直客也可邀请用户成为二级或者一级，直接找自己上级或者客服咨询
+    12. 关于邀请码的规则，一级代理商邀请码都由总部市场部发出； 二级邀请码，代理商都可以发，默认给10个，不够了找客服申请
+    """
     __tablename__ = 'rebates'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64), comment="用来命名返佣表名称，例如‘封坛返佣’， 用来表示封坛类SKU的返佣，SKU表中外键关联此表")
     member_type = db.Column(db.SmallInteger, comment='0: 直客，1: 代理')
     member_grade = db.Column(db.SmallInteger, comment='1: 一级代理， 2： 二级代理；直客忽略此字段')
-    invitor_grade = db.Column(db.SmallInteger, default=1, comment="1 表示上级发展来下的下级，0，表示平级或者下级发展来的代理")
+    parent_grade = db.Column(db.SmallInteger, default=1, comment="1 表示上级发展来的下级，0，表示平级或者下级发展来的代理")
     self_rebate = db.Column(db.DECIMAL(5, 2), comment='填写百分比，譬如30.00, 表示返佣30%')
-    # 如果是C，只有invitor，父级邀请者为代理商，即member_type是1，则会计算父级返佣；如果invitor是C，那么上游的C会得到积分或者返佣
-    parent_rebate = db.Column(db.DECIMAL(5, 2), comment='父级返佣比例')
-    grandparent_rebate = db.Column(db.DECIMAL(5, 2), comment='祖父级返佣比例')
-    invitor_second_level_rebate = db.Column(db.DECIMAL(5, 2), comment='邀请者返佣比例，目前指邀请成功的二级 5%')
-    invite_first_level_bonus = db.Column(db.DECIMAL(7, 2), comment='成功邀请一个一级的奖金')
+    # 如果是C，只有parent，父级邀请者为代理商，即member_type是1，则会计算父级返佣；如果invitor是C，那么上游的C会得到积分或者返佣
+    invitor_rebate = db.Column(db.DECIMAL(5, 2), comment='父级返佣比例')
+    grandinvitor_rebate = db.Column(db.DECIMAL(5, 2), comment='祖父级返佣比例')
+    share_second_level_rebate = db.Column(db.DECIMAL(5, 2), comment='链接分享成为上下级，分享者返佣比例，目前指分享成功且成为二级 5%')
+    share_first_level_bonus = db.Column(db.DECIMAL(7, 2), comment='链接分享成为上下级，且成功邀请一个一级的奖金')
     c_to_c_bonus_score = db.Column(db.DECIMAL(5, 2), comment='c to c 可获取的奖励积分, 这里的百分比是消费额的百分比作为积分')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
