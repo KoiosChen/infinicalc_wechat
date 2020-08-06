@@ -44,20 +44,21 @@ update_user_parser.add_argument('true_name', help='真实姓名', location='json
 update_user_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
 update_user_parser.add_argument('password', help='密码', location='json')
 update_user_parser.add_argument('role_id', type=list, location='json', help='选择的结果，role可多选，例如[1,2]')
-update_user_parser.add_argument('address', location='json', help='用户地址')
+update_user_parser.add_argument('global_address', location='json', help='用户地址')
 update_user_parser.add_argument('Authorization', required=True, location='headers')
 
 return_json = users_ns.model('ReturnRegister', return_dict)
 
-page_parser.add_argument('Authorization', required=True, location='headers')
-page_parser.add_argument('phone', help='搜索phone字段', location='args')
+user_page_parser = page_parser.copy()
+user_page_parser.add_argument('Authorization', required=True, location='headers')
+user_page_parser.add_argument('phone', help='搜索phone字段', location='args')
 
 
 @users_ns.route('')
 class QueryUsers(Resource):
     @users_ns.marshal_with(return_json)
     @permission_required("app.users.users_api.users_info")
-    @users_ns.expect(page_parser)
+    @users_ns.expect(user_page_parser)
     def get(self, info):
         """
         获取后端用户信息

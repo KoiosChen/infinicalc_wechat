@@ -3,7 +3,7 @@ import datetime
 import time
 from ..models import Users, Elements, LoginInfo
 from .. import db, logger, SECRET_KEY
-from ..common import success_return, false_return, session_commit, code_return
+from ..common import success_return, false_return, session_commit, code_return, sort_by_order
 from ..public_method import new_data_obj
 from sqlalchemy import or_
 from ..public_method import table_fields, get_table_data_by_id
@@ -96,14 +96,7 @@ def authenticate(username, password, login_ip, platform, method='password'):
         ru = get_table_data_by_id(Users, user_info.id, ["roles", "menus"], ["password_hash"])
         menus = ru.pop('menus')
 
-        def sort_menus(ms):
-            for el in ms:
-                if el.get('children'):
-                    sort_menus(el['children'])
-                    el["children"].sort(key=lambda x: x['order'])
-
-
-        sort_menus(menus)
+        sort_by_order(menus)
 
         # permissions = ru.pop['permissions']
         return success_return(data={'token': token, 'menus': menus, 'permissions': permissions, 'user': ru},

@@ -5,7 +5,7 @@ from ..models import Elements, LoginInfo, Customers
 from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 from ..public_method import table_fields, get_table_data_by_id
 
 
@@ -44,61 +44,46 @@ def encode_auth_token(user_id, login_time, login_ip, platform):
         return false_return(message=str(e))
 
 
-def authenticate(username, password, login_ip, platform, method='password'):
+def authenticate(login_ip, **kwargs):
     """
-    用户登录，登录成功返回token，将登录时间写入数据库；登录失败返回失败原因
-    :param username: 用户名、邮箱或者手机号
-    :param password: 用户密码，或者是手机验证码
+    前端用户登录，目前只针对微信小程序环境
+    :param kwargs: code2session接口返回的json
     :param login_ip: 用户发起请求的IP
-    :param platform: pc | mobile
-    :param method: default is password, or else use code
-    code: using the phone number as username, cell phone message as password
-    wechat: using wechat id as login username , password=?
     :return: json
     """
-    verify_method = {
-        'password': {"method": "verify_password", 'msg': '用户名密码不正确'},
-        'code': {'method': 'verify_code', 'msg': '验证码错误'}
-    }
+    open_id = kwargs['openid']
+    session_key = kwargs['session_key']
+    new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
+    customer = new_customer['obj']
 
-    user_info = Customers.query.filter(or_(Customers.username.__eq__(username),
-                                           Customers.phone.__eq__(username),
-                                           Customers.email.__eq__(username)), Customers.status.__eq__(1)).first()
-
-    if user_info is None:
-        return false_return('', '找不到用户'), 400
+    # 如果父级id为空，那么将此次父级id作为自己的父级
+    if not customer.parent_id and kwargs.get('shared_id'):
+        customer.parent_id = Customers.query.filter(openid=kwargs['shared_id']).first().id
 
     # 查询并删除已经登陆的信息
-    logged_in_info = user_info.login_info.filter_by(platform=platform, status=True).all()
+    logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()
     for lg in logged_in_info:
         db.session.delete(lg)
     session_commit()
 
-    if getattr(user_info, verify_method[method]['method'])(password):
-        login_time = int(time.time())
-        token = encode_auth_token(user_info.id, login_time, login_ip, platform).decode()
+    login_time = int(time.time())
 
-        new_data_obj("LoginInfo",
-                     **{
-                         'token': token,
-                         'login_time': login_time,
-                         'login_ip': login_ip,
-                         'platform': platform,
-                         'customer': user_info.id,
-                         'status': True
-                     }
-                     )
-        # db.session.add(user_info)
-        session_commit()
-        permissions = [u.permission for u in user_info.permissions if u.permission is not None]
+    new_data_obj("LoginInfo",
+                 **{
+                     'token': session_key,
+                     'login_time': login_time,
+                     'login_ip': login_ip,
+                     'customer': customer.id,
+                     'platform': 'wechat',
+                     'status': True
+                 }
+                 )
+    db.session.add(customer)
+    session_commit()
 
-        ru = get_table_data_by_id(Customers, user_info.id, ["roles", "menus"], ["password_hash"])
-        menus = ru.pop('menus')
+    ru = get_table_data_by_id(Customers, customer.id, ["role"], ["role_id"])
 
-        return success_return(data={'token': token, 'elements': menus, 'permissions': permissions,
-                                    'user_info': ru}, message='登录成功')
-    else:
-        return false_return(message=verify_method[method]['msg']), 400
+    return success_return(data={'customer_info': ru, 'session_key': session_key}, message='登录成功')
 
 
 def decode_auth_token(auth_token):

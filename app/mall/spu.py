@@ -1,9 +1,9 @@
 from flask_restplus import Resource, fields, reqparse
 from ..models import SPU, Standards, spu_standards
-from . import mall
+from . import mall, image_operate
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj, get_table_data
+from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
@@ -13,6 +13,11 @@ add_spu_parser.add_argument('name', required=True, help='SPU的名称，例如iP
 add_spu_parser.add_argument('sub_name', help='SPU子标题，可为空')
 add_spu_parser.add_argument('brand_id', required=True, help='品牌，如：苹果。从/brands接口获取')
 add_spu_parser.add_argument('classify_id', required=True, help='分类，如：手机。 从/classifies接口获取')
+add_spu_parser.add_argument('express_fee', type=float, help='快递费')
+add_spu_parser.add_argument('contents', help='富文本内容')
+add_spu_parser.add_argument('status', help='是否上架 1：上架 0：下架')
+add_spu_parser.add_argument('objects', type=list, help='spu对应的所有图片或视频', location='json')
+
 # add_spu_parser.add_argument('standards', type=list, location='json',
 #                             help='此SPU相关的产品规格，用list传递，包含规格的ID， 用/standards接口获取')
 
@@ -36,7 +41,8 @@ class SPUApi(Resource):
         获取全部SPU
         """
         args = page_parser.parse_args()
-        return success_return(get_table_data(SPU, args, ['sku']))
+        return success_return(
+            get_table_data(SPU, args, ['sku', 'brand', 'classifies', 'standards'], ['brand_id', 'classify_id']))
 
     @mall_ns.doc(body=add_spu_parser)
     @mall_ns.marshal_with(return_json)
@@ -51,9 +57,17 @@ class SPUApi(Resource):
         new_one = new_data_obj("SPU", **{"name": args['name'],
                                          "sub_name": args.get('sub_name'),
                                          "brand_id": args['brand_id'],
-                                         "classify_id": args['classify_id']})
-        return submit_return(f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}",
-                             f"SPU {args['name']} 添加失败")
+                                         "classify_id": args['classify_id'],
+                                         "contents": args['contents'],
+                                         "status": args['status'],
+                                         "express_fee": args['express_fee']
+                                         })
+        append_image = image_operate.operate(new_one['obj'], args['objects'], "append")
+        if append_image.get("code") == 'success':
+            return submit_return(f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}",
+                                 f"SPU {args['name']} 添加失败")
+        else:
+            return false_return("图片添加失败")
 
 
 @mall_ns.route('/spu/<string:spu_id>')
@@ -65,19 +79,10 @@ class PerSPUApi(Resource):
         """
         获取指定ID的SPU
         """
-        fields_ = table_fields(SPU)
-        fields_.extend(["sku", "standards"])
-        p = SPU.query.get(kwargs['spu_id'])
-        tmp = dict()
-        for f in fields_:
-            if f == 'sku':
-                tmp[f] = [{'id': s.id, 'name': s.name} for s in p.sku]
-            elif f == 'standards':
-                tmp[f] = [{'id': s.id, 'name': s.name} for s in p.standards]
-            else:
-                tmp[f] = getattr(p, f)
-
-        return success_return(tmp, "")
+        return success_return(get_table_data_by_id(SPU,
+                                                   kwargs['spu_id'],
+                                                   ['sku', 'brand', 'classifies', 'standards'],
+                                                   ['brand_id', 'classify_id']))
 
     @mall_ns.marshal_with(return_json)
     @permission_required("app.mall.sku.delete_spu")

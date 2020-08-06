@@ -30,19 +30,20 @@ query_element_parser.add_argument('role_id', help='要查询的角色ID(Roles.id
 
 return_json = roles_ns.model('ReturnRegister', return_dict)
 
-page_parser.add_argument('Authorization', required=True, location='headers')
+role_page_parser = page_parser.copy()
+role_page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @roles_ns.route('')
 class RoleApi(Resource):
-    @roles_ns.expect(page_parser)
+    @roles_ns.expect(role_page_parser)
     @roles_ns.marshal_with(return_json)
     @permission_required("app.users.roles_api.query_roles")
     def get(self, info):
         """
         获取所有角色列表
         """
-        args = page_parser.parse_args()
+        args = role_page_parser.parse_args()
         return success_return(
             get_table_data(Roles, args, ['elements']),
             "请求成功"
