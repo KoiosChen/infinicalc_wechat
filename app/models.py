@@ -94,6 +94,20 @@ promotions_classifies = db.Table('promotions_classifies',
                                            primary_key=True),
                                  db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+sku_rebatesgroup = db.Table('sku_rebatesgroup',
+                            db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'),
+                                      primary_key=True),
+                            db.Column('rebates_group', db.String(64), db.ForeignKey('rebates_group.id'),
+                                      primary_key=True),
+                            db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+rebatesgroup_rebate = db.Table('rebatesgroup_rebate',
+                               db.Column('rebatesgroup_id', db.String(64), db.ForeignKey('rebates_group.id'),
+                                         primary_key=True),
+                               db.Column('rebates_id', db.String(64), db.ForeignKey('rebates.id'),
+                                         primary_key=True),
+                               db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 
 class Permission:
     READER = 0x01
@@ -569,6 +583,11 @@ class SKU(db.Model):
         secondary=sku_obj,
         backref=db.backref('obj_sku')
     )
+    rebate_group = db.relationship(
+        'RebatesGroup',
+        secondary=sku_rebatesgroup,
+        backref=db.backref('purchased_item')
+    )
     status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
@@ -586,9 +605,22 @@ class SKU(db.Model):
     shopping_cart = db.relationship('ShoppingCart', backref='desire_skus', lazy='dynamic')
 
 
-# class RebatesGroup(db.Model):
-#     """一组返佣表，与SKU关联。返佣表group中的与rebates表多对多关系"""
-#     pass
+class RebatesGroup(db.Model):
+    """
+    一组返佣表，与SKU关联。返佣表group中的与rebates表多对多关系.
+    例如SKU A 一级返佣规则  二级返佣规则 推荐规则等
+    """
+    __tablename__ = "rebates_group"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(100), comment="返佣组的名称")
+    rebates = db.relationship(
+        'Rebates',
+        secondary=rebatesgroup_rebate,
+        backref=db.backref('groups')
+    )
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class Rebates(db.Model):

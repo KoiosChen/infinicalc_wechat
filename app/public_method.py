@@ -101,12 +101,12 @@ def __make_table(fields, table, strainer=None):
             t1 = getattr(table, f)
             for value in t1:
                 if value.thumbnails:
-                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type,
+                    tmp1.append({'id': value.id, 'url': value.login_url, 'obj_type': value.obj_type,
                                  'thumbnail': {'id': value.thumbnails[0].id,
-                                               'url': value.thumbnails[0].url,
+                                               'url': value.thumbnails[0].login_url,
                                                'obj_type': value.thumbnails[0].obj_type}})
                 else:
-                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
+                    tmp1.append({'id': value.id, 'url': value.login_url, 'obj_type': value.obj_type})
             tmp[f] = tmp1
         elif f == 'values':
             tmp1 = list()
@@ -116,7 +116,7 @@ def __make_table(fields, table, strainer=None):
             tmp[f] = tmp1
         elif f == 'banner_contents':
             t1 = getattr(table, f)
-            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
+            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.login_url}
         elif f == 'brand':
             tmp[f] = get_table_data_by_id(Brands, table.brand.id)
         elif f == 'classifies':
