@@ -8,5 +8,5 @@ from app.type_validation import checkout_sku_type
 from collections import defaultdict
 import datetime
 from decimal import Decimal
-from .place_order import shopping_cart_ns, return_json
+from .shop_cart_api import shopping_cart_ns, return_json
 

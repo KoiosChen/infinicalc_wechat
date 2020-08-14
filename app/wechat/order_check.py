@@ -1,46 +1,12 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
+    WEIXIN_KEY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
-import logging
 import xmltodict
-import pymysql
 import uuid
 import json
 import requests
-
 from hashlib import md5
-
-MYSQL = dict(
-    host='127.0.0.1', user='mysql_user', passwd='mysql_pwd', db='mydb', charset="utf8mb4"
-)
-logger = logging.getLogger(__name__)
-conn = pymysql.connect(**MYSQL)
-cur_dict = conn.cursor(pymysql.cursors.DictCursor)
-cur = conn.cursor()
-
-###############################################
-#############    微信支付配置   #################
-###############################################
-# 微信支付APP_ID
-WEIXIN_APP_ID = 'wx91f04ffbf8a23431'
-# 微信支付MCH_ID 【登录账号】
-WEIXIN_MCH_ID = '1535411231'
-# 微信支付sign_type
-WEIXIN_SIGN_TYPE = 'MD5'
-# 服务器IP地址
-WEIXIN_SPBILL_CREATE_IP = '32.23.11.34'
-# 微信支付用途
-WEIXIN_BODY = '费用充值'
-# 微信KEY值 【API密钥】
-WEIXIN_KEY = 'ZiwcVpWomDqixQdhRgm5FpBKNXqwasde'
-# 微信统一下单URL
-WEIXIN_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
-# 微信查询订单URL
-WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
-# 微信支付回调API
-WEIXIN_CALLBACK_API = 'http://xxxx.com/weixinpay_rollback/'
 
 
 def update_order(data):

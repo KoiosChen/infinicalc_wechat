@@ -3,6 +3,8 @@ from .models import *
 from time import sleep
 from sqlalchemy import or_, and_
 import datetime
+import app.wechat.wechat_config as wechat
+import traceback
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -26,6 +28,7 @@ def new_data_obj(table, **kwargs):
             db.session.flush()
         except Exception as e:
             logger.error(f'create {table} fail {kwargs} {e}')
+            traceback.print_exc()
             db.session.rollback()
             return False
     else:
@@ -101,12 +104,12 @@ def __make_table(fields, table, strainer=None):
             t1 = getattr(table, f)
             for value in t1:
                 if value.thumbnails:
-                    tmp1.append({'id': value.id, 'url': value.login_url, 'obj_type': value.obj_type,
+                    tmp1.append({'id': value.id, 'url': wechat.login_url, 'obj_type': value.obj_type,
                                  'thumbnail': {'id': value.thumbnails[0].id,
-                                               'url': value.thumbnails[0].login_url,
+                                               'url': wechat.login_url,
                                                'obj_type': value.thumbnails[0].obj_type}})
                 else:
-                    tmp1.append({'id': value.id, 'url': value.login_url, 'obj_type': value.obj_type})
+                    tmp1.append({'id': value.id, 'url': wechat.login_url, 'obj_type': value.obj_type})
             tmp[f] = tmp1
         elif f == 'values':
             tmp1 = list()
@@ -116,7 +119,7 @@ def __make_table(fields, table, strainer=None):
             tmp[f] = tmp1
         elif f == 'banner_contents':
             t1 = getattr(table, f)
-            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.login_url}
+            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": wechat.login_url}
         elif f == 'brand':
             tmp[f] = get_table_data_by_id(Brands, table.brand.id)
         elif f == 'classifies':
@@ -133,6 +136,9 @@ def __make_table(fields, table, strainer=None):
         elif '_promotions' in f:
             tmp[f] = [{'id': p.id, 'name': p.name, 'type': p.promotion_type} for p in getattr(table, f) if
                       p.start_time <= datetime.datetime.now() <= p.end_time]
+        elif f == 'gifts':
+            tmp[f] = [get_table_data_by_id(SKU, g.sku, appends=['values', 'objects', 'sku_promotions']) for g in
+                      table.gifts]
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -202,4 +208,7 @@ def get_table_data(table, args, appends=[], removes=[]):
 def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
     fields = table_fields(table, appends, removes)
     t = table.query.get(key_id)
-    return __make_table(fields, t, strainer)
+    if t:
+        return __make_table(fields, t, strainer)
+    else:
+        return {}

@@ -63,6 +63,7 @@ ssender = SmsSingleSender(appid, appkey)
 
 coupon_lock = threading.Lock()
 order_lock = threading.Lock()
+sku_lock = threading.Lock()
 
 
 def create_app(config_name):
@@ -139,5 +140,8 @@ def create_app(config_name):
 
     from .member_cards import member_cards as member_cards_blueprint
     app.register_blueprint(member_cards_blueprint)
+
+    from .wechat import wechat as wechat_blueprint
+    app.register_blueprint(wechat_blueprint)
 
     return app

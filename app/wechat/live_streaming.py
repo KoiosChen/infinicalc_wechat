@@ -1,4 +1,4 @@
-from app.wechat import app_secret, app_id, broadcast_url, upload_url, access_token_url
+from app.wechat.wechat_config import app_id, app_secret, broadcast_url, upload_url, access_token_url
 from app.wechat.access_token import get_token
 import datetime
 import requests

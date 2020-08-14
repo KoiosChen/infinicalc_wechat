@@ -13,8 +13,9 @@ return_json = orders_ns.model('ReturnRegister', return_dict)
 
 checkout_parser = reqparse.RequestParser()
 checkout_parser.add_argument('sku', required=True, type=checkout_sku_type,
-                             help="{'id': {'required': True, 'type': str}, "
-                                  " 'quantity': {'required': True, 'type': float}}", location='json')
+                             help="""传递数组，其中的元素为json：{'id': {'required': True, 'type': str},
+                                    'quantity': {'required': True, 'type': int}}""",
+                             location='json')
 checkout_parser.add_argument('desc', help='促销活动描述')
 checkout_parser.add_argument('group_id', required=True,
                              help='组ID， 0 为特殊组，特殊组和任何组不互斥。group_id 为-1表示是发优惠券，>=0的group，为活动')

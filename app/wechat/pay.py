@@ -1,9 +1,10 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from .. import logger, db, redis_db
-from app.models import ShopOrders
+from app import logger, db, redis_db, sku_lock
+from app.models import ShopOrders, Benefits, ShoppingCart
+from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
+    WEIXIN_KEY, \
+    WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
-import logging
 import uuid
 import requests
 import json
@@ -12,29 +13,14 @@ import time
 import datetime
 import random
 from hashlib import md5
-
-# 微信支付APP_ID
-WEIXIN_APP_ID = 'wx91f04ffbf8a23431'
-# 微信支付MCH_ID 【登录账号】
-WEIXIN_MCH_ID = '1535411231'
-# 微信支付sign_type
-WEIXIN_SIGN_TYPE = 'MD5'
-# 服务器IP地址
-WEIXIN_SPBILL_CREATE_IP = 'www.winestar.com'
-# 微信支付用途
-WEIXIN_BODY = '费用充值'
-# 微信KEY值 【API密钥】
-WEIXIN_KEY = 'ZiwcVpWomDqixQdhRgm5FpBKNXqwasde'
-# 微信统一下单URL
-WEIXIN_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
-# 微信查询订单URL
-WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
-# 微信支付回调API
-WEIXIN_CALLBACK_API = 'https://wechat.winestar.club/weixinpay_callback/'
+from app.public_method import new_data_obj
+from app.common import submit_return, success_return, false_return, session_commit
+from app.mall.sku import compute_quantity
+import threading
 
 
-def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None):
-    order_info = {'appid': WEIXIN_APP_ID,
+def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid=None):
+    order_info = {'appid': app_id,
                   'mch_id': WEIXIN_MCH_ID,
                   'device_info': 'WEB',
                   'nonce_str': '',
@@ -44,11 +30,12 @@ def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None):
                   'total_fee': total_fee,
                   'spbill_create_ip': WEIXIN_SPBILL_CREATE_IP,
                   'notify_url': notify_url,
-                  'trade_type': 'APP'}
+                  'trade_type': 'JSAPI',
+                  'openid': openid}
     return order_info
 
 
-def make_payment_request_wx(notify_url, out_trade_no, total_fee):
+def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid):
     """
     微信统一下单，并返回客户端数据
     :param notify_url: 回调地址
@@ -59,7 +46,7 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee):
 
     def generate_call_app_data(params_dict, prepay_id):
         """
-        客户端APP的数据参数包装
+        将组合数据再次签名，客户端APP的数据参数包装
         """
         request_order_info = {
             'appId': params_dict['appid'],
@@ -100,12 +87,13 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee):
         """
         data = generate_request_data(params_dict)
         headers = {'Content-Type': 'application/xml'}
-        res = requests.post(unified_order_url, data=data, headers=headers)
-        if res.status_code == 200:
-            result = json.loads(json.dumps(xmltodict.parse(res.content)))
+        req = requests.post(unified_order_url, data=data, headers=headers)
+        if req.status_code == 200:
+            result = json.loads(json.dumps(xmltodict.parse(req.content)))
             xml_content = result['xml']
             if xml_content['return_code'] == 'SUCCESS' and xml_content['result_code'] == 'SUCCESS':
-                prepay_id = result['xml']['prepay_id']
+                prepay_id = xml_content['prepay_id']
+                # 将组合数据再次签名
                 return generate_call_app_data(params_dict, prepay_id), result['xml']
             elif xml_content['return_code'] == 'SUCCESS':
                 return result['xml']['return_msg'], None
@@ -114,86 +102,127 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee):
         return None, None
 
     if float(total_fee) < 0.01:
-        raise Exception('充值金额不能小于0.01')
-    payment_info = make_payment_info(notify_url=notify_url, out_trade_no=out_trade_no, total_fee=total_fee)
+        raise Exception('金额不能小于0.01')
+
+    # 返回统一下单接口请求参数
+    payment_info = make_payment_info(notify_url=notify_url,
+                                     out_trade_no=out_trade_no,
+                                     total_fee=total_fee,
+                                     openid=openid)
+
+    # 统一下单接口提交请求
     res, info = make_payment_request(payment_info, WEIXIN_UNIFIED_ORDER_URL)
     return res, info
 
 
-def create_order(data, out_trade_no):
+def create_order(**kwargs):
     """
-    创建订单信息，存入库中
+    用于生成订单，此时还未支付
+    :param kwargs:
     :return:
     """
-    insert_sql = ''' insert into {table}(status, app_id, seller_id, device_info, trade_type, prepay_id, trade_status, 
-    out_trade_no, total_amount) 
-     values (3, '{app_id}', '{seller_id}', '{device_info}', '{trade_type}', '{prepay_id}', '{trade_status}', 
-     '{out_trade_no}', '{total_amount}')'''
 
-    app_id = data['appid']  # 应用ID
-    seller_id = data['mch_id']  # 商户号
-    device_info = data['device_info']  # 微信支付分配的终端设备号
-    trade_status = data['result_code']  # 业务结果 SUCCESS/FAIL
-    total_amount = data['total_amount']  # 总金额
-    if trade_status == "SUCCESS":
-        trade_type = data['trade_type']  # 交易类型
-        prepay_id = data['prepay_id']  # 预支付交易会话标识
-        insert_sql = insert_sql.format(
-            app_id=app_id,
-            seller_id=seller_id,
-            device_info=device_info,
-            trade_type=trade_type,
-            prepay_id=prepay_id,
-            trade_status=trade_status,
-            out_trade_no=out_trade_no,
-            total_amount=total_amount / 100  # 将微信的分转为元
-        )
-        cur_dict.execute(insert_sql)
-        return True
+    def __do_create(create_info, op_key, lock):
+        if lock.acquire():
+            try:
+                order_info = create_info.get('order_info')
+                new_order = new_data_obj("ShopOrders", **order_info)
+                if not new_order:
+                    raise Exception("订单创建失败，订单号创建失败")
+                if not new_order['status']:
+                    return success_return(data=new_order['obj'].id, message='订单已存在')
+
+                for item in create_info.get('select_items'):
+                    item_obj = ShoppingCart.query.get(item)
+                    if not item_obj:
+                        raise Exception(f"购物车中{item}不存在")
+                    sku = item_obj.desire_skus
+                    if not sku or not sku.status or sku.delete_at:
+                        raise Exception(f"购物车对应商品不存在")
+
+                    item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
+                                  "item_quantity": item_obj.quantity, "item_price": sku.price,
+                                  "transaction_price": sku.price}
+                    new_item_order = new_data_obj("ItemsOrders", **item_order)
+
+                    if new_item_order and new_item_order.get('status'):
+                        # 此处调用修改sku数量方法，数量传递为负数，因为这里一定是减少
+                        change_result = compute_quantity(sku, -item_obj.quantity)
+
+                        # 如果change_result是false， 那么表明出货失败
+                        if change_result.get("code") == "false":
+                            raise Exception(json.dumps(change_result))
+
+                        # 如果这个sku有相关的促销活动，则记录
+                        if item_obj.combo:
+                            new_item_order['obj'].benefits.append(Benefits.query.get(item_obj.combo))
+
+                    else:
+                        raise Exception("订单创建失败")
+                if session_commit().get("code") == 'false':
+                    raise Exception("订单创建失败，因为事务提交失败")
+            except Exception as e:
+                redis_db.set(f"create_order::{create_info['order_info']['customer_id']}::{op_key}",
+                             json.dumps(false_return(message=str(e))),
+                             ex=6000)
+            finally:
+                lock.release()
+
+    operate_key = str(uuid.uuid4())
+    create_thread = threading.Thread(target=__do_create, args=(kwargs, operate_key, sku_lock))
+    create_thread.start()
+    create_thread.join()
+    k = f"create_order::{kwargs['order_info']['customer_id']}::{operate_key}"
+    if redis_db.exists(k):
+        result = json.loads(redis_db.get(k))
+        redis_db.delete(k)
+        return result
     else:
-        return False
+        for i in kwargs['select_items']:
+            cart = ShoppingCart.query.get(i)
+            cart.delete_at = datetime.datetime.now()
+            db.session.add(cart)
+        db.session.commit()
+        return success_return(message=f"创建订单成功")
 
 
-def create_order_number():
-    """
-    生成订单号
-    :return:
-    """
-    date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
-    # 生成4为随机数作为订单号的一部分
-    random_str = str(random.randint(1, 9999))
-    random_str = random_str.rjust(4, '0')
-    rtn = '%s%s%s' % (date, random_str)
-    return rtn
-
-
-def weixin_create_order(request):
+def weixin_pay(out_trade_no, price, openid):
     """
     【API】: 创建订单,供商户app调用
     """
-    res = {
-        'code': 1,
-        'msg': 'error'
-    }
+    order = ShopOrders.query.get(out_trade_no)
     try:
-        price = 0.99  # 0.99元，微信的单位为分，需要转为分
-        out_trade_no = create_order_number()
-        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100))
+        # 后台提交支付请求
+        if not order:
+            raise Exception(f"订单 {out_trade_no} 不存在")
+        if order.is_pay == 1 and order.pay_time:
+            raise Exception(f"订单 {out_trade_no} 已支付")
+        if order.is_pay == 3 and not order.pay_time:
+            raise Exception(f"订单 {out_trade_no} 支付中")
+        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API,
+                                                   out_trade_no,
+                                                   int(price * 100),
+                                                   openid)
         if order_info and info:
             info['total_amount'] = int(price * 100)
             if info['result_code'] == "SUCCESS":
+                # 在返回小程序的package中增加订单号
                 order_info['out_trade_no'] = out_trade_no
-                res['order_info'] = order_info
-                create_order(info, out_trade_no)
+                order.is_pay = 3
+                order.pre_pay_time = datetime.datetime.now()
+                db.session.add(order)
+                session_commit()
+                return success_return(data=order_info, message="订单预付id获取成功")
             # 调用统一创建订单接口失败
             else:
-                res['msg'] = info['result_code']
+                raise Exception(info['result_code'])
         elif order_info:
-            res['msg'] = order_info
-            res['code'] = -1
+            raise Exception(order_info)
         else:
-            res['code'] = -2
-    except Exception:
+            raise Exception("请求无响应")
+    except Exception as e:
         traceback.print_exc()
-    finally:
-        return json.dumps(res)
+        order.is_pay = 2
+        db.session.add(order)
+        session_commit()
+        return false_return(message=f"支付失败，{e}")
