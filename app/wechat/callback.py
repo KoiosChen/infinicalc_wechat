@@ -1,49 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
+from app import logger, redis_db, db
+from app.models import ShopOrders
+from . import wechat
+from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
+    WEIXIN_KEY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
 import logging
 import xmltodict
 import pymysql
-
+from flask import request, jsonify
 from hashlib import md5
+from app.common import submit_return, false_return, success_return
+from app.public_method import session_commit
 
-MYSQL = dict(
-    host='127.0.0.1', user='mysql_user', passwd='mysql_pwd', db='mydb', charset="utf8mb4"
-)
-logger = logging.getLogger(__name__)
-conn = pymysql.connect(**MYSQL)
-cur_dict = conn.cursor(pymysql.cursors.DictCursor)
-cur = conn.cursor()
 
-###############################################
-#############    微信支付配置   #################
-###############################################
-# 微信支付APP_ID
-WEIXIN_APP_ID = 'wx91f04ffbf8a23431'
-# 微信支付MCH_ID 【登录账号】
-WEIXIN_MCH_ID = '1535411231'
-# 微信支付sign_type
-WEIXIN_SIGN_TYPE = 'MD5'
-# 服务器IP地址
-WEIXIN_SPBILL_CREATE_IP = '32.23.11.34'
-# 微信支付用途
-WEIXIN_BODY = '费用充值'
-# 微信KEY值 【API密钥】
-WEIXIN_KEY = 'ZiwcVpWomDqixQdhRgm5FpBKNXqwasde'
-# 微信统一下单URL
-WEIXIN_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
-# 微信查询订单URL
-WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
-# 微信支付回调API
-WEIXIN_CALLBACK_API = 'http://xxxx.com/weixinpay_rollback/'
+@wechat.route('/wechat_pay/callback', methods=['POST'])
+def wechat_pay_callback():
+    return weixin_rollback(request)
 
 
 def weixinpay_call_back(request):
     """
     微信支付回调
-    :param request: 回调参数
+    :param args: 回调参数
     :return:
     """
 
@@ -81,7 +61,7 @@ def weixinpay_call_back(request):
             print('FAIL')
         return
 
-    args = request.body
+    args = request.data
     # 验证平台签名
     resp_dict = handle_wx_response_xml(args)
     if resp_dict is None:
@@ -109,7 +89,7 @@ def weixinpay_response_xml(params):
 
 def weixin_rollback(request):
     """
-    【API】: 微信宝支付结果回调接口,供微信服务端调用
+    【API】: 微信支付结果回调接口,供微信服务端调用
     """
     try:
         # 支付异步回调验证
@@ -119,62 +99,46 @@ def weixin_rollback(request):
 
             trade_status = data['result_code']  # 业务结果  SUCCESS/FAIL
             out_trade_no = data['out_trade_no']  # 商户订单号
+            order = ShopOrders.query.get(out_trade_no)
+            if not order:
+                raise Exception(f"订单 {out_trade_no} 不存在")
+
             if trade_status == "SUCCESS":
                 status = 1
-                app_id = data['appid']  # 应用ID
                 bank_type = data['bank_type']  # 付款银行
                 cash_fee = data['cash_fee']  # 现金支付金额(分)
-                device_info = data['device_info']  # 微信支付分配的终端设备号
-                fee_type = data['fee_type']  # 货币种类
-                gmt_create = data['time_end']  # 支付完成时间
+                pay_time = data['time_end']  # 支付完成时间
                 total_amount = int(data['total_fee']) / 100  # 总金额(单位由分转元)
                 trade_type = data['trade_type']  # 交易类型
-                trade_no = data['transaction_id']  # 微信支付订单号
+                transaction_id = data['transaction_id']  # 微信支付订单号
                 seller_id = data['mch_id']  # 商户号
                 buyer_id = data['openid']  # 用户标识
+                if buyer_id != order.buyer.id:
+                    raise Exception(f"回调中openid {buyer_id}与订单记录不符{order.buyer.id}")
 
-                update_sql = ''' update orders set trade_status='{trade_status}', app_id='{app_id}', 
-                                    seller_id='{seller_id}', buyer_id='{buyer_id}', total_amount='{total_amount}', 
-                                    out_trade_no='{out_trade_no}', gmt_create='{gmt_create}', trade_no='{trade_no}', 
-                                    device_info='{device_info}', trade_type='{trade_type}', bank_type='{bank_type}', 
-                                    fee_type='{fee_type}', cash_fee='{cash_fee}',  
-                                    status='{status}' where out_trade_no='{out_trade_no}' '''
-                update_sql = update_sql.format(
-                    app_id=app_id,
-                    bank_type=bank_type,
-                    cash_fee=cash_fee,
-                    device_info=device_info,
-                    fee_type=fee_type,
-                    out_trade_no=out_trade_no,
-                    gmt_create=gmt_create,
-                    total_amount=total_amount,
-                    trade_type=trade_type,
-                    trade_no=trade_no,
-                    seller_id=seller_id,
-                    buyer_id=buyer_id,
-                    trade_status=trade_status,
-                    status=status
-                )
+                # 更新订单数据
+                order.is_pay = 1
+                order.bank_type = bank_type
+                order.cash_free = cash_fee
+                order.pay_time = pay_time
+                order.transaction_id = transaction_id
+
             else:
                 res = "error: pay failed! "
                 status = 0
                 err_code = data['err_code']  # 错误代码
                 err_code_des = data['err_code_des']  # 错误代码描述
-                update_sql = ''' update orders set trade_status='{trade_status}', err_code='{err_code}', 
-                err_code_des='{err_code_des}', status='{status}' where out_trade_no='{out_trade_no}'  '''
-                update_sql = update_sql.format(
-                    out_trade_no=out_trade_no,
-                    trade_status=trade_status,
-                    status=status,
-                    err_code=err_code,
-                    err_code_des=err_code_des,
-                )
-
-            cur_dict.execute(update_sql)
-            conn.commit()
+                # 更新订单，把错误信息更新到订单中
+                order.is_pay = 2
+                order.pay_err_code = err_code
+                order.pay_err_code_des = err_code_des
+            db.session.add(order)
+            if session_commit().get("code") == 'success':
+                res = 'success'
         else:
-            res = "error: verify failed! "
-    except Exception:
+            res = "回调无内容"
+    except Exception as e:
         traceback.print_exc()
+        res = str(e)
     finally:
         return weixinpay_response_xml(res)

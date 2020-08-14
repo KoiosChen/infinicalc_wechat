@@ -2,7 +2,7 @@ from app import redis_db
 import json
 import datetime
 import requests
-from app.wechat import access_token_url, app_id, app_secret
+from app.wechat.wechat_config import app_id, app_secret, access_token_url
 
 
 def get_token():

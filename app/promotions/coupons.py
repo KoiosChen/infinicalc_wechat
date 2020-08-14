@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from app.models import Coupons, CouponReady
+from app.models import Coupons, CouponReady, Permission
 from app import redis_db, logger, coupon_lock
 from app.common import success_return, false_return, session_commit
 from app.decorators import permission_required
@@ -58,13 +58,13 @@ def take_coupon(coupon_id, take_coupon_id, user, lock):
 @promotions_ns.expect(head_parser)
 class TakeCouponApi(Resource):
     @promotions_ns.marshal_with(return_json)
-    @permission_required("frontstage.app.promotions.coupons.take_coupon")
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         获取优惠券
         """
         take_coupon_id = str(uuid.uuid4())
-        user = kwargs['info']['user']
+        user = kwargs['current_user']
         coupon_thread = threading.Thread(target=take_coupon,
                                          args=(kwargs.get('coupon_id'), take_coupon_id, user.id, coupon_lock))
         coupon_thread.start()

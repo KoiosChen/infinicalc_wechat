@@ -1,12 +1,15 @@
 from flask_restplus import Resource, fields, reqparse
 from ..models import Brands, SKU, sku_standardvalue, PurchaseInfo, Permission
 from . import mall, image_operate
-from .. import db, redis_db, default_api, logger
+from .. import db, redis_db, default_api, logger, sku_lock
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
+import uuid
+import threading
+import json
 
 add_sku_parser = reqparse.RequestParser()
 add_sku_parser.add_argument('spu_id', required=True, help="", location='json')
@@ -44,8 +47,58 @@ sku_page_parser = page_parser.copy()
 sku_page_parser.add_argument('home_page', help='搜索是否需要首页加载', type=int, choices=[0, 1], location='args')
 
 temporary_cart_parser = reqparse.RequestParser()
-temporary_cart_parser.add_argument('quantity', type=int, required=True, help='购买数量', location='json')
-temporary_cart_parser.add_argument('combo', help='如果此SKU有关联的套餐，则让用户选择套餐种类，价格按照套餐价格计算并显示', location='json')
+temporary_cart_parser.add_argument('quantity', type=int, required=True, help='购买数量')
+temporary_cart_parser.add_argument('combo', help='如果此SKU有关联的套餐，则让用户选择套餐种类，价格按照套餐价格计算并显示。传benefits id')
+
+
+def compute_quantity(sku_id, quantity_change):
+    sku = SKU.query.get(sku_id) if isinstance(sku_id, str) else sku_id
+    logger.debug(str(sku))
+    if not sku:
+        raise Exception(f"没有{sku_id}对应的记录")
+    # 无论quantity_change是整数还是负数
+    if (sku.quantity + quantity_change) >= 0:
+        logger.debug(f"{sku.quantity} + {quantity_change}")
+        sku.quantity += quantity_change
+        logger.debug(sku.quantity)
+        db.session.add(sku)
+        logger.debug("db flushed")
+        return success_return()
+    else:
+        logger.error(f'sku库存不足。 库存{sku.quantity}, 采购量为{abs(quantity_change)}')
+        if isinstance(sku_id, str):
+            raise Exception(f'sku库存不足。 库存{sku.quantity}, 采购量为{abs(quantity_change)}')
+        else:
+            return false_return()
+
+
+def thread_compute_quantity(sku_id, operate_key, lock, quantity_change):
+    if lock.acquire():
+        try:
+            compute_quantity(sku_id, quantity_change)
+            if session_commit().get('code') == 'false':
+                raise Exception(f"变更sku{sku_id}数量失败")
+        except Exception as e:
+            logger.error(str(e))
+            redis_db.set(f"change_sku_quantity::{sku_id}::{operate_key}",
+                         json.dumps(false_return(message=str(e))),
+                         ex=6000)
+        finally:
+            lock.release()
+
+
+def change_sku_quantity(sku_id, lock, quantity_change):
+    operate_key = str(uuid.uuid4())
+    sku_thread = threading.Thread(target=thread_compute_quantity, args=(sku_id, operate_key, lock, quantity_change))
+    sku_thread.start()
+    sku_thread.join()
+    k = f"change_sku_quantity::{sku_id}::{operate_key}"
+    if redis_db.exists(k):
+        result = json.loads(redis_db.get(k))
+        redis_db.delete(k)
+        return result
+    else:
+        return success_return(message=f"sku数量改变成功")
 
 
 @mall_ns.route('/sku')
@@ -105,8 +158,8 @@ class PerSKUApi(Resource):
         """
         获取指定sku数据
         """
-
-        return success_return(get_table_data_by_id(SKU, kwargs['sku_id'], appends=['values', 'objects', 'sku_promotions']))
+        return success_return(
+            get_table_data_by_id(SKU, kwargs['sku_id'], appends=['values', 'objects', 'sku_promotions']))
 
     @mall_ns.doc(body=update_sku_parser)
     @mall_ns.marshal_with(return_json)
@@ -185,7 +238,7 @@ class SKUAddToShoppingCart(Resource):
             else:
                 return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400
         else:
-            return false_return(message=f"<{sku_id}>无效"), 400
+            return false_return(message=f"<{sku_id}>已下架"), 400
 
 
 @mall_ns.route('/sku/<string:sku_id>/images')
@@ -226,9 +279,10 @@ class SKUPurchase(Resource):
                                                       "amount": eval(args['amount']),
                                                       "operator": kwargs['info']['user'].id})
             if new_one:
-                sku.quantity += eval(args['amount'])
-                db.session.add(sku)
-                db.session.flush()
+                # sku.quantity += eval(args['amount'])
+                change_result = change_sku_quantity(sku_id, sku_lock, eval(args['amount']))
+                if change_result.get("code") == "false":
+                    return change_result, 400
                 return submit_return(
                     f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>",
                     f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")

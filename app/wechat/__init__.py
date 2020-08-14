@@ -1,6 +1,5 @@
-app_id = "wxbd90eb9673088c7b"
-app_secret = "3aa0c3296b1ee4ef09bf9f3c0a43b7ff"
-login_url = "https://api.weixin.qq.com/sns/jscode2session"
-broadcast_url = "https://api.weixin.qq.com/wxaapi/broadcast/room/create"
-upload_url = "https://api.weixin.qq.com/cgi-bin/media/upload"
-access_token_url = "https://api.weixin.qq.com/cgi-bin/token"
+from flask import Blueprint
+
+wechat = Blueprint('wechat', __name__)
+
+from . import callback

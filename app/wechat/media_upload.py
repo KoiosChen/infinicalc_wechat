@@ -1,5 +1,5 @@
 from app.wechat.access_token import get_token
-from app.wechat import upload_url
+from app.wechat.wechat_config import upload_url
 import requests
 import json
 

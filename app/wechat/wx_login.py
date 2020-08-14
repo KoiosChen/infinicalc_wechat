@@ -1,5 +1,5 @@
 import requests
-from app.wechat import app_id, app_secret, login_url
+from app.wechat.wechat_config import app_id, app_secret, login_url
 
 
 class WxLogin(object):

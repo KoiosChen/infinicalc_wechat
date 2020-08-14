@@ -64,8 +64,8 @@ def seckill_type(value):
 
 
 def checkout_sku_type(value):
-    parse_keys = {'id': {'required': True, 'type': str}, 'quantity': {'required': True, 'type': int},
-                  'combo': {'type': dict}}
+    parse_keys = {'id': {'required': True, 'type': str},
+                  'quantity': {'required': True, 'type': int}}
     return type_base(parse_keys, value)
 
 

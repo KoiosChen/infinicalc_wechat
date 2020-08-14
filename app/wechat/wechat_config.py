@@ -1,0 +1,15 @@
+app_id = "wxbd90eb9673088c7b"
+app_secret = "3aa0c3296b1ee4ef09bf9f3c0a43b7ff"
+login_url = "https://api.weixin.qq.com/sns/jscode2session"
+broadcast_url = "https://api.weixin.qq.com/wxaapi/broadcast/room/create"
+upload_url = "https://api.weixin.qq.com/cgi-bin/media/upload"
+access_token_url = "https://api.weixin.qq.com/cgi-bin/token"
+WEIXIN_APP_ID = 'wx91f04ffbf8a23431'
+WEIXIN_MCH_ID = '1535411231'
+WEIXIN_SIGN_TYPE = 'MD5'
+WEIXIN_SPBILL_CREATE_IP = '32.23.11.34'
+WEIXIN_BODY = '盛馔酒业-酒类'
+WEIXIN_KEY = 'ZiwcVpWomDqixQdhRgm5FpBKNXqwasde'
+WEIXIN_UNIFIED_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
+WEIXIN_CALLBACK_API = 'http://wechat.winestar.club/wechat_pay/callback'
