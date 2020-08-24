@@ -188,6 +188,18 @@ class CustomerExpressAddress(Resource):
 @customers_ns.expect(head_parser)
 @customers_ns.param("express_address_id", "express global_address's id")
 class UpdateCustomerExpressAddress(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """
+        指定EXPRESS ADDRESS ID获取用户地址
+        """
+        if kwargs['express_address_id'] in [addr.id for addr in kwargs['current_user'].express_addresses.all() if
+                                            addr.status == 1]:
+            return success_return(data=get_table_data_by_id(ExpressAddress, kwargs['express_address_id']))
+        else:
+            return false_return(message="当前用户没有改地址")
+
     @customers_ns.doc(body=update_express_addr_parser)
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
