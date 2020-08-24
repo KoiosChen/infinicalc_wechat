@@ -12,10 +12,24 @@ import uuid
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.mysql import LONGTEXT
+import random
 
 
 def make_uuid():
     return str(uuid.uuid4())
+
+
+def make_order_id():
+    """
+    生成订单号
+    :return:
+    """
+    date = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
+    # 生成4为随机数作为订单号的一部分
+    random_str = str(random.randint(1, 9999))
+    random_str = random_str.rjust(4, '0')
+    rtn = '%s%s' % (date, random_str)
+    return rtn
 
 
 user_role = db.Table('user_role',
@@ -93,6 +107,27 @@ promotions_classifies = db.Table('promotions_classifies',
                                  db.Column('classifies_id', db.String(64), db.ForeignKey('classifies.id'),
                                            primary_key=True),
                                  db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+sku_rebatesgroup = db.Table('sku_rebatesgroup',
+                            db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'),
+                                      primary_key=True),
+                            db.Column('rebates_group', db.String(64), db.ForeignKey('rebates_group.id'),
+                                      primary_key=True),
+                            db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+rebatesgroup_rebate = db.Table('rebatesgroup_rebate',
+                               db.Column('rebatesgroup_id', db.String(64), db.ForeignKey('rebates_group.id'),
+                                         primary_key=True),
+                               db.Column('rebates_id', db.String(64), db.ForeignKey('rebates.id'),
+                                         primary_key=True),
+                               db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
+itemsorders_benefits = db.Table('itemsorders_benefits',
+                                db.Column('itemsorders_id', db.String(64), db.ForeignKey('items_orders.id'),
+                                          primary_key=True),
+                                db.Column('benefits_id', db.String(64), db.ForeignKey('benefits.id'),
+                                          primary_key=True),
+                                db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 
 class Permission:
@@ -528,6 +563,7 @@ class SPU(db.Model):
     status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class PurchaseInfo(db.Model):
@@ -552,12 +588,15 @@ class SKU(db.Model):
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
     member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
     score_type = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
-    score = db.Column(db.Integer, comment="积分")
-    contents = db.Column(db.Text(length=(2 ** 32) - 1))
+    get_score = db.Column(db.Integer, comment="可以获得的积分")
+    max_score = db.Column(db.Integer, comment='最多可用积分')
+    contents = db.Column(db.Text(length=(2 ** 32) - 1), comment='富文本，sku描述')
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
     special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售")
+    need_express = db.Column(db.SmallInteger, default=1, comment="1: 可快递， 0: 不可快递")
+    express_fee = db.Column(db.DECIMAL(7, 2), default=10.00, comment='sku 默认快递费')
     per_user = db.Column(db.SmallInteger, default=0, comment="设置限购量，默认为0不限购，一般在特价，秒杀折扣时使用")
     values = db.relationship(
         'StandardValue',
@@ -568,6 +607,11 @@ class SKU(db.Model):
         'ObjStorage',
         secondary=sku_obj,
         backref=db.backref('obj_sku')
+    )
+    rebate_group = db.relationship(
+        'RebatesGroup',
+        secondary=sku_rebatesgroup,
+        backref=db.backref('purchased_item')
     )
     status = db.Column(db.SmallInteger, default=0, comment="1 上架； 0 下架")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -586,18 +630,54 @@ class SKU(db.Model):
     shopping_cart = db.relationship('ShoppingCart', backref='desire_skus', lazy='dynamic')
 
 
+class RebatesGroup(db.Model):
+    """
+    一组返佣表，与SKU关联。返佣表group中的与rebates表多对多关系.
+    例如SKU A 一级返佣规则  二级返佣规则 推荐规则等
+    """
+    __tablename__ = "rebates_group"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(100), comment="返佣组的名称")
+    rebates = db.relationship(
+        'Rebates',
+        secondary=rebatesgroup_rebate,
+        backref=db.backref('groups')
+    )
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
 class Rebates(db.Model):
+    """
+    invitor 指提供邀请码的用户，可以是公司市场部，也可以是一级代理。 邀请码都由后台统一生成
+    parent 用来关联分享链接的上下级关系，用来锁定上下级；
+    例如：
+    1. 一级代理A 分享给未使用过商城的B， B成为商城的直客，成为A的下游，所有B的消费，A提成30%
+    2. A某日说服B成为二级代理，A提供B升级邀请码，B成为二级后，A获取B销售额的10%
+    3. B 某日想成为一级代理，A向总公司申请一级代理邀请码，分配给B，B的销售提成和A脱钩， A获取一次性费用3万元。此处预留，以后可能不脱钩，留1%的提成
+    4. A的直客封坛，A返佣10%； B（二级）的用户或者自己封坛，B返佣10%， A也同样有销售额的10%提成（符合销售管理奖金10%的规则）
+    5. B某日发展了用户C为二级， B提成C的销售额的5%， A也同样提成C的销售额的5% 。 C的提成政策按照二级代理计算
+    6. C某日发展了用户D为二级， C提成D的销售额的5%， B没有提成，A提成D的销售额的5% 。
+    7. B邀请C，C邀请D的邀请码，平台默认给每个二级代理10个二级代理邀请码
+    8. B某日邀请用户E为一级， B或者E 直接咨询客户，客户联系对接E，进行沟通审核后分配一级代理邀请码 成功后B获取一次性佣金3万元
+    9. 总部路演等方式，招的一级代理，或者二级代理，都挂在市场部账号下。市场部账号为一级代理。市场部拓展的渠道始终由市场部管理。
+    10. 二级代理自己消费，或者其下游直客消费，提成20%， 封坛佣金10% 。
+    11. 直客也可邀请用户成为二级或者一级，直接找自己上级或者客服咨询
+    12. 关于邀请码的规则，一级代理商邀请码都由总部市场部发出； 二级邀请码，代理商都可以发，默认给10个，不够了找客服申请
+    """
     __tablename__ = 'rebates'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64), comment="用来命名返佣表名称，例如‘封坛返佣’， 用来表示封坛类SKU的返佣，SKU表中外键关联此表")
     member_type = db.Column(db.SmallInteger, comment='0: 直客，1: 代理')
     member_grade = db.Column(db.SmallInteger, comment='1: 一级代理， 2： 二级代理；直客忽略此字段')
-    invitor_grade = db.Column(db.SmallInteger, default=1, comment="1 表示上级发展来下的下级，0，表示平级或者下级发展来的代理")
+    parent_grade = db.Column(db.SmallInteger, default=1, comment="1 表示上级发展来的下级，0，表示平级或者下级发展来的代理")
     self_rebate = db.Column(db.DECIMAL(5, 2), comment='填写百分比，譬如30.00, 表示返佣30%')
-    # 如果是C，只有invitor，父级邀请者为代理商，即member_type是1，则会计算父级返佣；如果invitor是C，那么上游的C会得到积分或者返佣
-    parent_rebate = db.Column(db.DECIMAL(5, 2), comment='父级返佣比例')
-    grandparent_rebate = db.Column(db.DECIMAL(5, 2), comment='祖父级返佣比例')
-    invitor_second_level_rebate = db.Column(db.DECIMAL(5, 2), comment='邀请者返佣比例，目前指邀请成功的二级 5%')
-    invite_first_level_bonus = db.Column(db.DECIMAL(7, 2), comment='成功邀请一个一级的奖金')
+    # 如果是C，只有parent，父级邀请者为代理商，即member_type是1，则会计算父级返佣；如果invitor是C，那么上游的C会得到积分或者返佣
+    invitor_rebate = db.Column(db.DECIMAL(5, 2), comment='父级返佣比例')
+    grandinvitor_rebate = db.Column(db.DECIMAL(5, 2), comment='祖父级返佣比例')
+    share_second_level_rebate = db.Column(db.DECIMAL(5, 2), comment='链接分享成为上下级，分享者返佣比例，目前指分享成功且成为二级 5%')
+    share_first_level_bonus = db.Column(db.DECIMAL(7, 2), comment='链接分享成为上下级，且成功邀请一个一级的奖金')
     c_to_c_bonus_score = db.Column(db.DECIMAL(5, 2), comment='c to c 可获取的奖励积分, 这里的百分比是消费额的百分比作为积分')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
@@ -637,13 +717,20 @@ class CouponReady(db.Model):
 
 class ShopOrders(db.Model):
     __tablename__ = 'shop_orders'
-    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    id = db.Column(db.String(64), primary_key=True, default=make_order_id)
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    trade_sn = db.Column(db.String(64), comment="微信支付的交易号")
-    items_total_price = db.Column(db.DECIMAL(10, 2), default=0.00)
+    customer_type = db.Column(db.SmallInteger, comment='记录订单生成时用户的类型')
+    customer_grade = db.Column(db.SmallInteger, comment='记录订单生成时用户的级别')
+    transaction_id = db.Column(db.String(64), comment="微信支付的订单号，回调中获取")
+    items_total_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='未使用积分的总价')
     score_used = db.Column(db.Integer, default=0, comment="使用的积分")
-    is_pay = db.Column(db.SmallInteger, default=0, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败")
-    pay_time = db.Column(db.DateTime, comment="支付时间")
+    is_pay = db.Column(db.SmallInteger, default=0, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败, 3:支付中")
+    pay_err_code = db.Column(db.String(32), comment="微信支付回调结果，如果有错误")
+    pay_err_code_des = db.Column(db.String(128), comment="微信支付回调结果描述")
+    bank_type = db.Column(db.String(32), comment="回调用户的银行类型，如果成功")
+    pre_pay_time = db.Column(db.DateTime, comment='后台支付获取预付ID成功时间')
+    pay_time = db.Column(db.DateTime, comment="支付成功时间")
+    cash_fee = db.Column(db.DECIMAL(10, 2), comment="微信支付实际现金支付金额")
     is_ship = db.Column(db.SmallInteger, default=0, comment="0：未发货，1：已发货")
     ship_time = db.Column(db.DateTime, comment="发货时间")
     receive_time = db.Column(db.DateTime, comment="收货时间")
@@ -651,13 +738,16 @@ class ShopOrders(db.Model):
     express_company = db.Column(db.String(50))
     express_number = db.Column(db.String(50))
     express_fee = db.Column(db.DECIMAL(7, 2), default=10.00)
-    express_address = db.Column(db.String(64), db.ForeignKey('express_address.id'))
+    express_address = db.Column(db.String(200), comment="记录下单时发货地址，防止地址记录修改。 原express_address表中address1+address2")
+    express_postcode = db.Column(db.String(7), comment='邮编')
+    express_recipient = db.Column(db.String(20), comment='收件人')
+    express_recipient_phone = db.Column(db.String(13), comment='收件人手机号')
     status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消")
+    items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
+    message = db.Column(db.String(500), comment='用户留言')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
-    items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
-    message = db.Column(db.String(500), comment='用户留言')
 
 
 class ItemsOrders(db.Model):
@@ -666,8 +756,13 @@ class ItemsOrders(db.Model):
     order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
     item_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     item_quantity = db.Column(db.Integer, default=1)
-    item_price = db.Column(db.DECIMAL(10, 2))
-    activity_discount = db.Column(db.DECIMAL(3, 2), default=1.00)
+    item_price = db.Column(db.DECIMAL(10, 2), comment="下单时sku的价格")
+    transaction_price = db.Column(db.DECIMAL(10, 2), comment="参与活动折扣后的价格，如果是套餐，那么显示套餐价格")
+    benefits = db.relationship(
+        'Benefits',
+        secondary=itemsorders_benefits,
+        backref=db.backref('item_orders')
+    )
     # 1：正常 2：禁用 0：取消
     status = db.Column(db.SmallInteger, default=1)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -678,7 +773,7 @@ class ItemsOrders(db.Model):
 
 class ShopOrderStatus(db.Model):
     """
-    用于记录下单时本用户至根用户（parent级别知道parent_id 为）及
+    用于记录下单时本用户至根用户（parent级别直到parent_id ）及邀请者id
     """
     __tablename__ = 'shop_order_status'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
@@ -698,11 +793,10 @@ class ExpressAddress(db.Model):
     address1 = db.Column(db.String(100), comment="某某路xx号xx栋xx门牌号")
     address2 = db.Column(db.String(100))
     postcode = db.Column(db.String(10), comment="邮编")
-    recipients = db.Column(db.String(50), comment="收件人")
-    recipients_phone = db.Column(db.String(20), comment="收件人电话")
+    recipient = db.Column(db.String(50), comment="收件人")
+    recipient_phone = db.Column(db.String(20), comment="收件人电话")
     status = db.Column(db.SmallInteger, default=1, comment="1：正常 0：删除")
     is_default = db.Column(db.Boolean, default=False)
-    spu_order = db.relationship("ShopOrders", backref='express_to', lazy='dynamic')
 
 
 class Evaluates(db.Model):
@@ -800,6 +894,7 @@ class Benefits(db.Model):
     pay_more = db.Column(db.DECIMAL(10, 2), default=0.00, comment='加价购，可选范围在gifts中，由pay_more_quantity来控制加价购可选商品数量')
     pay_more_quantity = db.Column(db.SmallInteger, comment='控制加价购数量')
     combo_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='仅当活动类型是4时生效, 添加的sku为活动范围，添加的gifts为这个sku套餐的其它sku')
+    combo_express_fee = db.Column(db.DECIMAL(7, 2), default=0.00, comment='套餐的快递价格，例如药酒封坛，则为0')
     presell_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='当类型是5时， 设置预售定金')
     presell_multiple = db.Column(db.DECIMAL(3, 2), default=0.00, comment='预售定金倍数，例如定金是10元，倍数是1.5，那么抵扣商品15元')
     gifts = db.relationship('Gifts', secondary=benefits_gifts, backref=db.backref('benefits'))

@@ -1,14 +1,12 @@
 import requests
+from app.wechat.wechat_config import app_id, app_secret, login_url
 
 
 class WxLogin(object):
     def __init__(self, jscode):
-        __app_id = "wxbd90eb9673088c7b"
-        __app_secret = "3aa0c3296b1ee4ef09bf9f3c0a43b7ff"
-        __url = "https://api.weixin.qq.com/sns/jscode2session"
-        __params = {"appid": __app_id, "secret": __app_secret, "js_code": jscode,
+        __params = {"appid": app_id, "secret": app_secret, "js_code": jscode,
                     "grant_type": "authorization_code"}
-        r = requests.get(__url, params=__params)
+        r = requests.get(login_url, params=__params)
         self.response = r.json()
 
     def get_openid(self):
