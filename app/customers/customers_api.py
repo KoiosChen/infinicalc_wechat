@@ -137,7 +137,7 @@ class CustomerRole(Resource):
         修改指定ID用户的角色
         """
         args = bind_role_parser.parse_args()
-        customer = Customers.query.get(kwargs.get('customer_id'))
+        customer = kwargs.get('current_user')
         if not customer:
             return false_return(message='用户不存在'), 400
         old_role = customer.role
@@ -172,8 +172,8 @@ class CustomerExpressAddress(Resource):
         指定ID用户新增快递地址
         """
         args = bind_express_addr_parser.parse_args()
-        args['sender'] = kwargs['customer_id']
-        if not if_default(kwargs['customer_id'], args['force_default']):
+        args['sender'] = kwargs['current_user'].id
+        if not if_default(kwargs['current_user'].id, args['force_default']):
             return false_return("已存在默认地址")
         new_express_address = ExpressAddress()
         db.session.flush()
