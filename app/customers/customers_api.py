@@ -198,7 +198,7 @@ class UpdateCustomerExpressAddress(Resource):
         args = update_express_addr_parser.parse_args()
         current_user = kwargs['current_user']
         express_address = ExpressAddress.query.filter_by(id=kwargs['express_address_id'],
-                                                         sender=current_user.id).first()
+                                                         sender=current_user.id, status=1).first()
         if not if_default(current_user.id, args['force_default']):
             return false_return("已存在默认地址")
 
@@ -217,4 +217,4 @@ class UpdateCustomerExpressAddress(Resource):
         addr = ExpressAddress.query.get(kwargs['express_address_id'])
         addr.status = 0
         db.session.add(addr)
-        return submit_return("删除地址成功，删除地址失败")
+        return submit_return("删除地址成功", "删除地址失败")
