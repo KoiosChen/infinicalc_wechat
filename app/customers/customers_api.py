@@ -131,7 +131,7 @@ class Login(Resource):
 class CustomerRole(Resource):
     @customers_ns.doc(body=bind_role_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def put(self, **kwargs):
         """
         修改指定ID用户的角色
@@ -155,7 +155,7 @@ class CustomerRole(Resource):
 @customers_ns.expect(head_parser)
 class CustomerExpressAddress(Resource):
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         指定ID用户快递地址
@@ -166,7 +166,7 @@ class CustomerExpressAddress(Resource):
 
     @customers_ns.doc(body=bind_express_addr_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def post(self, **kwargs):
         """
         指定ID用户新增快递地址
@@ -190,7 +190,7 @@ class CustomerExpressAddress(Resource):
 class UpdateCustomerExpressAddress(Resource):
     @customers_ns.doc(body=update_express_addr_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def put(self, **kwargs):
         """
         指定ID用户修改快递地址
