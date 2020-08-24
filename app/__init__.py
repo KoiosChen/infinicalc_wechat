@@ -144,4 +144,10 @@ def create_app(config_name):
     from .wechat import wechat as wechat_blueprint
     app.register_blueprint(wechat_blueprint)
 
+    from .cargoes import cargoes as cargoes_blueprint
+    app.register_blueprint(cargoes_blueprint)
+
+    from .packing_orders import packing_orders as packing_orders_bluieprint
+    app.register_blueprint(packing_orders_bluieprint)
+
     return app

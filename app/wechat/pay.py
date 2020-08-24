@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from app import logger, db, redis_db, sku_lock
-from app.models import ShopOrders, Benefits, ShoppingCart
+from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders
 from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
     WEIXIN_KEY, \
     WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
@@ -126,11 +126,20 @@ def create_order(**kwargs):
         if lock.acquire():
             try:
                 order_info = create_info.get('order_info')
+                packing_order = create_info.pop('packing_order')
+                packing_obj = None
+                if packing_order:
+                    packing_obj = PackingItemOrders.query.get(packing_order)
+
                 new_order = new_data_obj("ShopOrders", **order_info)
                 if not new_order:
                     raise Exception("订单创建失败，订单号创建失败")
                 if not new_order['status']:
                     return success_return(data=new_order['obj'].id, message='订单已存在')
+
+                if packing_obj:
+                    # packing_obj.shop_order_id = new_order['obj'].id
+                    packing_obj.packing_item_order = new_order['obj']
 
                 for item in create_info.get('select_items'):
                     item_obj = ShoppingCart.query.get(item)

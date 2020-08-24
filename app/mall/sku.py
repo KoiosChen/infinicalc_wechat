@@ -49,6 +49,7 @@ sku_page_parser.add_argument('home_page', help='搜索是否需要首页加载',
 temporary_cart_parser = reqparse.RequestParser()
 temporary_cart_parser.add_argument('quantity', type=int, required=True, help='购买数量')
 temporary_cart_parser.add_argument('combo', help='如果此SKU有关联的套餐，则让用户选择套餐种类，价格按照套餐价格计算并显示。传benefits id')
+temporary_cart_parser.add_argument('packing_order_id', help='如果在分装流程中，此参数必传，通过接口获取预分配的分装ID')
 
 
 def compute_quantity(sku_id, quantity_change):
@@ -230,10 +231,21 @@ class SKUAddToShoppingCart(Resource):
         current_user = kwargs.get('current_user')
         sku = SKU.query.get(sku_id)
         if sku and sku.status == 1 and sku.delete_at is None:
-            cart_item = new_data_obj("ShoppingCart", **{"customer_id": current_user.id, "sku_id": sku_id})
+            if args.get("combo"):
+                cart_item = new_data_obj("ShoppingCart", **{"customer_id": current_user.id, "sku_id": sku_id,
+                                                            "combo": args.get('combo')})
+            else:
+                cart_item = new_data_obj("ShoppingCart", **{"customer_id": current_user.id, "sku_id": sku_id})
+
             if cart_item:
-                cart_item['obj'].quantity = args['quantity']
-                cart_item['obj'].combo = args['combo']
+                if cart_item['status']:
+                    cart_item['obj'].quantity = args['quantity']
+                else:
+                    cart_item['obj'].quantity += args['quantity']
+
+                # 如果是分装流程，那么就添加上packing_order到购物车商品上，表示特殊商品
+                if args.get('packing_order'):
+                    cart_item['obj'].packing_item_order = args.get('packing_order')
                 return submit_return("购物车添加成功", "购物出添加失败")
             else:
                 return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400

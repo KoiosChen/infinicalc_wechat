@@ -1,9 +1,10 @@
 from flask_restplus import Resource, reqparse
-from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Benefits, ExpressAddress, make_order_id
+from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Benefits, ExpressAddress, make_order_id, \
+    PackingItemOrders
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, nesteddict, submit_return
 from ..decorators import permission_required
-from ..swagger import return_dict, head_parser
+from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
 from collections import defaultdict
 import datetime
@@ -24,11 +25,18 @@ checkout_parser = reqparse.RequestParser()
 checkout_parser.add_argument("shopping_cart_id", type=list, help='用户确认要购买的物品，传list，元素为shopping_cart_id',
                              location='json')
 
+packing_checkout_parser = reqparse.RequestParser()
+packing_checkout_parser.add_argument("packing_order", help='分装订单编号')
+
 pay_parser = reqparse.RequestParser()
 pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分为1元')
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("select_items", type=list, help="传选中的shopping_cart表的id", location='json')
+pay_parser.add_argument("packing_order", help='当在分装流程中，传递预分配的分装ID，不用传select_items；正常订单，只传select_items，不传packing_order')
+
+shopping_cart_parser = page_parser.copy()
+shopping_cart_parser.add_argument('packing_order', help='若是分装流程，获取购物车页面需传递此参数; 否则不传，或者为空', location='args')
 
 
 def checkout_cart(**args):
@@ -77,7 +85,13 @@ class Pay(Resource):
             args['express_recipient_phone'] = addr.recipient_phone
             args['customer_id'] = kwargs['current_user'].id
             args['id'] = make_order_id()
-            select_items = args.pop('select_items')
+            packing_order = args.get("packing_order")
+            if packing_order:
+                args.pop("select_items")
+                select_items = [s.id for s in
+                                ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order"))]
+            else:
+                select_items = args.pop('select_items')
             for i in select_items:
                 if ShoppingCart.query.get(i).delete_at:
                     raise Exception(f"购物车订单{i}已删除")
@@ -91,7 +105,7 @@ class Pay(Resource):
                 raise Exception("此订单货物都不可快递")
 
             args['items_total_price'] = total_price
-            create_data = {'order_info': args, 'select_items': select_items}
+            create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
             create_result = pay.create_order(**create_data)
 
             if create_result.get("code") == "false":
@@ -114,6 +128,29 @@ class CheckOut(Resource):
         """点击 ‘去结算’ 计算可用积分总数及总价，进入结算页"""
         args = checkout_parser.parse_args()
         args['customer'] = kwargs['current_user']
+        try:
+            total_price, total_score, express_addr = checkout_cart(**args)
+            return success_return(
+                {"total_score": total_score,
+                 "total_price": str(total_price.quantize(Decimal("0.00"))),
+                 "express_addr": express_addr},
+                'express_addr为0，表示此订单中没有需要快递的商品')
+        except Exception as e:
+            return false_return(message=str(e))
+
+
+@shopping_cart_ns.route('/packing_checkout')
+@shopping_cart_ns.expect(head_parser)
+class PackingCheckOut(Resource):
+    @shopping_cart_ns.marshal_with(return_json)
+    @shopping_cart_ns.doc(body=packing_checkout_parser)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """分装流程，最后点击 ‘去结算’ 计算可用积分总数及总价，进入结算页"""
+        args = packing_checkout_parser.parse_args()
+        args['customer'] = kwargs['current_user']
+        packing_order_id = args.pop('packing_order')
+        args['cart_id'] = [sc.id for sc in ShoppingCart.query.filter_by(packing_item_order=packing_order_id).all()]
         try:
             total_price, total_score, express_addr = checkout_cart(**args)
             return success_return(
@@ -201,12 +238,15 @@ class ShoppingCartApi(Resource):
     @shopping_cart_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
-        """显示购物车，目前只有套餐一种促销活动，结果返回sku的list，包括价格、数量、总价、选择的套餐"""
+        """显示购物车（不显示分装过程中的零时购物车内容），目前只有套餐一种促销活动，结果返回sku的list，包括价格、数量、总价、选择的套餐"""
         all_p = defaultdict(list)
         customer = kwargs['current_user']
+        params = shopping_cart_parser.parse_args()
+        packing_order = params.get("packing_order") if params.get("packing_order") else None
         args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo} for c in
                 customer.shopping_cart.filter(ShoppingCart.delete_at.__eq__(None),
-                                              ShoppingCart.status.__eq__(1)).all()]
+                                              ShoppingCart.status.__eq__(1),
+                                              ShoppingCart.packing_item_order.__eq__(packing_order)).all()]
         member_card = None
         member_cards = customer.member_card
         for card in member_cards:

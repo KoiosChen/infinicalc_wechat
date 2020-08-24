@@ -69,6 +69,11 @@ spu_obj = db.Table('spu_obj',
                    db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
                    db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+cargo_obj = db.Table('cargo_obj',
+                     db.Column('cargo_id', db.String(64), db.ForeignKey('total_cargoes.id'), primary_key=True),
+                     db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
+                     db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 sku_shoporders = db.Table('sku_shoporders',
                           db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
                           db.Column('shoporders_id', db.String(64), db.ForeignKey('shop_orders.id'), primary_key=True),
@@ -372,6 +377,7 @@ class Customers(db.Model):
                                       lazy='dynamic')
 
     shopping_cart = db.relationship("ShoppingCart", backref='buyer', lazy='dynamic')
+    total_cargoes = db.relationship("TotalCargoes", backref='owner', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -578,6 +584,67 @@ class PurchaseInfo(db.Model):
     memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
 
+class WareHouse(db.Model):
+    __tablename__ = 'warehouse'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64))
+    address = db.Column(db.String(100))
+    purpose = db.Column(db.String(100), comment='仓库用途')
+    status = db.Column(db.SmallInteger, default=1, comment='仓库状态，默认1为在用')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+    total_cargoes = db.relationship("TotalCargoes", backref='cargo_warehous', lazy='dynamic')
+
+
+class PackingItemOrders(db.Model):
+    __tablename__ = 'packing_item_orders'
+    # 当进入分装流程时，先生成一个分装的订单，如果
+    id = db.Column(db.String(64), primary_key=True, default=make_order_id)
+    total_cargoes_id = db.Column(db.String(64), db.ForeignKey('total_cargoes.id'))
+    shop_order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'), comment='分装的总订单')
+    materials_in_cart = db.relationship('ShoppingCart', backref='packing_order', lazy='dynamic')
+    consumption = db.Column(db.DECIMAL(7, 2), comment='总量中分装的消耗量，单位与total_cargoes中的unit相同')
+    loss = db.Column(db.DECIMAL(7, 2), default=0.00, comment='分装过程的损耗，默认为0.00')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now, comment='创建分装的日期')
+    # 支付时间看对应的订单
+    packing_at = db.Column(db.String(64), comment='选择完所有材料后提交结算的时间')
+    pay_at = db.Column(db.DateTime,
+                       comment='支付完成回调时，如果是shop_orders中外键关联packing_order不为空，那么就update这个parcking_order中的pay_at，表示支付完成')
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    # 如果delete_at不为空，表示此分装订单没有生效
+    delete_at = db.Column(db.DateTime)
+
+
+class TotalCargoes(db.Model):
+    __tablename__ = 'total_cargoes'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    cargo_code = db.Column(db.String(64), comment='货物编号')
+    warehouse_id = db.Column(db.String(64), db.ForeignKey('warehouse.id'), comment='货物存储房间')
+    cargo_pan = db.Column(db.String(3), comment='货物水平位置')
+    cargo_tilt = db.Column(db.String(3), comment='货物垂直位置')
+    cargo_zoom = db.Column(db.String(3), comment='货物焦距位置')
+    order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'), comment='外键关联订单')
+    seal_date = db.Column(db.DateTime)
+    init_total = db.Column(db.DECIMAL(7, 2), comment='初始的总量')
+    last_total = db.Column(db.DECIMAL(7, 2), comment='最后的总量')
+    unit = db.Column(db.String(10), default='斤', comment='货物单位')
+    key_code = db.Column(db.String(100), comment='智能锁远程访问id')
+    key_pwd = db.Column(db.String(100), comment='key 密钥')
+    # 存放封坛相关的照片，后续还能上传
+    cargo_media = db.relationship(
+        'ObjStorage',
+        secondary=cargo_obj,
+        backref=db.backref('obj_cargo')
+    )
+    packing_orders = db.relationship('PackingItemOrders', backref='parent_cargo', lazy='dynamic')
+    owner_name = db.Column(db.String(20), comment='货物主人姓名')
+    owner_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
 class SKU(db.Model):
     __tablename__ = 'sku'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
@@ -594,7 +661,8 @@ class SKU(db.Model):
     quantity = db.Column(db.Integer, default=0, index=True)
     spu_id = db.Column(db.String(64), db.ForeignKey('spu.id'))
     unit = db.Column(db.String(6), nullable=False)
-    special = db.Column(db.SmallInteger, default=0, comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售")
+    special = db.Column(db.SmallInteger, default=0,
+                        comment="0 非特价商品，1 特价商品， 2 赠品，不可单独销售, 30 ~ 69: 表示有后续业务流程的商品，当前用31，表示分装所需包装材料，订单生成后，会产生分装订单")
     need_express = db.Column(db.SmallInteger, default=1, comment="1: 可快递， 0: 不可快递")
     express_fee = db.Column(db.DECIMAL(7, 2), default=10.00, comment='sku 默认快递费')
     per_user = db.Column(db.SmallInteger, default=0, comment="设置限购量，默认为0不限购，一般在特价，秒杀折扣时使用")
@@ -744,6 +812,8 @@ class ShopOrders(db.Model):
     express_recipient_phone = db.Column(db.String(13), comment='收件人手机号')
     status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消")
     items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
+    total_cargoes = db.relationship("TotalCargoes", backref='cargo_order', lazy='dynamic')
+    packing_order = db.relationship("PackingItemOrders", backref='packing_item_order', lazy='dynamic')
     message = db.Column(db.String(500), comment='用户留言')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
@@ -981,6 +1051,7 @@ class ObjStorage(db.Model):
     evaluates = db.relationship("Evaluates", backref="experience_objects", lazy='dynamic')
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
     customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
+    seal_certifications = db.relationship('WineJars', backref='seal_certification_objects', lazy='dynamic')
 
 
 class ShoppingCart(db.Model):
@@ -995,6 +1066,7 @@ class ShoppingCart(db.Model):
     combo = db.Column(db.String(64), db.ForeignKey('benefits.id'),
                       comment='前端页面选择的combo，实质为这个套餐中的一种，为benefits表的id')
     status = db.Column(db.SmallInteger, default=1, comment='预留，默认为1，则显示在购物车中，如果为0， 则作为想买货物，不在购物车内')
+    packing_item_order = db.Column(db.String(64), db.ForeignKey('packing_item_orders.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
