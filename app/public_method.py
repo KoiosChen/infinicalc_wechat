@@ -132,7 +132,7 @@ def __make_table(fields, table, strainer=None):
         elif f == 'express_addresses':
             tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, [], ['sender', 'city_id', 'district']) for
                       e in
-                      table.express_addresses.all()]
+                      table.express_addresses.filter_by(status=1).all()]
         elif '_promotions' in f:
             tmp[f] = [{'id': p.id, 'name': p.name, 'type': p.promotion_type} for p in getattr(table, f) if
                       p.start_time <= datetime.datetime.now() <= p.end_time]

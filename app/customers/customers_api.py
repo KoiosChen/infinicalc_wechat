@@ -208,3 +208,13 @@ class UpdateCustomerExpressAddress(Resource):
         db.session.add(express_address)
         return submit_return("修改地址成功", "修改地址失败")
 
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def delete(self, **kwargs):
+        """
+        删除地址
+        """
+        addr = ExpressAddress.query.get(kwargs['express_address_id'])
+        addr.status = 0
+        db.session.add(addr)
+        return submit_return("删除地址成功，删除地址失败")
