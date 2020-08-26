@@ -147,7 +147,10 @@ def create_app(config_name):
     from .cargoes import cargoes as cargoes_blueprint
     app.register_blueprint(cargoes_blueprint)
 
-    from .packing_orders import packing_orders as packing_orders_bluieprint
-    app.register_blueprint(packing_orders_bluieprint)
+    from .packing_orders import packing_orders as packing_orders_blueprint
+    app.register_blueprint(packing_orders_blueprint)
+
+    from .news_center import news_center as news_center_blueprint
+    app.register_blueprint(news_center_blueprint)
 
     return app

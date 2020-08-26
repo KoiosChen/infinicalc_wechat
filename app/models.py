@@ -1051,6 +1051,7 @@ class ObjStorage(db.Model):
     evaluates = db.relationship("Evaluates", backref="experience_objects", lazy='dynamic')
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
     customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
+    news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
 
 
 class ShoppingCart(db.Model):
@@ -1066,6 +1067,38 @@ class ShoppingCart(db.Model):
                       comment='前端页面选择的combo，实质为这个套餐中的一种，为benefits表的id')
     status = db.Column(db.SmallInteger, default=1, comment='预留，默认为1，则显示在购物车中，如果为0， 则作为想买货物，不在购物车内')
     packing_item_order = db.Column(db.String(64), db.ForeignKey('packing_item_orders.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class NewsSections(db.Model):
+    """
+    新闻栏目
+    """
+    __tablename__ = 'news_sections'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(64))
+    section_image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
+    order = db.Column(db.SmallInteger, default=0, comment='栏目排序')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+    news = db.relationship('NewsCenter', backref='news_section', lazy='dynamic')
+
+
+class NewsCenter(db.Model):
+    """
+    咨询类
+    """
+    __tablename__ = 'news_center'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    title = db.Column(db.String(30), comment="主标题")
+    sub_title = db.Column(db.String(30), comment="副标题")
+    cover_image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
+    content = db.Column(db.Text(length=(2 ** 32) - 1), comment='富文本，sku描述')
+    order = db.Column(db.SmallInteger, default=0, comment='文章排序')
+    news_section_id = db.Column(db.String(64), db.ForeignKey('news_sections.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
