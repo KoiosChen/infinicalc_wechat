@@ -88,14 +88,3 @@ class NewsSectionsByID(Resource):
             return submit_return("删除栏目成功", "删除栏目失败")
         else:
             return false_return(message=f"{kwargs['section_id']}不存在或有关联")
-
-
-@news_section_ns.route('/<string:section_name>')
-@news_section_ns.param('section_name', '栏目名称')
-@news_section_ns.expect(head_parser)
-class NewsSectionsByName(Resource):
-    @news_section_ns.doc(body=update_section_parser)
-    @news_section_ns.marshal_with(return_json)
-    @permission_required("app.news_sections.get_id_by_name")
-    def get(self, **kwargs):
-        return success_return(data=NewsSections.query.filter_by(name=kwargs['section_name']).first().id)
