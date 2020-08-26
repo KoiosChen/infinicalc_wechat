@@ -5,7 +5,7 @@ from ..common import success_return, false_return, submit_return, sort_by_order
 from ..public_method import new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
-from ..models import Banners, Permission, ObjStorage, NewsCenter
+from ..models import Banners, Permission, ObjStorage, NewsCenter, NewsSections
 from app.wechat.qqcos import QcloudCOS, delete_object
 import datetime
 
@@ -24,7 +24,7 @@ add_news_parser.add_argument('order', type=int, help='banner顺序，大于等�
 update_news_parser = add_news_parser.copy()
 
 news_page_parser = page_parser.copy()
-news_page_parser.add_argument("news_section_id", help='根据栏目ID')
+news_page_parser.add_argument("section_name", help='根据栏目名称查询')
 
 
 @news_center_ns.route('')
@@ -39,8 +39,9 @@ class NewsCenterApi(Resource):
         """
         args = news_page_parser.parse_args()
         args['search'] = {'delete_at': None}
-        if args.get("news_section_id"):
-            args['search']['news_section_id'] = args.get('news_section_id')
+        if args.get("section_name"):
+            args['search']['news_section_id'] = NewsSections.query.filter(
+                NewsSections.name.contains(args.get("section_name"))).first().id
         news_result = get_table_data(NewsCenter, args, appends=['news_section', 'news_cover_image'],
                                      removes=['cover_image'])
 
