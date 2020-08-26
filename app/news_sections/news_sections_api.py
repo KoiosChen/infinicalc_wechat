@@ -34,7 +34,7 @@ class NewsSectionApi(Resource):
         """
         args = section_page_parser.parse_args()
         args['search'] = {'delete_at': None}
-        section_result = get_table_data(NewsCenter, args, appends=['section_image'])
+        section_result = get_table_data(NewsSections, args, appends=['section_image'])
         sort_by_order(section_result['records'])
         return success_return(section_result)
 
