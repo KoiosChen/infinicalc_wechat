@@ -115,7 +115,7 @@ def __make_table(fields, table, strainer=None):
             for value in t1:
                 tmp1.append({'value': value.value, 'standard_name': value.standards.name})
             tmp[f] = tmp1
-        elif f == 'banner_contents':
+        elif f == 'banner_contents' or f == 'news_cover_image':
             t1 = getattr(table, f)
             tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
         elif f == 'brand':
@@ -174,7 +174,10 @@ def get_table_data(table, args, appends=[], removes=[]):
         if search:
             for k, v in search.items():
                 if k in fields:
-                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+                    if k == 'delete_at' and v is None:
+                        and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
+                    else:
+                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
             table_data = base_sql.filter(and_(*and_fields_list)).all()
         else:
             table_data = base_sql.all()
