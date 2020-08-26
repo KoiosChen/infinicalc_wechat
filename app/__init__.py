@@ -153,4 +153,7 @@ def create_app(config_name):
     from .news_center import news_center as news_center_blueprint
     app.register_blueprint(news_center_blueprint)
 
+    from .news_sections import news_sections as news_sections_blueprint
+    app.register_blueprint(news_sections_blueprint)
+
     return app

@@ -41,7 +41,7 @@ class NewsCenterApi(Resource):
         args['search'] = {'delete_at': None}
         if args.get("section_name"):
             args['search']['section_name'] = args.get('section_name')
-        news_result = get_table_data(NewsCenter, args, appends=['news_section', 'news_cover_image'],
+        news_result = get_table_data(NewsCenter, args, appends=['news_sections', 'news_cover_image'],
                                      removes=['cover_image', 'news_section_id'])
 
         sort_by_order(news_result['records'])
@@ -78,7 +78,7 @@ class NewsCenterByIDApi(Resource):
         获取指定新闻内容
         """
         return success_return(
-            get_table_data_by_id(NewsCenter, kwargs['news_id'], appends=['news_cover_image', 'news_section'],
+            get_table_data_by_id(NewsCenter, kwargs['news_id'], appends=['news_cover_image', 'news_sections'],
                                  removes=['cover_image', 'news_section_id']))
 
     @news_center_ns.doc(body=update_news_parser)
