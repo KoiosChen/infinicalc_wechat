@@ -27,8 +27,8 @@ bind_express_addr_parser = reqparse.RequestParser()
 bind_express_addr_parser.add_argument('address1', required=True, help='地图中定位的地址')
 bind_express_addr_parser.add_argument('address2', help='门牌号')
 bind_express_addr_parser.add_argument('postcode', help='邮编, 可为空')
-bind_express_addr_parser.add_argument('recipients', required=True, help='收件人姓名')
-bind_express_addr_parser.add_argument('recipients_phone', required=True, help='收件人电话')
+bind_express_addr_parser.add_argument('recipient', required=True, help='收件人姓名')
+bind_express_addr_parser.add_argument('recipient_phone', required=True, help='收件人电话')
 bind_express_addr_parser.add_argument('is_default', required=True, type=int, choices=[0, 1], default=0, help='是否为默认地址')
 bind_express_addr_parser.add_argument('force_default', required=True, type=int, choices=[0, 1], default=0,
                                       help='是否强制为默认地址')
@@ -37,8 +37,8 @@ update_express_addr_parser = bind_express_addr_parser.copy()
 update_express_addr_parser.replace_argument('city_id', type=int)
 update_express_addr_parser.replace_argument('district', type=int)
 update_express_addr_parser.replace_argument('address1')
-update_express_addr_parser.replace_argument('recipients', help='收件人')
-update_express_addr_parser.replace_argument('recipients_phone', help='收件人电话')
+update_express_addr_parser.replace_argument('recipient', help='收件人')
+update_express_addr_parser.replace_argument('recipient_phone', help='收件人电话')
 update_express_addr_parser.replace_argument('is_default', type=int, choices=[0, 1], default=0, help='是否为默认地址')
 update_express_addr_parser.add_argument('force_default', required=True, type=int, choices=[0, 1], default=0,
                                         help='是否强制为默认地址')
@@ -131,13 +131,13 @@ class Login(Resource):
 class CustomerRole(Resource):
     @customers_ns.doc(body=bind_role_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def put(self, **kwargs):
         """
         修改指定ID用户的角色
         """
         args = bind_role_parser.parse_args()
-        customer = Customers.query.get(kwargs.get('customer_id'))
+        customer = kwargs.get('current_user')
         if not customer:
             return false_return(message='用户不存在'), 400
         old_role = customer.role
@@ -155,7 +155,7 @@ class CustomerRole(Resource):
 @customers_ns.expect(head_parser)
 class CustomerExpressAddress(Resource):
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         指定ID用户快递地址
@@ -166,14 +166,14 @@ class CustomerExpressAddress(Resource):
 
     @customers_ns.doc(body=bind_express_addr_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def post(self, **kwargs):
         """
         指定ID用户新增快递地址
         """
         args = bind_express_addr_parser.parse_args()
-        args['sender'] = kwargs['customer_id']
-        if not if_default(kwargs['customer_id'], args['force_default']):
+        args['sender'] = kwargs['current_user'].id
+        if not if_default(kwargs['current_user'].id, args['force_default']):
             return false_return("已存在默认地址")
         new_express_address = ExpressAddress()
         db.session.flush()
@@ -188,9 +188,21 @@ class CustomerExpressAddress(Resource):
 @customers_ns.expect(head_parser)
 @customers_ns.param("express_address_id", "express global_address's id")
 class UpdateCustomerExpressAddress(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """
+        指定EXPRESS ADDRESS ID获取用户地址
+        """
+        if kwargs['express_address_id'] in [addr.id for addr in kwargs['current_user'].express_addresses.all() if
+                                            addr.status == 1]:
+            return success_return(data=get_table_data_by_id(ExpressAddress, kwargs['express_address_id']))
+        else:
+            return false_return(message="当前用户没有改地址")
+
     @customers_ns.doc(body=update_express_addr_parser)
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.OPERATOR)
+    @permission_required(Permission.USER)
     def put(self, **kwargs):
         """
         指定ID用户修改快递地址
@@ -198,7 +210,7 @@ class UpdateCustomerExpressAddress(Resource):
         args = update_express_addr_parser.parse_args()
         current_user = kwargs['current_user']
         express_address = ExpressAddress.query.filter_by(id=kwargs['express_address_id'],
-                                                         sender=current_user.id).first()
+                                                         sender=current_user.id, status=1).first()
         if not if_default(current_user.id, args['force_default']):
             return false_return("已存在默认地址")
 
@@ -208,3 +220,13 @@ class UpdateCustomerExpressAddress(Resource):
         db.session.add(express_address)
         return submit_return("修改地址成功", "修改地址失败")
 
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def delete(self, **kwargs):
+        """
+        删除地址
+        """
+        addr = ExpressAddress.query.get(kwargs['express_address_id'])
+        addr.status = 0
+        db.session.add(addr)
+        return submit_return("删除地址成功", "删除地址失败")
