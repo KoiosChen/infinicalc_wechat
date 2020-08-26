@@ -22,6 +22,7 @@ update_section_parser = add_section_parser.copy()
 
 section_page_parser = page_parser.copy()
 
+
 @news_section_ns.route('')
 @news_section_ns.expect(head_parser)
 class NewsSectionApi(Resource):
@@ -68,7 +69,7 @@ class NewsSectionsByID(Resource):
     def put(self, **kwargs):
         """更新栏目"""
         args = update_section_parser.parse_args()
-        __news = NewsCenter.query.get(kwargs['news_id'])
+        __news = NewsSections.query.get(kwargs['section_id'])
         if __news:
             for k, v in args.items():
                 if hasattr(__news, k) and v:
@@ -87,3 +88,14 @@ class NewsSectionsByID(Resource):
             return submit_return("删除栏目成功", "删除栏目失败")
         else:
             return false_return(message=f"{kwargs['section_id']}不存在或有关联")
+
+
+@news_section_ns.route('/<string:section_name>')
+@news_section_ns.param('section_name', '栏目名称')
+@news_section_ns.expect(head_parser)
+class NewsSectionsByName(Resource):
+    @news_section_ns.doc(body=update_section_parser)
+    @news_section_ns.marshal_with(return_json)
+    @permission_required("app.news_sections.get_id_by_name")
+    def get(self, **kwargs):
+        return success_return(data=NewsSections.query.filter_by(name=kwargs['section_name']).first().id)
