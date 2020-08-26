@@ -137,6 +137,8 @@ def __make_table(fields, table, strainer=None):
         elif f == 'gifts':
             tmp[f] = [get_table_data_by_id(SKU, g.sku, appends=['values', 'objects', 'sku_promotions']) for g in
                       table.gifts]
+        elif f == 'news_section':
+            tmp['section_name'] = table.news_section.name
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
