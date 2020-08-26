@@ -32,9 +32,9 @@ class DevelopmentConfig(Config):
 class TestingConfig(Config):
     DEBUG = False
     DB_USERNAME = os.environ.get('TEST_DATABASE_USERNAME') or 'peter'
-    DB_PASSWORD = os.environ.get('TEST_DATABASE_PASSWORD') or 'Ftp123buzhidao_'
+    DB_PASSWORD = os.environ.get('TEST_DATABASE_PASSWORD') or 'Gwbnsh@408'
     DB_HOST = os.environ.get('TEST_DATABASE_HOST') or '127.0.0.1'
-    DB_DATABASE = os.environ.get('TEST_DATABASE_DATABASE') or 'infinicalc'
+    DB_DATABASE = os.environ.get('TEST_DATABASE_DATABASE') or 'shengzhuan'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
 
 

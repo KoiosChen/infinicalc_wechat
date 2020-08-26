@@ -1051,7 +1051,6 @@ class ObjStorage(db.Model):
     evaluates = db.relationship("Evaluates", backref="experience_objects", lazy='dynamic')
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
     customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
-    seal_certifications = db.relationship('WineJars', backref='seal_certification_objects', lazy='dynamic')
 
 
 class ShoppingCart(db.Model):
