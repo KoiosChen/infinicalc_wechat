@@ -1,9 +1,7 @@
-from . import db, logger
+from . import logger
 from .models import *
-from time import sleep
-from sqlalchemy import or_, and_
+from sqlalchemy import and_
 import datetime
-import app.wechat.wechat_config as wechat
 import traceback
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
@@ -104,12 +102,12 @@ def __make_table(fields, table, strainer=None):
             t1 = getattr(table, f)
             for value in t1:
                 if value.thumbnails:
-                    tmp1.append({'id': value.id, 'url': wechat.login_url, 'obj_type': value.obj_type,
+                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type,
                                  'thumbnail': {'id': value.thumbnails[0].id,
-                                               'url': wechat.login_url,
+                                               'url': value.url,
                                                'obj_type': value.thumbnails[0].obj_type}})
                 else:
-                    tmp1.append({'id': value.id, 'url': wechat.login_url, 'obj_type': value.obj_type})
+                    tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
             tmp[f] = tmp1
         elif f == 'values':
             tmp1 = list()
@@ -119,7 +117,7 @@ def __make_table(fields, table, strainer=None):
             tmp[f] = tmp1
         elif f == 'banner_contents':
             t1 = getattr(table, f)
-            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": wechat.login_url}
+            tmp[f] = {"id": t1.id, "type": t1.obj_type, "url": t1.url}
         elif f == 'brand':
             tmp[f] = get_table_data_by_id(Brands, table.brand.id)
         elif f == 'classifies':
