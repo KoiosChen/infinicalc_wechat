@@ -22,11 +22,9 @@ def exp_return(data="", message=""):
 def session_commit():
     try:
         db.session.commit()
-        db.session.close()
         return success_return(message="db commit success")
     except SQLAlchemyError as e:
         db.session.rollback()
-        db.session.close()
         logger.error(f"users::register::db_commit()::SQLAlchemyError --> {str(e)}")
         return false_return(message=str(e))
 
