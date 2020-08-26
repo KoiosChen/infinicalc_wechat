@@ -63,7 +63,7 @@ class OperateObject:
 class ObjectStorageApi(Resource):
     @cos_ns.marshal_with(return_json)
     @cos_ns.doc(body=page_parser)
-    @permission_required("app.img_urls.img_url.query_img_urls")
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         获取所有图片
