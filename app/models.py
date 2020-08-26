@@ -1084,7 +1084,7 @@ class NewsSections(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
-    news = db.relationship('NewsCenter', backref='news_section', lazy='dynamic')
+    news = db.relationship('NewsCenter', backref='news_sections', lazy='dynamic')
 
 
 class NewsCenter(db.Model):
