@@ -79,7 +79,7 @@ class NewsCenterByIDApi(Resource):
         获取指定新闻内容
         """
         return success_return(
-            get_table_data_by_id(NewsCenter, kwargs['news_id'], appends=['news_cover_image', 'news_sections'],
+            get_table_data_by_id(NewsCenter, kwargs['news_id'], appends=['news_cover_image', 'news_section'],
                                  removes=['cover_image', 'news_section_id']))
 
     @news_center_ns.doc(body=update_news_parser)
