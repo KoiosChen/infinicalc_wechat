@@ -24,7 +24,7 @@ add_news_parser.add_argument('order', type=int, help='banner顺序，大于等�
 update_news_parser = add_news_parser.copy()
 
 news_page_parser = page_parser.copy()
-news_page_parser.add_argument("section_name", help='根据栏目名称查询')
+news_page_parser.add_argument("section_name", help='根据栏目名称查询', location='args')
 
 
 @news_center_ns.route('')
