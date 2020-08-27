@@ -187,7 +187,10 @@ def get_table_data(table, args, appends=[], removes=[]):
         if search:
             for k, v in search.items():
                 if k in fields:
-                    and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+                    if k == 'delete_at' and v is None:
+                        and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
+                    else:
+                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
 
             table_data = base_sql.filter(and_(*and_fields_list)).offset((current - 1) * size).limit(size).all()
         else:
