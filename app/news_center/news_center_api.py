@@ -80,7 +80,7 @@ class NewsCenterByIDApi(Resource):
         """
         return success_return(
             get_table_data_by_id(NewsCenter, kwargs['news_id'], appends=['news_cover_image', 'news_section'],
-                                 removes=['cover_image', 'news_section_id']))
+                                 removes=['cover_image']))
 
     @news_center_ns.doc(body=update_news_parser)
     @news_center_ns.marshal_with(return_json)
