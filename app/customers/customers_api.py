@@ -161,6 +161,8 @@ class CustomerExpressAddress(Resource):
         指定ID用户快递地址
         """
         current_user = kwargs['current_user']
+        if current_user is None:
+            return false_return(message="用户未登陆")
         return success_return(
             get_table_data_by_id(Customers, current_user.id, ["express_addresses"], table_fields(Customers)))
 

@@ -87,6 +87,15 @@ def weixinpay_response_xml(params):
     return generate_response_data(return_info)
 
 
+def create_cargoes(**kwargs):
+    """
+    如果是需要仓储，有分装（分发）流程的货物，则产生仓储记录
+    :param kwargs:
+    :return:
+    """
+
+
+
 def weixin_rollback(request):
     """
     【API】: 微信支付结果回调接口,供微信服务端调用
@@ -122,6 +131,7 @@ def weixin_rollback(request):
                 order.cash_free = cash_fee
                 order.pay_time = pay_time
                 order.transaction_id = transaction_id
+                for item_orders in order.item_orders_id.all()
 
             else:
                 res = "error: pay failed! "

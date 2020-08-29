@@ -835,10 +835,11 @@ class ItemsOrders(db.Model):
     )
     # 1：正常 2：禁用 0：取消
     status = db.Column(db.SmallInteger, default=1)
+    special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
-    rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'))
+    rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
 
 
 class ShopOrderStatus(db.Model):
