@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Layout, SKULayout, SKU
 from . import layout
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
@@ -70,11 +70,9 @@ class LayoutApi(Resource):
         """新增页面板块，仅用于定义板块名称"""
         args = add_layout_parser.parse_args()
         new_one = new_data_obj("Layout", **{"name": args['name']})
-        if new_one['status']:
-            new_one.desc = args['desc']
-            db.session.add(new_one)
-            return success_return(message=f"页面板块{args['name']}添加成功，id：{new_one['obj'].id}") \
-                       if session_commit() else false_return(message=f"页面板块{args['name']}添加描述失败"), 400
+        if new_one and new_one['status']:
+            new_one['obj'].desc = args.get('desc')
+            return submit_return(f"页面板块{args['name']}添加成功，id：{new_one['obj'].id}", f"页面板块{args['name']}添加描述失败")
         else:
             return false_return(message=f"页面板块{args['name']}已经存在"), 400
 
@@ -119,8 +117,7 @@ class SKULayoutApi(Resource):
             if not new_one.get('status'):
                 failed.append({'layout_id': kwargs['layout_id'], 'sku_id': sl['id']})
 
-        return success_return(message="添加sku到页面板块中成功") if not failed else false_return(data=failed,
-                                                                                       message="部分SKU已存在该页面板块"), 400
+        return submit_return("添加sku到页面板块中成功", "部分SKU已存在该页面板块")
 
 
 @layout_ns.doc(body=update_sku_layout_parser)
