@@ -19,7 +19,7 @@ def make_uuid():
     return str(uuid.uuid4())
 
 
-def make_order_id():
+def make_order_id(prefix=None):
     """
     生成订单号
     :return:
@@ -29,7 +29,7 @@ def make_order_id():
     random_str = str(random.randint(1, 9999))
     random_str = random_str.rjust(4, '0')
     rtn = '%s%s' % (date, random_str)
-    return rtn
+    return rtn if prefix is None else prefix + rtn
 
 
 user_role = db.Table('user_role',
@@ -625,7 +625,7 @@ class TotalCargoes(db.Model):
     cargo_tilt = db.Column(db.String(3), comment='货物垂直位置')
     cargo_zoom = db.Column(db.String(3), comment='货物焦距位置')
     order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'), comment='外键关联订单')
-    seal_date = db.Column(db.DateTime)
+    storage_date = db.Column(db.DateTime)
     init_total = db.Column(db.DECIMAL(7, 2), comment='初始的总量')
     last_total = db.Column(db.DECIMAL(7, 2), comment='最后的总量')
     unit = db.Column(db.String(10), default='斤', comment='货物单位')

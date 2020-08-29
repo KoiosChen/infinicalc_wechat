@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from app import logger, redis_db, db
-from app.models import ShopOrders
+from app.models import ShopOrders, make_order_id
 from . import wechat
-from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
+from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, \
+    WEIXIN_BODY, \
     WEIXIN_KEY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
 import logging
@@ -13,6 +14,7 @@ from flask import request, jsonify
 from hashlib import md5
 from app.common import submit_return, false_return, success_return
 from app.public_method import session_commit
+import datetime
 
 
 @wechat.route('/wechat_pay/callback', methods=['POST'])
@@ -95,7 +97,6 @@ def create_cargoes(**kwargs):
     """
 
 
-
 def weixin_rollback(request):
     """
     【API】: 微信支付结果回调接口,供微信服务端调用
@@ -131,23 +132,30 @@ def weixin_rollback(request):
                 order.cash_free = cash_fee
                 order.pay_time = pay_time
                 order.transaction_id = transaction_id
-                for item_orders in order.item_orders_id.all()
+                items = order.items_orders_id.all()
+                if items:
+                    for item_order in items:
+                        if item_order.special >= 30:
+                            cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
+                                          "storage_date":datetime.datetime.now(),
+                                          "init_total": item_order.item_id.first().values.get(0).value,
+                                          "unit": item_order.item_id.first().values.get(0).standards.name}
 
+                else:
+                    res = "error: pay failed! "
+                    status = 0
+                    err_code = data['err_code']  # 错误代码
+                    err_code_des = data['err_code_des']  # 错误代码描述
+                    # 更新订单，把错误信息更新到订单中
+                    order.is_pay = 2
+                    order.pay_err_code = err_code
+                    order.pay_err_code_des = err_code_des
+                db.session.add(order)
+                if session_commit().get("code") == 'success':
+                    res = 'success'
             else:
-                res = "error: pay failed! "
-                status = 0
-                err_code = data['err_code']  # 错误代码
-                err_code_des = data['err_code_des']  # 错误代码描述
-                # 更新订单，把错误信息更新到订单中
-                order.is_pay = 2
-                order.pay_err_code = err_code
-                order.pay_err_code_des = err_code_des
-            db.session.add(order)
-            if session_commit().get("code") == 'success':
-                res = 'success'
-        else:
-            res = "回调无内容"
-    except Exception as e:
+                res = "回调无内容"
+        except Exception as e:
         traceback.print_exc()
         res = str(e)
     finally:
