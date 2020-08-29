@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from app import logger, redis_db, db
-from app.models import ShopOrders
+from app.models import ShopOrders, make_order_id
 from . import wechat
-from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
+from app.wechat.wechat_config import WEIXIN_APP_ID, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, \
+    WEIXIN_BODY, \
     WEIXIN_KEY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
 import logging
@@ -12,7 +13,8 @@ import pymysql
 from flask import request, jsonify
 from hashlib import md5
 from app.common import submit_return, false_return, success_return
-from app.public_method import session_commit
+from app.public_method import session_commit, new_data_obj
+import datetime
 
 
 @wechat.route('/wechat_pay/callback', methods=['POST'])
@@ -87,6 +89,14 @@ def weixinpay_response_xml(params):
     return generate_response_data(return_info)
 
 
+def create_cargoes(**kwargs):
+    """
+    如果是需要仓储，有分装（分发）流程的货物，则产生仓储记录
+    :param kwargs:
+    :return:
+    """
+
+
 def weixin_rollback(request):
     """
     【API】: 微信支付结果回调接口,供微信服务端调用
@@ -122,21 +132,43 @@ def weixin_rollback(request):
                 order.cash_free = cash_fee
                 order.pay_time = pay_time
                 order.transaction_id = transaction_id
+                items = order.items_orders_id.all()
+                if items:
+                    for item_order in items:
+                        if item_order.special >= 30:
+                            for _ in range(0, item_order.item_quantity):
+                                standard_value = item_order.item_id.first().values
+                                # 查找单位是‘斤’的数值
+                                for s in standard_value:
+                                    if s.standards.name == '斤':
+                                        init_total = s.value
+                                        unit = s.standards.name
+                                        break
+                                cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
+                                              "storage_date": datetime.datetime.now(),
+                                              "init_total": init_total,
+                                              "last_total": init_total,
+                                              "unit": unit,
+                                              "owner_name": order.consumer.true_name,
+                                              "owner_id": order.customer_id}
+                                new_cargo = new_data_obj("TotalCargoes", **cargo_data)
+                                if not new_cargo and not new_cargo.get('status'):
+                                    res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
 
+                else:
+                    res = "error: pay failed! "
+                    status = 0
+                    err_code = data['err_code']  # 错误代码
+                    err_code_des = data['err_code_des']  # 错误代码描述
+                    # 更新订单，把错误信息更新到订单中
+                    order.is_pay = 2
+                    order.pay_err_code = err_code
+                    order.pay_err_code_des = err_code_des
+                db.session.add(order)
+                if session_commit().get("code") == 'success':
+                    res = 'success'
             else:
-                res = "error: pay failed! "
-                status = 0
-                err_code = data['err_code']  # 错误代码
-                err_code_des = data['err_code_des']  # 错误代码描述
-                # 更新订单，把错误信息更新到订单中
-                order.is_pay = 2
-                order.pay_err_code = err_code
-                order.pay_err_code_des = err_code_des
-            db.session.add(order)
-            if session_commit().get("code") == 'success':
-                res = 'success'
-        else:
-            res = "回调无内容"
+                res = "回调无内容"
     except Exception as e:
         traceback.print_exc()
         res = str(e)

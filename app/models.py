@@ -19,7 +19,7 @@ def make_uuid():
     return str(uuid.uuid4())
 
 
-def make_order_id():
+def make_order_id(prefix=None):
     """
     生成订单号
     :return:
@@ -29,7 +29,7 @@ def make_order_id():
     random_str = str(random.randint(1, 9999))
     random_str = random_str.rjust(4, '0')
     rtn = '%s%s' % (date, random_str)
-    return rtn
+    return rtn if prefix is None else prefix + rtn
 
 
 user_role = db.Table('user_role',
@@ -549,7 +549,7 @@ class SPU(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
-    express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
+    express_fee = db.Column(db.DECIMAL(6, 2), default=0.00, comment="邮费，默认0元")
     contents = db.Column(db.Text(length=(2 ** 32) - 1))
     standards = db.relationship(
         'Standards',
@@ -625,7 +625,7 @@ class TotalCargoes(db.Model):
     cargo_tilt = db.Column(db.String(3), comment='货物垂直位置')
     cargo_zoom = db.Column(db.String(3), comment='货物焦距位置')
     order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'), comment='外键关联订单')
-    seal_date = db.Column(db.DateTime)
+    storage_date = db.Column(db.DateTime)
     init_total = db.Column(db.DECIMAL(7, 2), comment='初始的总量')
     last_total = db.Column(db.DECIMAL(7, 2), comment='最后的总量')
     unit = db.Column(db.String(10), default='斤', comment='货物单位')
@@ -835,10 +835,11 @@ class ItemsOrders(db.Model):
     )
     # 1：正常 2：禁用 0：取消
     status = db.Column(db.SmallInteger, default=1)
+    special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
-    rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'))
+    rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
 
 
 class ShopOrderStatus(db.Model):

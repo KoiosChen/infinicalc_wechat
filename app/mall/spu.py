@@ -62,12 +62,12 @@ class SPUApi(Resource):
                                          "status": args['status'],
                                          "express_fee": args['express_fee']
                                          })
-        append_image = image_operate.operate(new_one['obj'], args['objects'], "append")
-        if append_image.get("code") == 'success':
-            return submit_return(f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}",
-                                 f"SPU {args['name']} 添加失败")
-        else:
-            return false_return("图片添加失败")
+        if args['objects']:
+            append_image = image_operate.operate(new_one['obj'], args['objects'], "append")
+            if append_image.get("code") != 'success':
+                return false_return("图片添加失败")
+        return submit_return(f"SPU {args['name']} 添加到Brand ID: {args['brand_id']}成功，id：{new_one['obj'].id}",
+                             f"SPU {args['name']} 添加失败")
 
 
 @mall_ns.route('/spu/<string:spu_id>')

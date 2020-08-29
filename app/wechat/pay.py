@@ -150,7 +150,7 @@ def create_order(**kwargs):
                         raise Exception(f"购物车对应商品不存在")
 
                     item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
-                                  "item_quantity": item_obj.quantity, "item_price": sku.price,
+                                  "item_quantity": item_obj.quantity, "item_price": sku.price, "special": sku.special,
                                   "transaction_price": sku.price}
                     new_item_order = new_data_obj("ItemsOrders", **item_order)
 
