@@ -41,10 +41,13 @@ sku_img_parser = reqparse.RequestParser()
 sku_img_parser.add_argument('objects', type=list, required=True, help='sku对应的所有图片或视频', location='json')
 
 add_purchase_parser = reqparse.RequestParser()
-add_purchase_parser.add_argument("amount", required=True, help='进货数量', location='json')
+add_purchase_parser.add_argument("amount", required=True, help='进货数量')
+
+refund_parser = reqparse.RequestParser()
+refund_parser.add_argument("amount", required=True, help='退货数量')
 
 sku_page_parser = page_parser.copy()
-sku_page_parser.add_argument('home_page', help='搜索是否需要首页加载', type=int, choices=[0, 1], location='args')
+# sku_page_parser.add_argument('home_page', help='搜索是否需要首页加载', type=int, choices=[0, 1], location='args')
 
 temporary_cart_parser = reqparse.RequestParser()
 temporary_cart_parser.add_argument('quantity', type=int, required=True, help='购买数量')
@@ -73,33 +76,24 @@ def compute_quantity(sku_id, quantity_change):
             return false_return()
 
 
-def thread_compute_quantity(sku_id, operate_key, lock, quantity_change):
+def change_sku_quantity(key, purchase_data, lock, ):
     if lock.acquire():
         try:
-            compute_quantity(sku_id, quantity_change)
-            if session_commit().get('code') == 'false':
-                raise Exception(f"变更sku{sku_id}数量失败")
+            new_purchase_order = new_data_obj("PurchaseInfo", **purchase_data)
+            if new_purchase_order and new_purchase_order.get('status'):
+                change_quantity = compute_quantity(purchase_data.get('sku_id'), purchase_data.get('amount'))
+                if change_quantity.get('code') == 'false':
+                    raise Exception(change_quantity)
+                else:
+                    commit_result = session_commit()
+                    if commit_result.get('code') == 'false':
+                        raise Exception(commit_result)
+            else:
+                raise Exception("创建进货订单失败")
         except Exception as e:
-            logger.error(str(e))
-            redis_db.set(f"change_sku_quantity::{sku_id}::{operate_key}",
-                         json.dumps(false_return(message=str(e))),
-                         ex=6000)
+            redis_db.set(key, json.dumps(e), ex=6000)
         finally:
             lock.release()
-
-
-def change_sku_quantity(sku_id, lock, quantity_change):
-    operate_key = str(uuid.uuid4())
-    sku_thread = threading.Thread(target=thread_compute_quantity, args=(sku_id, operate_key, lock, quantity_change))
-    sku_thread.start()
-    sku_thread.join()
-    k = f"change_sku_quantity::{sku_id}::{operate_key}"
-    if redis_db.exists(k):
-        result = json.loads(redis_db.get(k))
-        redis_db.delete(k)
-        return result
-    else:
-        return success_return(message=f"sku数量改变成功")
 
 
 @mall_ns.route('/sku')
@@ -282,25 +276,29 @@ class SKUPurchase(Resource):
     @mall_ns.marshal_with(return_json)
     @permission_required("app.mall.sku.add_purchase_info")
     def post(self, **kwargs):
-        """根据sku进货"""
+        """根据sku进货, 退货"""
         sku_id = kwargs.get("sku_id")
         args = add_purchase_parser.parse_args()
         sku = SKU.query.get(sku_id)
+        operator = kwargs.get('current_user').id if kwargs.get('current_user') else None
         if sku and not sku.status:
-            new_one = new_data_obj("PurchaseInfo", **{"sku_id": sku_id,
-                                                      "amount": eval(args['amount']),
-                                                      "operator": kwargs['info']['user'].id})
-            if new_one:
-                # sku.quantity += eval(args['amount'])
-                change_result = change_sku_quantity(sku_id, sku_lock, eval(args['amount']))
-                if change_result.get("code") == "false":
-                    return change_result, 400
-                return submit_return(
-                    f"进货单<{new_one['obj'].id}>新增成功，<{sku.name}>增加数量<{args['amount']}>, 共<{sku.quantity}>",
-                    f"进货单<{new_one['obj'].id}>新增成功，SKU数量增加失败")
+            purchase_data = {"sku_id": sku_id,
+                             "amount": eval(args['amount']),
+                             "operator": operator}
+            operate_key = str(uuid.uuid4())
+            key = f"change_sku_quantity::{sku_id}::{operate_key}"
+            change_thread = threading.Thread(target=change_sku_quantity, args=(key, purchase_data, sku_lock))
+            change_thread.start()
+            change_thread.join()
+            if redis_db.exists(key):
+                result = json.loads(redis_db.get(key))
+                redis_db.delete(key)
+                return result
             else:
-                false_return(message="进货数据添加失败"), 400
+                db.session.commit()
+                return submit_return(f"进（退）货操作成功", "数据提交失败，进（退）货操作失败")
+
         elif sku and sku.status:
-            return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进货单，请先下架"), 400
+            return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进（退）货单，请先下架"), 400
         else:
             return false_return(message=f"<{sku_id}>不存在"), 400

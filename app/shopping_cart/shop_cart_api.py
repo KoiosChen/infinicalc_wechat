@@ -86,12 +86,14 @@ class Pay(Resource):
             args['customer_id'] = kwargs['current_user'].id
             args['id'] = make_order_id()
             packing_order = args.get("packing_order")
+            # 若是分装流程
             if packing_order:
                 args.pop("select_items")
                 select_items = [s.id for s in
                                 ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order"))]
             else:
                 select_items = args.pop('select_items')
+
             for i in select_items:
                 if ShoppingCart.query.get(i).delete_at:
                     raise Exception(f"购物车订单{i}已删除")

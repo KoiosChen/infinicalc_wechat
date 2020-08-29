@@ -549,7 +549,7 @@ class SPU(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
     sub_name = db.Column(db.String(100))
-    express_fee = db.Column(db.DECIMAL(4, 2), default=0.00, comment="邮费，默认0元")
+    express_fee = db.Column(db.DECIMAL(6, 2), default=0.00, comment="邮费，默认0元")
     contents = db.Column(db.Text(length=(2 ** 32) - 1))
     standards = db.relationship(
         'Standards',

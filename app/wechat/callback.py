@@ -13,7 +13,7 @@ import pymysql
 from flask import request, jsonify
 from hashlib import md5
 from app.common import submit_return, false_return, success_return
-from app.public_method import session_commit
+from app.public_method import session_commit, new_data_obj
 import datetime
 
 
@@ -136,10 +136,24 @@ def weixin_rollback(request):
                 if items:
                     for item_order in items:
                         if item_order.special >= 30:
-                            cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
-                                          "storage_date":datetime.datetime.now(),
-                                          "init_total": item_order.item_id.first().values.get(0).value,
-                                          "unit": item_order.item_id.first().values.get(0).standards.name}
+                            for _ in range(0, item_order.item_quantity):
+                                standard_value = item_order.item_id.first().values
+                                # 查找单位是‘斤’的数值
+                                for s in standard_value:
+                                    if s.standards.name == '斤':
+                                        init_total = s.value
+                                        unit = s.standards.name
+                                        break
+                                cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
+                                              "storage_date": datetime.datetime.now(),
+                                              "init_total": init_total,
+                                              "last_total": init_total,
+                                              "unit": unit,
+                                              "owner_name": order.consumer.true_name,
+                                              "owner_id": order.customer_id}
+                                new_cargo = new_data_obj("TotalCargoes", **cargo_data)
+                                if not new_cargo and not new_cargo.get('status'):
+                                    res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
 
                 else:
                     res = "error: pay failed! "
@@ -155,7 +169,7 @@ def weixin_rollback(request):
                     res = 'success'
             else:
                 res = "回调无内容"
-        except Exception as e:
+    except Exception as e:
         traceback.print_exc()
         res = str(e)
     finally:
