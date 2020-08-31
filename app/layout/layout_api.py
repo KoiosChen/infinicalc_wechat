@@ -3,7 +3,7 @@ from ..models import Layout, SKULayout, SKU
 from . import layout
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj, get_table_data
+from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
 
@@ -42,7 +42,8 @@ def query_sku_layout(layout_name=None):
             if f == 'layout_id':
                 tmp['layout'] = {'id': lay.layout_id, 'name': lay.layout.name}
             elif f == 'sku_id':
-                tmp['sku'] = {'id': lay.sku_id, 'name': lay.layout_sku.name}
+                tmp['sku'] = get_table_data_by_id(SKU, lay.sku_id, appends=['id', 'price', 'objects'],
+                                                  removes=table_fields(SKU))
             elif f == 'create_at':
                 tmp['create_at'] = str(lay.create_at)
             else:
