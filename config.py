@@ -30,7 +30,7 @@ class DevelopmentConfig(Config):
 
 
 class TestingConfig(Config):
-    DEBUG = False
+    DEBUG = True
     DB_USERNAME = os.environ.get('TEST_DATABASE_USERNAME') or 'peter'
     DB_PASSWORD = os.environ.get('TEST_DATABASE_PASSWORD') or 'Gwbnsh@408'
     DB_HOST = os.environ.get('TEST_DATABASE_HOST') or '127.0.0.1'
