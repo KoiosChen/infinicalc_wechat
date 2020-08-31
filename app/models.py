@@ -810,11 +810,15 @@ class ShopOrders(db.Model):
     express_postcode = db.Column(db.String(7), comment='邮编')
     express_recipient = db.Column(db.String(20), comment='收件人')
     express_recipient_phone = db.Column(db.String(13), comment='收件人手机号')
-    status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消")
+    status = db.Column(db.SmallInteger, default=1,
+                       comment="1：正常 2：禁用 0：订单取消(delete_at 写入时间), "
+                               "31：退货申请中,32: 退货成功(delete_at 写入时间). "
+                               "41: 换货申请中， 42: 换货成功(delete_at 写入时间)")
     items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='cargo_order', lazy='dynamic')
     packing_order = db.relationship("PackingItemOrders", backref='packing_item_order', lazy='dynamic')
     message = db.Column(db.String(500), comment='用户留言')
+    cancel_reason = db.Column(db.String(64), comment='取消原因，给用户下拉选择')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)

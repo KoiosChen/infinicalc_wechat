@@ -34,6 +34,10 @@ pay_parser.add_argument("express_addr_id", type=str, help='express_address表id'
 pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("select_items", type=list, help="传选中的shopping_cart表的id", location='json')
 pay_parser.add_argument("packing_order", help='当在分装流程中，传递预分配的分装ID，不用传select_items；正常订单，只传select_items，不传packing_order')
+pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
+pay_parser.add_argument("invoice_title", help='发票抬头')
+pay_parser.add_argument("invoice_tax_no", help="发票公司税号")
+pay_parser.add_argument("inovice_email", help="发票")
 
 shopping_cart_parser = page_parser.copy()
 shopping_cart_parser.add_argument('packing_order', help='若是分装流程，获取购物车页面需传递此参数; 否则不传，或者为空', location='args')
@@ -100,7 +104,7 @@ class Pay(Resource):
             total_price, total_score, express_addr = checkout_cart(
                 **{"select_items": select_items, 'customer': kwargs['current_user']})
 
-            if total_score < args['score_used']:
+            if args.get('score_used') and total_score < args['score_used']:
                 raise Exception(f"欲使用积分{args['score_used']}此订单最大可消费积分为{total_score}")
 
             if not express_addr and addr:
@@ -113,7 +117,8 @@ class Pay(Resource):
             if create_result.get("code") == "false":
                 return create_result
             out_trade_no = create_result.get("data")
-            return pay.weixin_pay(price=total_price - args['score_used'], out_trade_no=out_trade_no,
+            score_used = 0 if not args.get('score_used') else args.get('score_used')
+            return pay.weixin_pay(out_trade_no=out_trade_no, price=total_price - score_used,
                                   openid=kwargs['current_user'].openid)
 
         except Exception as e:
@@ -126,7 +131,7 @@ class CheckOut(Resource):
     @shopping_cart_ns.marshal_with(return_json)
     @shopping_cart_ns.doc(body=checkout_parser)
     @permission_required(Permission.USER)
-    def get(self, **kwargs):
+    def post(self, **kwargs):
         """点击 ‘去结算’ 计算可用积分总数及总价，进入结算页"""
         args = checkout_parser.parse_args()
         args['customer'] = kwargs['current_user']
