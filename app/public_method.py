@@ -104,7 +104,7 @@ def __make_table(fields, table, strainer=None):
                 if value.thumbnails:
                     tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type,
                                  'thumbnail': {'id': value.thumbnails[0].id,
-                                               'url': value.url,
+                                               'url': value.thumbnails[0].url,
                                                'obj_type': value.thumbnails[0].obj_type}})
                 else:
                     tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
