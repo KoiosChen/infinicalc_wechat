@@ -130,6 +130,11 @@ def create_order(**kwargs):
                 packing_obj = None
                 if packing_order:
                     packing_obj = PackingItemOrders.query.get(packing_order)
+                else:
+                    order_info.pop('packing_order')
+
+                if not create_info.get('score_used'):
+                    order_info.pop('score_used')
 
                 new_order = new_data_obj("ShopOrders", **order_info)
                 if not new_order:
@@ -170,6 +175,9 @@ def create_order(**kwargs):
                         raise Exception("订单创建失败")
                 if session_commit().get("code") == 'false':
                     raise Exception("订单创建失败，因为事务提交失败")
+                else:
+                    redis_db.set(f"create_order::{create_info['order_info']['customer_id']}::{op_key}",
+                                 json.dumps(success_return(data=new_order['obj'].id)), ex=6000)
             except Exception as e:
                 redis_db.set(f"create_order::{create_info['order_info']['customer_id']}::{op_key}",
                              json.dumps(false_return(message=str(e))),
@@ -185,21 +193,24 @@ def create_order(**kwargs):
     if redis_db.exists(k):
         result = json.loads(redis_db.get(k))
         redis_db.delete(k)
-        return result
-    else:
-        for i in kwargs['select_items']:
-            cart = ShoppingCart.query.get(i)
-            cart.delete_at = datetime.datetime.now()
-            db.session.add(cart)
-        db.session.commit()
-        return success_return(message=f"创建订单成功")
+        if result.get("code") == "false":
+            return result
+        else:
+            order_no = result['data']
+            for i in kwargs['select_items']:
+                cart = ShoppingCart.query.get(i)
+                cart.delete_at = datetime.datetime.now()
+                db.session.add(cart)
+            db.session.commit()
+            return success_return(data=order_no, message="创建订单成功")
 
 
 def weixin_pay(out_trade_no, price, openid):
     """
     【API】: 创建订单,供商户app调用
     """
-    order = ShopOrders.query.get(out_trade_no)
+    # order = ShopOrders.query.get(out_trade_no)
+    order = db.session.query(ShopOrders).with_for_update().get(out_trade_no)
     try:
         # 后台提交支付请求
         if not order:
@@ -208,10 +219,15 @@ def weixin_pay(out_trade_no, price, openid):
             raise Exception(f"订单 {out_trade_no} 已支付")
         if order.is_pay == 3 and not order.pay_time:
             raise Exception(f"订单 {out_trade_no} 支付中")
-        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API,
-                                                   out_trade_no,
-                                                   int(price * 100),
-                                                   openid)
+
+        # 先把订单状态更新为支付中
+        order.is_pay = 3
+        if session_commit().get("code") == "false":
+            raise Exception("订单状态修改为‘支付中’失败")
+
+        # 提交支付
+        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid)
+
         if order_info and info:
             info['total_amount'] = int(price * 100)
             if info['result_code'] == "SUCCESS":
@@ -220,7 +236,8 @@ def weixin_pay(out_trade_no, price, openid):
                 order.is_pay = 3
                 order.pre_pay_time = datetime.datetime.now()
                 db.session.add(order)
-                session_commit()
+                if session_commit().get('code') == 'false':
+                    raise Exception("订单数据提交失败，事务回滚")
                 return success_return(data=order_info, message="订单预付id获取成功")
             # 调用统一创建订单接口失败
             else:

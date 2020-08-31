@@ -28,12 +28,13 @@ update_sku_layout_parser.replace_argument('sku', required=True, type=list, locat
                                           help='需要变更到sku list，例如[{"id": sku_id, "order": 1, "status": 1}]')
 
 
-def query_sku_layout(layout_id=None):
+def query_sku_layout(layout_name=None):
     fields_ = table_fields(SKULayout)
-    if layout_id is None:
+    if layout_name is None:
         all_layout = SKULayout.query.all()
     else:
-        all_layout = SKULayout.query.filter_by(layout_id=layout_id).all()
+        layout = Layout.query.filter_by(name=layout_name).first()
+        all_layout = SKULayout.query.filter_by(layout_id=layout.id).all()
     r = list()
     for lay in all_layout:
         tmp = dict()
@@ -89,8 +90,8 @@ class AllSKULayoutApi(Resource):
         return success_return(query_sku_layout(), "")
 
 
-@layout_ns.route('/<int:layout_id>/sku')
-@layout_ns.param('layout_id', '页面ID')
+@layout_ns.route('/<string:layout_name>/sku')
+@layout_ns.param('layout_name', '页面ID')
 @layout_ns.expect(head_parser)
 class SKULayoutApi(Resource):
     @layout_ns.marshal_with(return_json)
@@ -99,8 +100,8 @@ class SKULayoutApi(Resource):
         """
         获取指定页面板块对应的SKU及其排序
         """
-        layout_id = kwargs.get('layout_id')
-        return success_return(query_sku_layout(layout_id), "")
+        layout_name = kwargs.get('layout_name')
+        return success_return(query_sku_layout(layout_name), "")
 
     @layout_ns.doc(body=add_sku_layout_parser)
     @layout_ns.marshal_with(return_json)
@@ -112,10 +113,11 @@ class SKULayoutApi(Resource):
         args = update_sku_layout_parser.parse_args()
         sku_list = args.get('sku')
         failed = []
+        layout = Layout.query.filter_by(name=kwargs['layout_name']).first()
         for sl in sku_list:
-            new_one = new_data_obj("SKULayout", **{'layout_id': kwargs['layout_id'], 'sku_id': sl['id']})
+            new_one = new_data_obj("SKULayout", **{'layout_id': layout.id, 'sku_id': sl['id']})
             if not new_one.get('status'):
-                failed.append({'layout_id': kwargs['layout_id'], 'sku_id': sl['id']})
+                failed.append({'layout_id': layout.id, 'sku_id': sl['id']})
 
         return submit_return("添加sku到页面板块中成功", "部分SKU已存在该页面板块")
 
