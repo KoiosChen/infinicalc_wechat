@@ -37,14 +37,12 @@ def query_sku_layout(layout_name=None):
         all_layout = SKULayout.query.filter_by(layout_id=layout.id, status=1).all()
     r = defaultdict(dict)
     for lay in all_layout:
-        if not r.get(lay.layout.name):
-            r[lay.layout.name]["create_at"] = str(lay.create_at)
-            if "sku" not in r[lay.layout.name].keys():
-                r[lay.layout.name]["sku"] = list()
+        if "sku" not in r[lay.layout.name].keys():
+            r[lay.layout.name]["sku"] = list()
 
-            sku_data = get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'price', 'objects'], table_fields(SKU))
-            sku_data['order'] = lay.order
-            r[lay.layout.name]["sku"].append(sku_data)
+        sku_data = get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'price', 'objects'], table_fields(SKU))
+        sku_data['order'] = lay.order
+        r[lay.layout.name]["sku"].append(sku_data)
     return r
 
 
