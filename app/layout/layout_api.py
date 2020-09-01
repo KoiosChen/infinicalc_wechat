@@ -110,7 +110,7 @@ class SKULayoutApi(Resource):
         failed = []
         layout = Layout.query.filter_by(name=kwargs['layout_name']).first()
         for sl in sku_list:
-            new_one = new_data_obj("SKULayout", **{'layout_id': layout.id, 'sku_id': sl['id']})
+            new_one = new_data_obj("SKULayout", **{'layout_id': layout.id, 'sku_id': sl['id'], 'order': sl['order']})
             if not new_one.get('status'):
                 failed.append({'layout_id': layout.id, 'sku_id': sl['id']})
 
