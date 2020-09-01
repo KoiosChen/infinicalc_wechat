@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="">
+    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/elements/elements_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/elements/elements_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/layout/layout_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/layout/layout_api.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -53,34 +53,43 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <excluded-from-favorite>
+      <branch-storage>
+        <map>
+          <entry type="LOCAL">
+            <value>
+              <list>
+                <branch-info repo="$PROJECT_DIR$" source="master" />
+              </list>
+            </value>
+          </entry>
+        </map>
+      </branch-storage>
+    </excluded-from-favorite>
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="beta0.2" />
+        <entry key="$PROJECT_DIR$" value="MichaelWine" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="IgnoredFileRootStore">
-    <option name="generatedRoots">
-      <set>
-        <option value="$PROJECT_DIR$/.idea" />
-      </set>
-    </option>
-  </component>
   <component name="ProjectId" id="1ZPvvSmir25tn0yie98SuZcwaX9" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="新增" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DatabaseDriversLRU" value="mariadb&#10;mysql" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="add_unversioned_files" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/app" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
@@ -89,26 +98,27 @@
     </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app" />
+      <recent name="$PROJECT_DIR$/app/wechat" />
+      <recent name="$PROJECT_DIR$/app/mini_program" />
       <recent name="$PROJECT_DIR$/app/promotions" />
       <recent name="$PROJECT_DIR$/app/roles" />
-      <recent name="$PROJECT_DIR$/app" />
     </key>
   </component>
-  <component name="RunManager">
-    <configuration name="infinicalc_wechat" type="PythonConfigurationType" factoryName="Python">
+  <component name="RunManager" selected="Flask server.Flask (manage.py)">
+    <configuration name="banner_api" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="infinicalc_wechat" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="$USER_HOME$/.virtualenvs/untitled/bin/python" />
-      <option name="WORKING_DIRECTORY" value="" />
-      <option name="IS_MODULE_SDK" value="false" />
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/banners" />
+      <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/manage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/banners/banner_api.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -117,6 +127,130 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="live_streaming" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="infinicalc_wechat" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/wechat" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/wechat/live_streaming.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="media_upload" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="infinicalc_wechat" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/wechat" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/wechat/media_upload.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="qqcos" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="infinicalc_wechat" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/app/obj_storage" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/app/obj_storage/qqcos.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Flask (app/__init__.py:create_app)" type="Python.FlaskServer" temporary="true" nameIsGenerated="true">
+      <option name="application" value="create_app" />
+      <option name="flaskDebug" value="true" />
+      <module name="infinicalc_wechat" />
+      <option name="target" value="$PROJECT_DIR$/app/__init__.py" />
+      <option name="targetType" value="PATH" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="$USER_HOME$/.virtualenvs/untitled/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Flask (manage.py)" type="Python.FlaskServer" nameIsGenerated="true">
+      <option name="flaskDebug" value="true" />
+      <module name="infinicalc_wechat" />
+      <option name="target" value="$PROJECT_DIR$/manage.py" />
+      <option name="targetType" value="PATH" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="$USER_HOME$/.virtualenvs/untitled/bin/python" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <method v="2" />
+    </configuration>
+    <configuration default="true" type="Python.FlaskServer">
+      <option name="flaskDebug" value="true" />
+      <module name="infinicalc_wechat" />
+      <option name="target" value="$PROJECT_DIR$/manage.py" />
+      <option name="targetType" value="PATH" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <option name="SDK_HOME" value="$USER_HOME$/.virtualenvs/untitled/bin/python" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="launchJavascriptDebuger" value="false" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.qqcos" />
+        <item itemvalue="Python.media_upload" />
+        <item itemvalue="Python.live_streaming" />
+        <item itemvalue="Python.banner_api" />
+        <item itemvalue="Flask server.Flask (app/__init__.py:create_app)" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -175,322 +309,747 @@
       <workItem from="1589639978943" duration="513000" />
       <workItem from="1589641627267" duration="378000" />
       <workItem from="1589678710078" duration="202000" />
+      <workItem from="1589766926341" duration="247000" />
+      <workItem from="1590108457802" duration="135000" />
+      <workItem from="1590108912554" duration="116000" />
+      <workItem from="1590109067017" duration="210000" />
+      <workItem from="1590109335419" duration="4000" />
+      <workItem from="1590109398085" duration="998000" />
+      <workItem from="1590130707701" duration="399000" />
+      <workItem from="1590508267431" duration="45000" />
+      <workItem from="1590539688655" duration="553000" />
+      <workItem from="1590543485050" duration="3728000" />
+      <workItem from="1590982353951" duration="35000" />
+      <workItem from="1591263600961" duration="547000" />
+      <workItem from="1591264159998" duration="380000" />
+      <workItem from="1592360461058" duration="608000" />
+      <workItem from="1592442528994" duration="5634000" />
+      <workItem from="1592526706232" duration="609000" />
+      <workItem from="1592879448727" duration="7000" />
+      <workItem from="1593440124450" duration="7228000" />
+      <workItem from="1593597912331" duration="1862000" />
+      <workItem from="1593648542074" duration="234000" />
+      <workItem from="1594122017159" duration="1333000" />
+      <workItem from="1594133091690" duration="10271000" />
+      <workItem from="1594191061908" duration="6446000" />
+      <workItem from="1594273619350" duration="33598000" />
+      <workItem from="1594362007180" duration="3804000" />
+      <workItem from="1594372142697" duration="450000" />
+      <workItem from="1594381037168" duration="1282000" />
+      <workItem from="1594392718811" duration="771000" />
+      <workItem from="1594393504782" duration="18945000" />
+      <workItem from="1594546482444" duration="87589000" />
+      <workItem from="1595041062374" duration="1838000" />
+      <workItem from="1595047385643" duration="8736000" />
+      <workItem from="1595119455233" duration="17295000" />
+      <workItem from="1595468559570" duration="1336000" />
+      <workItem from="1595493932987" duration="2272000" />
+      <workItem from="1595504861136" duration="79000" />
+      <workItem from="1595555669952" duration="2261000" />
+      <workItem from="1595601430693" duration="5957000" />
+      <workItem from="1595671757733" duration="34930000" />
+      <workItem from="1596089950175" duration="18817000" />
+      <workItem from="1596249077085" duration="3157000" />
+      <workItem from="1596329107400" duration="5311000" />
+      <workItem from="1596430355702" duration="3278000" />
+      <workItem from="1596465789362" duration="600000" />
+      <workItem from="1596614897916" duration="22000" />
+      <workItem from="1596725588541" duration="17000000" />
+      <workItem from="1596850804556" duration="87842000" />
+      <workItem from="1598284365431" duration="18730000" />
+      <workItem from="1598534683647" duration="3614000" />
+      <workItem from="1598631829784" duration="22376000" />
+      <workItem from="1598840462523" duration="23136000" />
     </task>
-    <task id="LOCAL-00001" summary="ignore">
-      <created>1585498309901</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
+    <task id="LOCAL-00087" summary="默认更改列表">
+      <created>1596778953696</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
       <option name="project" value="LOCAL" />
-      <updated>1585498309901</updated>
+      <updated>1596778953696</updated>
     </task>
-    <task id="LOCAL-00002" summary="delete migrations">
-      <created>1585498355849</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
+    <task id="LOCAL-00088" summary="默认更改列表">
+      <created>1596781665258</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
       <option name="project" value="LOCAL" />
-      <updated>1585498355849</updated>
+      <updated>1596781665258</updated>
     </task>
-    <task id="LOCAL-00003" summary="delete migrations">
-      <created>1585614595519</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
+    <task id="LOCAL-00089" summary="默认更改列表">
+      <created>1597417214434</created>
+      <option name="number" value="00089" />
+      <option name="presentableId" value="LOCAL-00089" />
       <option name="project" value="LOCAL" />
-      <updated>1585614595519</updated>
+      <updated>1597417214435</updated>
     </task>
-    <task id="LOCAL-00004" summary="delete migrations">
-      <created>1585614627407</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
+    <task id="LOCAL-00090" summary="默认更改列表">
+      <created>1597417534459</created>
+      <option name="number" value="00090" />
+      <option name="presentableId" value="LOCAL-00090" />
       <option name="project" value="LOCAL" />
-      <updated>1585614627407</updated>
+      <updated>1597417534459</updated>
     </task>
-    <task id="LOCAL-00005" summary="delete migrations">
-      <created>1585614636747</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
+    <task id="LOCAL-00091" summary="默认更改列表">
+      <created>1597417691729</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
       <option name="project" value="LOCAL" />
-      <updated>1585614636747</updated>
+      <updated>1597417691730</updated>
     </task>
-    <task id="LOCAL-00006" summary="delete migrations">
-      <created>1585615002605</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
+    <task id="LOCAL-00092" summary="默认更改列表">
+      <created>1597417801900</created>
+      <option name="number" value="00092" />
+      <option name="presentableId" value="LOCAL-00092" />
       <option name="project" value="LOCAL" />
-      <updated>1585615002605</updated>
+      <updated>1597417801900</updated>
     </task>
-    <task id="LOCAL-00007" summary="env">
-      <created>1585993294370</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
+    <task id="LOCAL-00093" summary="默认更改列表">
+      <created>1598284454048</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
       <option name="project" value="LOCAL" />
-      <updated>1585993294370</updated>
+      <updated>1598284454049</updated>
     </task>
-    <task id="LOCAL-00008" summary="get_table_data方法修改，增加搜索">
-      <created>1589207322259</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
+    <task id="LOCAL-00094" summary="默认更改列表">
+      <created>1598284680826</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
       <option name="project" value="LOCAL" />
-      <updated>1589207322259</updated>
+      <updated>1598284680826</updated>
     </task>
-    <task id="LOCAL-00009" summary="env">
-      <created>1589209661014</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
+    <task id="LOCAL-00095" summary="默认更改列表">
+      <created>1598285707312</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
       <option name="project" value="LOCAL" />
-      <updated>1589209661014</updated>
+      <updated>1598285707312</updated>
     </task>
-    <task id="LOCAL-00010" summary="env">
-      <created>1589639055332</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
+    <task id="LOCAL-00096" summary="默认更改列表">
+      <created>1598286635765</created>
+      <option name="number" value="00096" />
+      <option name="presentableId" value="LOCAL-00096" />
       <option name="project" value="LOCAL" />
-      <updated>1589639055333</updated>
+      <updated>1598286635765</updated>
     </task>
-    <task id="LOCAL-00011" summary="env">
-      <created>1589639144593</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
+    <task id="LOCAL-00097" summary="默认更改列表">
+      <created>1598286954013</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
       <option name="project" value="LOCAL" />
-      <updated>1589639144593</updated>
+      <updated>1598286954013</updated>
     </task>
-    <task id="LOCAL-00012" summary="bugs">
-      <created>1589641719397</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
+    <task id="LOCAL-00098" summary="默认更改列表">
+      <created>1598287786643</created>
+      <option name="number" value="00098" />
+      <option name="presentableId" value="LOCAL-00098" />
       <option name="project" value="LOCAL" />
-      <updated>1589641719397</updated>
+      <updated>1598287786643</updated>
     </task>
-    <task id="LOCAL-00013" summary="bugs">
-      <created>1589641763394</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
+    <task id="LOCAL-00099" summary="默认更改列表">
+      <created>1598288996327</created>
+      <option name="number" value="00099" />
+      <option name="presentableId" value="LOCAL-00099" />
       <option name="project" value="LOCAL" />
-      <updated>1589641763394</updated>
+      <updated>1598288996327</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00100" summary="默认更改列表">
+      <created>1598402854117</created>
+      <option name="number" value="00100" />
+      <option name="presentableId" value="LOCAL-00100" />
+      <option name="project" value="LOCAL" />
+      <updated>1598402854117</updated>
+    </task>
+    <task id="LOCAL-00101" summary="默认更改列表">
+      <created>1598403996263</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1598403996263</updated>
+    </task>
+    <task id="LOCAL-00102" summary="默认更改列表">
+      <created>1598408015116</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1598408015116</updated>
+    </task>
+    <task id="LOCAL-00103" summary="默认更改列表">
+      <created>1598408085910</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1598408085910</updated>
+    </task>
+    <task id="LOCAL-00104" summary="默认更改列表">
+      <created>1598410099121</created>
+      <option name="number" value="00104" />
+      <option name="presentableId" value="LOCAL-00104" />
+      <option name="project" value="LOCAL" />
+      <updated>1598410099121</updated>
+    </task>
+    <task id="LOCAL-00105" summary="默认更改列表">
+      <created>1598410914260</created>
+      <option name="number" value="00105" />
+      <option name="presentableId" value="LOCAL-00105" />
+      <option name="project" value="LOCAL" />
+      <updated>1598410914260</updated>
+    </task>
+    <task id="LOCAL-00106" summary="默认更改列表">
+      <created>1598411339875</created>
+      <option name="number" value="00106" />
+      <option name="presentableId" value="LOCAL-00106" />
+      <option name="project" value="LOCAL" />
+      <updated>1598411339875</updated>
+    </task>
+    <task id="LOCAL-00107" summary="默认更改列表">
+      <created>1598453333265</created>
+      <option name="number" value="00107" />
+      <option name="presentableId" value="LOCAL-00107" />
+      <option name="project" value="LOCAL" />
+      <updated>1598453333265</updated>
+    </task>
+    <task id="LOCAL-00108" summary="默认更改列表">
+      <created>1598453354692</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1598453354692</updated>
+    </task>
+    <task id="LOCAL-00109" summary="默认更改列表">
+      <created>1598453419650</created>
+      <option name="number" value="00109" />
+      <option name="presentableId" value="LOCAL-00109" />
+      <option name="project" value="LOCAL" />
+      <updated>1598453419650</updated>
+    </task>
+    <task id="LOCAL-00110" summary="默认更改列表">
+      <created>1598454521931</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1598454521931</updated>
+    </task>
+    <task id="LOCAL-00111" summary="默认更改列表">
+      <created>1598454682087</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1598454682087</updated>
+    </task>
+    <task id="LOCAL-00112" summary="默认更改列表">
+      <created>1598455265973</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1598455265973</updated>
+    </task>
+    <task id="LOCAL-00113" summary="默认更改列表">
+      <created>1598455807265</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1598455807265</updated>
+    </task>
+    <task id="LOCAL-00114" summary="默认更改列表">
+      <created>1598456049980</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1598456049980</updated>
+    </task>
+    <task id="LOCAL-00115" summary="默认更改列表">
+      <created>1598534820581</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1598534820582</updated>
+    </task>
+    <task id="LOCAL-00116" summary="默认更改列表">
+      <created>1598537665872</created>
+      <option name="number" value="00116" />
+      <option name="presentableId" value="LOCAL-00116" />
+      <option name="project" value="LOCAL" />
+      <updated>1598537665872</updated>
+    </task>
+    <task id="LOCAL-00117" summary="默认更改列表">
+      <created>1598538193207</created>
+      <option name="number" value="00117" />
+      <option name="presentableId" value="LOCAL-00117" />
+      <option name="project" value="LOCAL" />
+      <updated>1598538193207</updated>
+    </task>
+    <task id="LOCAL-00118" summary="默认更改列表">
+      <created>1598538548719</created>
+      <option name="number" value="00118" />
+      <option name="presentableId" value="LOCAL-00118" />
+      <option name="project" value="LOCAL" />
+      <updated>1598538548719</updated>
+    </task>
+    <task id="LOCAL-00119" summary="默认更改列表">
+      <created>1598679121221</created>
+      <option name="number" value="00119" />
+      <option name="presentableId" value="LOCAL-00119" />
+      <option name="project" value="LOCAL" />
+      <updated>1598679121222</updated>
+    </task>
+    <task id="LOCAL-00120" summary="默认更改列表">
+      <created>1598680520715</created>
+      <option name="number" value="00120" />
+      <option name="presentableId" value="LOCAL-00120" />
+      <option name="project" value="LOCAL" />
+      <updated>1598680520715</updated>
+    </task>
+    <task id="LOCAL-00121" summary="默认更改列表">
+      <created>1598720124912</created>
+      <option name="number" value="00121" />
+      <option name="presentableId" value="LOCAL-00121" />
+      <option name="project" value="LOCAL" />
+      <updated>1598720124912</updated>
+    </task>
+    <task id="LOCAL-00122" summary="默认更改列表">
+      <created>1598720173345</created>
+      <option name="number" value="00122" />
+      <option name="presentableId" value="LOCAL-00122" />
+      <option name="project" value="LOCAL" />
+      <updated>1598720173345</updated>
+    </task>
+    <task id="LOCAL-00123" summary="默认更改列表">
+      <created>1598720259064</created>
+      <option name="number" value="00123" />
+      <option name="presentableId" value="LOCAL-00123" />
+      <option name="project" value="LOCAL" />
+      <updated>1598720259065</updated>
+    </task>
+    <task id="LOCAL-00124" summary="默认更改列表">
+      <created>1598720400660</created>
+      <option name="number" value="00124" />
+      <option name="presentableId" value="LOCAL-00124" />
+      <option name="project" value="LOCAL" />
+      <updated>1598720400660</updated>
+    </task>
+    <task id="LOCAL-00125" summary="默认更改列表">
+      <created>1598721031015</created>
+      <option name="number" value="00125" />
+      <option name="presentableId" value="LOCAL-00125" />
+      <option name="project" value="LOCAL" />
+      <updated>1598721031015</updated>
+    </task>
+    <task id="LOCAL-00126" summary="默认更改列表">
+      <created>1598886289238</created>
+      <option name="number" value="00126" />
+      <option name="presentableId" value="LOCAL-00126" />
+      <option name="project" value="LOCAL" />
+      <updated>1598886289238</updated>
+    </task>
+    <task id="LOCAL-00127" summary="默认更改列表">
+      <created>1598888144419</created>
+      <option name="number" value="00127" />
+      <option name="presentableId" value="LOCAL-00127" />
+      <option name="project" value="LOCAL" />
+      <updated>1598888144419</updated>
+    </task>
+    <task id="LOCAL-00128" summary="默认更改列表">
+      <created>1598890745526</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1598890745526</updated>
+    </task>
+    <task id="LOCAL-00129" summary="默认更改列表">
+      <created>1598891083940</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1598891083940</updated>
+    </task>
+    <task id="LOCAL-00130" summary="默认更改列表">
+      <created>1598924631728</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1598924631728</updated>
+    </task>
+    <task id="LOCAL-00131" summary="默认更改列表">
+      <created>1598924940999</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1598924941000</updated>
+    </task>
+    <task id="LOCAL-00132" summary="默认更改列表">
+      <created>1598924977123</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1598924977123</updated>
+    </task>
+    <task id="LOCAL-00133" summary="默认更改列表">
+      <created>1598925211570</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1598925211570</updated>
+    </task>
+    <task id="LOCAL-00134" summary="默认更改列表">
+      <created>1598925816403</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1598925816403</updated>
+    </task>
+    <task id="LOCAL-00135" summary="默认更改列表">
+      <created>1598926754235</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1598926754236</updated>
+    </task>
+    <option name="localTasksCounter" value="136" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="1" />
+    <option name="version" value="2" />
   </component>
   <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="ignore" />
     <MESSAGE value="delete migrations" />
     <MESSAGE value="bug" />
     <MESSAGE value="默认不传page" />
     <MESSAGE value="or 改成 and" />
     <MESSAGE value="env" />
+    <MESSAGE value="return dict when searching by element id" />
+    <MESSAGE value="element 修改bug" />
+    <MESSAGE value="update role api" />
+    <MESSAGE value="role api修改" />
+    <MESSAGE value="role api 修改" />
+    <MESSAGE value="get_table_data 中elements改成返回id的list" />
+    <MESSAGE value="elements 返回格式修改" />
+    <MESSAGE value="1. bugs&#10;2. role delete api" />
+    <MESSAGE value="修改用户注册方法" />
+    <MESSAGE value="用户接口修改" />
     <MESSAGE value="bugs" />
-    <option name="LAST_COMMIT_MESSAGE" value="bugs" />
+    <MESSAGE value="默认更改列表" />
+    <option name="LAST_COMMIT_MESSAGE" value="默认更改列表" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="440" y="190" key="#Inspections" timestamp="1585658022757">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="440" y="190" key="#Inspections/0.0.1680.1050@0.0.1680.1050" timestamp="1585658022757" />
-    <state x="304" y="187" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1585748759567">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="304" y="187" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1585748759567" />
-    <state x="-1573" y="192" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.23.1680.976/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585633197551" />
-    <state x="578" y="203" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1588513394516">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="-1259" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585884783441" />
-    <state x="578" y="203" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1588513394516" />
-    <state x="661" y="209" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585788409963" />
-    <state x="578" y="212" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.23.1680.976@0.23.1680.976" timestamp="1584793793238" />
-    <state x="421" y="40" key="CommitChangelistDialog2" timestamp="1589209660906">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="421" y="40" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209660906" />
-    <state x="481" y="41" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1585615002489" />
-    <state x="686" y="426" key="Github.ShareDialog" timestamp="1585496990588">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="686" y="426" key="Github.ShareDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1585496990588" />
-    <state x="600" y="155" key="Github.UntrackedFilesDialog" timestamp="1585497012279">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="600" y="155" key="Github.UntrackedFilesDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1585497012279" />
-    <state width="1638" height="186" key="GridCell.Tab.0.bottom" timestamp="1589766323073">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.0.bottom/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589161919791" />
-    <state width="1638" height="387" key="GridCell.Tab.0.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137404" />
-    <state width="1878" height="214" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742523" />
-    <state width="1638" height="377" key="GridCell.Tab.0.bottom/0.23.1680.969@0.23.1680.969" timestamp="1587865528986" />
-    <state width="1638" height="186" key="GridCell.Tab.0.bottom/0.23.1680.970@0.23.1680.970" timestamp="1589766323073" />
-    <state width="1638" height="265" key="GridCell.Tab.0.bottom/0.23.1680.973@0.23.1680.973" timestamp="1586969523724" />
-    <state width="1230" height="226" key="GridCell.Tab.0.bottom/0.23.1680.976/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585633199376" />
-    <state width="1878" height="251" key="GridCell.Tab.0.bottom/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585879799742" />
-    <state width="1878" height="121" key="GridCell.Tab.0.bottom/0.23.1920.999@0.23.1920.999" timestamp="1588117149201" />
-    <state width="1638" height="186" key="GridCell.Tab.0.center" timestamp="1589766323072">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.0.center/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589161919789" />
-    <state width="1638" height="387" key="GridCell.Tab.0.center/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137403" />
-    <state width="1878" height="214" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742522" />
-    <state width="1638" height="377" key="GridCell.Tab.0.center/0.23.1680.969@0.23.1680.969" timestamp="1587865528985" />
-    <state width="1638" height="186" key="GridCell.Tab.0.center/0.23.1680.970@0.23.1680.970" timestamp="1589766323072" />
-    <state width="1638" height="265" key="GridCell.Tab.0.center/0.23.1680.973@0.23.1680.973" timestamp="1586969523723" />
-    <state width="1230" height="226" key="GridCell.Tab.0.center/0.23.1680.976/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585633199374" />
-    <state width="1878" height="251" key="GridCell.Tab.0.center/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585879799741" />
-    <state width="1878" height="121" key="GridCell.Tab.0.center/0.23.1920.999@0.23.1920.999" timestamp="1588117149198" />
-    <state width="1638" height="186" key="GridCell.Tab.0.left" timestamp="1589766323071">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.0.left/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589161919788" />
-    <state width="1638" height="387" key="GridCell.Tab.0.left/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137403" />
-    <state width="1878" height="214" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742521" />
-    <state width="1638" height="377" key="GridCell.Tab.0.left/0.23.1680.969@0.23.1680.969" timestamp="1587865528984" />
-    <state width="1638" height="186" key="GridCell.Tab.0.left/0.23.1680.970@0.23.1680.970" timestamp="1589766323071" />
-    <state width="1638" height="265" key="GridCell.Tab.0.left/0.23.1680.973@0.23.1680.973" timestamp="1586969523722" />
-    <state width="1230" height="226" key="GridCell.Tab.0.left/0.23.1680.976/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585633199373" />
-    <state width="1878" height="251" key="GridCell.Tab.0.left/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585879799740" />
-    <state width="1878" height="121" key="GridCell.Tab.0.left/0.23.1920.999@0.23.1920.999" timestamp="1588117149197" />
-    <state width="1638" height="186" key="GridCell.Tab.0.right" timestamp="1589766323072">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.0.right/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589161919790" />
-    <state width="1638" height="387" key="GridCell.Tab.0.right/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137404" />
-    <state width="1878" height="214" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742522" />
-    <state width="1638" height="377" key="GridCell.Tab.0.right/0.23.1680.969@0.23.1680.969" timestamp="1587865528985" />
-    <state width="1638" height="186" key="GridCell.Tab.0.right/0.23.1680.970@0.23.1680.970" timestamp="1589766323072" />
-    <state width="1638" height="265" key="GridCell.Tab.0.right/0.23.1680.973@0.23.1680.973" timestamp="1586969523723" />
-    <state width="1230" height="226" key="GridCell.Tab.0.right/0.23.1680.976/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585633199375" />
-    <state width="1878" height="251" key="GridCell.Tab.0.right/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585879799742" />
-    <state width="1878" height="121" key="GridCell.Tab.0.right/0.23.1920.999@0.23.1920.999" timestamp="1588117149198" />
-    <state width="1638" height="186" key="GridCell.Tab.1.bottom" timestamp="1589766322957">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.1.bottom/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589162064376" />
-    <state width="1638" height="387" key="GridCell.Tab.1.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137405" />
-    <state width="1878" height="214" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742453" />
-    <state width="1638" height="186" key="GridCell.Tab.1.bottom/0.23.1680.970@0.23.1680.970" timestamp="1589766322957" />
-    <state width="1878" height="262" key="GridCell.Tab.1.bottom/0.23.1680.972/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589159602107" />
-    <state width="1638" height="355" key="GridCell.Tab.1.bottom/0.23.1680.972@0.23.1680.972" timestamp="1588144741245" />
-    <state width="1638" height="265" key="GridCell.Tab.1.bottom/0.23.1680.973@0.23.1680.973" timestamp="1586969523666" />
-    <state width="1638" height="269" key="GridCell.Tab.1.bottom/0.23.1680.975@0.23.1680.975" timestamp="1585984053890" />
-    <state width="1878" height="269" key="GridCell.Tab.1.bottom/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585639218947" />
-    <state width="1638" height="259" key="GridCell.Tab.1.bottom/0.23.1680.976@0.23.1680.976" timestamp="1585295239125" />
-    <state width="1878" height="257" key="GridCell.Tab.1.bottom/0.23.1920.1057@0.23.1920.1057" timestamp="1588131282582" />
-    <state width="1878" height="121" key="GridCell.Tab.1.bottom/0.23.1920.999@0.23.1920.999" timestamp="1588117149203" />
-    <state width="1638" height="186" key="GridCell.Tab.1.center" timestamp="1589766322956">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.1.center/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589162064375" />
-    <state width="1638" height="387" key="GridCell.Tab.1.center/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137404" />
-    <state width="1878" height="214" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742452" />
-    <state width="1638" height="186" key="GridCell.Tab.1.center/0.23.1680.970@0.23.1680.970" timestamp="1589766322956" />
-    <state width="1878" height="262" key="GridCell.Tab.1.center/0.23.1680.972/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589159602105" />
-    <state width="1638" height="355" key="GridCell.Tab.1.center/0.23.1680.972@0.23.1680.972" timestamp="1588144741245" />
-    <state width="1638" height="265" key="GridCell.Tab.1.center/0.23.1680.973@0.23.1680.973" timestamp="1586969523665" />
-    <state width="1638" height="269" key="GridCell.Tab.1.center/0.23.1680.975@0.23.1680.975" timestamp="1585984053889" />
-    <state width="1878" height="269" key="GridCell.Tab.1.center/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585639218946" />
-    <state width="1638" height="259" key="GridCell.Tab.1.center/0.23.1680.976@0.23.1680.976" timestamp="1585295239123" />
-    <state width="1878" height="257" key="GridCell.Tab.1.center/0.23.1920.1057@0.23.1920.1057" timestamp="1588131282579" />
-    <state width="1878" height="121" key="GridCell.Tab.1.center/0.23.1920.999@0.23.1920.999" timestamp="1588117149202" />
-    <state width="1638" height="186" key="GridCell.Tab.1.left" timestamp="1589766322956">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.1.left/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589162064374" />
-    <state width="1638" height="387" key="GridCell.Tab.1.left/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137404" />
-    <state width="1878" height="214" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742451" />
-    <state width="1638" height="186" key="GridCell.Tab.1.left/0.23.1680.970@0.23.1680.970" timestamp="1589766322956" />
-    <state width="1878" height="262" key="GridCell.Tab.1.left/0.23.1680.972/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589159602104" />
-    <state width="1638" height="355" key="GridCell.Tab.1.left/0.23.1680.972@0.23.1680.972" timestamp="1588144741244" />
-    <state width="1638" height="265" key="GridCell.Tab.1.left/0.23.1680.973@0.23.1680.973" timestamp="1586969523665" />
-    <state width="1638" height="269" key="GridCell.Tab.1.left/0.23.1680.975@0.23.1680.975" timestamp="1585984053888" />
-    <state width="1878" height="269" key="GridCell.Tab.1.left/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585639218945" />
-    <state width="1638" height="259" key="GridCell.Tab.1.left/0.23.1680.976@0.23.1680.976" timestamp="1585295239122" />
-    <state width="1878" height="257" key="GridCell.Tab.1.left/0.23.1920.1057@0.23.1920.1057" timestamp="1588131282578" />
-    <state width="1878" height="121" key="GridCell.Tab.1.left/0.23.1920.999@0.23.1920.999" timestamp="1588117149202" />
-    <state width="1638" height="186" key="GridCell.Tab.1.right" timestamp="1589766322956">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state width="1878" height="387" key="GridCell.Tab.1.right/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589162064376" />
-    <state width="1638" height="387" key="GridCell.Tab.1.right/0.0.1680.1050@0.0.1680.1050" timestamp="1589180137404" />
-    <state width="1878" height="214" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1588233742453" />
-    <state width="1638" height="186" key="GridCell.Tab.1.right/0.23.1680.970@0.23.1680.970" timestamp="1589766322956" />
-    <state width="1878" height="262" key="GridCell.Tab.1.right/0.23.1680.972/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1589159602106" />
-    <state width="1638" height="355" key="GridCell.Tab.1.right/0.23.1680.972@0.23.1680.972" timestamp="1588144741245" />
-    <state width="1638" height="265" key="GridCell.Tab.1.right/0.23.1680.973@0.23.1680.973" timestamp="1586969523666" />
-    <state width="1638" height="269" key="GridCell.Tab.1.right/0.23.1680.975@0.23.1680.975" timestamp="1585984053890" />
-    <state width="1878" height="269" key="GridCell.Tab.1.right/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585639218946" />
-    <state width="1638" height="259" key="GridCell.Tab.1.right/0.23.1680.976@0.23.1680.976" timestamp="1585295239124" />
-    <state width="1878" height="257" key="GridCell.Tab.1.right/0.23.1920.1057@0.23.1920.1057" timestamp="1588131282581" />
-    <state width="1878" height="121" key="GridCell.Tab.1.right/0.23.1920.999@0.23.1920.999" timestamp="1588117149203" />
-    <state width="239" height="539" key="HiddenNamespacesPopup" timestamp="1585748775769">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="239" height="539" key="HiddenNamespacesPopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585748775769" />
-    <state x="551" y="244" key="MultipleFileMergeDialog" timestamp="1589639601668">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state x="551" y="239" key="MultipleFileMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783163289" />
-    <state x="630" y="246" key="MultipleFileMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757322622" />
-    <state x="551" y="244" key="MultipleFileMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639601668" />
-    <state x="310" y="91" key="SettingsEditor" timestamp="1589643901115">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state x="-1139" y="41" key="SettingsEditor/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585889855244" />
-    <state x="530" y="142" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1586783411170" />
-    <state x="781" y="41" key="SettingsEditor/0.0.1920.1080@0.0.1920.1080" timestamp="1587965251184" />
-    <state x="530" y="154" key="SettingsEditor/0.23.1680.969@0.23.1680.969" timestamp="1587857687743" />
-    <state x="310" y="91" key="SettingsEditor/0.23.1680.970@0.23.1680.970" timestamp="1589643901115" />
-    <state x="530" y="155" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1587131676592" />
-    <state x="-1139" y="63" key="SettingsEditor/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585874729798" />
-    <state x="171" y="72" key="SettingsEditor/0.23.1680.976@0.23.1680.976" timestamp="1584793602743" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2" timestamp="1589678942700">
-      <screen x="0" y="23" width="1680" height="970" />
-    </state>
-    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1589209663936" />
-    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1589191200298" />
-    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.970@0.23.1680.970" timestamp="1589678942700" />
-    <state x="440" y="265" key="Vcs.Push.Dialog.v2/0.23.1680.973@0.23.1680.973" timestamp="1586969887916" />
-    <state width="840" height="525" key="XDebugger.FullValuePopup" timestamp="1585220473749">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state width="840" height="525" key="XDebugger.FullValuePopup/0.0.1680.1050@0.0.1680.1050" timestamp="1585220473749" />
-    <state x="716" y="419" width="348" height="249" key="com.intellij.database.actions.DdlActions$DeleteProvider2$1" timestamp="1585830095800">
-      <screen x="0" y="0" width="1680" height="1050" />
-    </state>
-    <state x="716" y="419" width="348" height="249" key="com.intellij.database.actions.DdlActions$DeleteProvider2$1/0.0.1680.1050@0.0.1680.1050" timestamp="1585830095800" />
-    <state x="650" y="217" key="com.intellij.database.view.ui.AbstractDbRefactoringDialog" timestamp="1585790847581">
+    <state x="587" y="289" width="952" height="489" key="#Notifications" timestamp="1595468576391">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="569" y="211" key="com.intellij.database.view.ui.AbstractDbRefactoringDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1585411118306" />
-    <state x="650" y="217" key="com.intellij.database.view.ui.AbstractDbRefactoringDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1585790847581" />
-    <state x="495" y="269" width="812" height="538" key="find.popup" timestamp="1589678276138">
-      <screen x="0" y="23" width="1680" height="970" />
+    <state x="587" y="289" key="#Notifications/0.0.1920.1080@0.0.1920.1080" timestamp="1595468576391" />
+    <state x="-1333" y="306" key="#Notifications/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594275550523" />
+    <state x="587" y="289" width="952" height="489" key="#Notifications/0.23.1920.993@0.23.1920.993" timestamp="1592448815158" />
+    <state x="304" y="187" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1594651583440">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="495" y="266" width="812" height="582" key="find.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1588515417796" />
-    <state x="566" y="274" width="928" height="599" key="find.popup/0.0.1920.1080@0.0.1920.1080" timestamp="1586825337706" />
-    <state x="495" y="269" width="812" height="538" key="find.popup/0.23.1680.969@0.23.1680.969" timestamp="1587823774669" />
-    <state x="495" y="269" width="812" height="538" key="find.popup/0.23.1680.970@0.23.1680.970" timestamp="1589678276138" />
-    <state x="-1354" y="291" width="788" height="522" key="find.popup/0.23.1680.976/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1585880338490" />
-    <state x="586" y="174" key="git4idea.branch.GitSmartOperationDialog" timestamp="1589639599876">
-      <screen x="0" y="23" width="1680" height="970" />
+    <state x="304" y="187" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1594651583440" />
+    <state x="577" y="322" key="#com.intellij.ide.util.TreeClassChooserDialog" timestamp="1593443550025">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586783160811" />
-    <state x="586" y="174" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639599876" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog" timestamp="1589639984580">
-      <screen x="0" y="23" width="1680" height="970" />
+    <state x="577" y="322" key="#com.intellij.ide.util.TreeClassChooserDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1593443550025" />
+    <state x="-1310" y="140" key="#com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog" timestamp="1598926056493">
+      <screen x="-1920" y="23" width="1920" height="1057" />
     </state>
-    <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1586877611771" />
-    <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1586757320651" />
-    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.970@0.23.1680.970" timestamp="1589639984580" />
-    <state x="505" y="238" width="670" height="625" key="search.everywhere.popup" timestamp="1589766262804">
-      <screen x="0" y="23" width="1680" height="970" />
+    <state x="-1310" y="140" key="#com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598926056493" />
+    <state x="615" y="132" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog" timestamp="1597139282974">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="-1343" y="240" width="766" height="696" key="search.everywhere.popup/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1585728315360" />
-    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1588515664657" />
-    <state x="577" y="240" width="766" height="696" key="search.everywhere.popup/0.0.1920.1080@0.0.1920.1080" timestamp="1588209934211" />
-    <state x="505" y="238" width="670" height="625" key="search.everywhere.popup/0.23.1680.970@0.23.1680.970" timestamp="1589766262804" />
+    <state x="615" y="132" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1597139282974" />
+    <state x="594" y="209" key="#检查" timestamp="1597131098652">
+      <screen x="0" y="23" width="1920" height="1001" />
+    </state>
+    <state x="594" y="209" key="#检查/0.23.1920.1001@0.23.1920.1001" timestamp="1597131098652" />
+    <state x="594" y="209" key="#检查/0.23.1920.1003@0.23.1920.1003" timestamp="1596766812460" />
+    <state x="-1360" y="217" key="#部署" timestamp="1598925932684">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state x="-1360" y="217" key="#部署/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925932684" />
+    <state x="-1439" y="23" key="CommitChangelistDialog2" timestamp="1598926754108">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state x="-1439" y="0" key="CommitChangelistDialog2/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781665126" />
+    <state x="421" y="0" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1598680520521" />
+    <state x="481" y="0" key="CommitChangelistDialog2/0.0.1920.1080@0.0.1920.1080" timestamp="1598411339752" />
+    <state x="-1439" y="23" key="CommitChangelistDialog2/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596171879815" />
+    <state x="-1439" y="52" key="CommitChangelistDialog2/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368266784" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.963@0.23.1680.963" timestamp="1594435725176" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.969@0.23.1680.969" timestamp="1591264215175" />
+    <state x="-1439" y="23" key="CommitChangelistDialog2/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598926754108" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.971@0.23.1680.971" timestamp="1598891083782" />
+    <state x="421" y="23" key="CommitChangelistDialog2/0.23.1680.973@0.23.1680.973" timestamp="1596725895459" />
+    <state x="481" y="23" key="CommitChangelistDialog2/0.23.1920.993@0.23.1920.993" timestamp="1594254199847" />
+    <state x="-1706" y="97" width="1344" height="840" key="DiffContextDialog" timestamp="1596783276637">
+      <screen x="-1920" y="0" width="1920" height="1080" />
+    </state>
+    <state x="-1706" y="97" width="1344" height="840" key="DiffContextDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596783276637" />
+    <state x="187" y="94" key="DiffContextDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1594564238280" />
+    <state width="1878" height="288" key="GridCell.Tab.0.bottom" timestamp="1598925034380">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="224" key="GridCell.Tab.0.bottom/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781675797" />
+    <state width="1638" height="366" key="GridCell.Tab.0.bottom/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840347" />
+    <state width="1638" height="388" key="GridCell.Tab.0.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334921" />
+    <state width="1638" height="334" key="GridCell.Tab.0.bottom/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982372" />
+    <state width="1878" height="431" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881805" />
+    <state width="1878" height="424" key="GridCell.Tab.0.bottom/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603784" />
+    <state width="1878" height="352" key="GridCell.Tab.0.bottom/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140086" />
+    <state width="1638" height="267" key="GridCell.Tab.0.bottom/0.23.1680.956@0.23.1680.956" timestamp="1596260019554" />
+    <state width="1878" height="424" key="GridCell.Tab.0.bottom/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642255" />
+    <state width="1878" height="443" key="GridCell.Tab.0.bottom/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368517466" />
+    <state width="1878" height="288" key="GridCell.Tab.0.bottom/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034380" />
+    <state width="1638" height="277" key="GridCell.Tab.0.bottom/0.23.1680.971@0.23.1680.971" timestamp="1598885864310" />
+    <state width="1638" height="473" key="GridCell.Tab.0.bottom/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850305" />
+    <state width="1638" height="473" key="GridCell.Tab.0.bottom/0.23.1680.973@0.23.1680.973" timestamp="1596793698648" />
+    <state width="1878" height="242" key="GridCell.Tab.0.bottom/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498694" />
+    <state width="1638" height="189" key="GridCell.Tab.0.bottom/0.23.1920.993@0.23.1920.993" timestamp="1594255523546" />
+    <state width="1878" height="288" key="GridCell.Tab.0.center" timestamp="1598925034379">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="224" key="GridCell.Tab.0.center/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781675796" />
+    <state width="1638" height="366" key="GridCell.Tab.0.center/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840346" />
+    <state width="1638" height="388" key="GridCell.Tab.0.center/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334920" />
+    <state width="1638" height="334" key="GridCell.Tab.0.center/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982370" />
+    <state width="1878" height="431" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881803" />
+    <state width="1878" height="424" key="GridCell.Tab.0.center/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603781" />
+    <state width="1878" height="352" key="GridCell.Tab.0.center/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140084" />
+    <state width="1638" height="267" key="GridCell.Tab.0.center/0.23.1680.956@0.23.1680.956" timestamp="1596260019553" />
+    <state width="1878" height="424" key="GridCell.Tab.0.center/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642254" />
+    <state width="1878" height="443" key="GridCell.Tab.0.center/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368517465" />
+    <state width="1878" height="288" key="GridCell.Tab.0.center/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034379" />
+    <state width="1638" height="277" key="GridCell.Tab.0.center/0.23.1680.971@0.23.1680.971" timestamp="1598885864308" />
+    <state width="1638" height="473" key="GridCell.Tab.0.center/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850304" />
+    <state width="1638" height="473" key="GridCell.Tab.0.center/0.23.1680.973@0.23.1680.973" timestamp="1596793698646" />
+    <state width="1878" height="242" key="GridCell.Tab.0.center/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498693" />
+    <state width="1638" height="189" key="GridCell.Tab.0.center/0.23.1920.993@0.23.1920.993" timestamp="1594255523546" />
+    <state width="1878" height="288" key="GridCell.Tab.0.left" timestamp="1598925034378">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="224" key="GridCell.Tab.0.left/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781675795" />
+    <state width="1638" height="366" key="GridCell.Tab.0.left/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840344" />
+    <state width="1638" height="388" key="GridCell.Tab.0.left/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334920" />
+    <state width="1638" height="334" key="GridCell.Tab.0.left/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982369" />
+    <state width="1878" height="431" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881802" />
+    <state width="1878" height="424" key="GridCell.Tab.0.left/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603780" />
+    <state width="1878" height="352" key="GridCell.Tab.0.left/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140084" />
+    <state width="1638" height="267" key="GridCell.Tab.0.left/0.23.1680.956@0.23.1680.956" timestamp="1596260019553" />
+    <state width="1878" height="424" key="GridCell.Tab.0.left/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642253" />
+    <state width="1878" height="443" key="GridCell.Tab.0.left/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368517464" />
+    <state width="1878" height="288" key="GridCell.Tab.0.left/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034378" />
+    <state width="1638" height="277" key="GridCell.Tab.0.left/0.23.1680.971@0.23.1680.971" timestamp="1598885864307" />
+    <state width="1638" height="473" key="GridCell.Tab.0.left/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850304" />
+    <state width="1638" height="473" key="GridCell.Tab.0.left/0.23.1680.973@0.23.1680.973" timestamp="1596793698646" />
+    <state width="1878" height="242" key="GridCell.Tab.0.left/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498693" />
+    <state width="1638" height="189" key="GridCell.Tab.0.left/0.23.1920.993@0.23.1920.993" timestamp="1594255523545" />
+    <state width="1878" height="288" key="GridCell.Tab.0.right" timestamp="1598925034379">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="224" key="GridCell.Tab.0.right/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781675796" />
+    <state width="1638" height="366" key="GridCell.Tab.0.right/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840346" />
+    <state width="1638" height="388" key="GridCell.Tab.0.right/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334921" />
+    <state width="1638" height="334" key="GridCell.Tab.0.right/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982371" />
+    <state width="1878" height="431" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881804" />
+    <state width="1878" height="424" key="GridCell.Tab.0.right/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603783" />
+    <state width="1878" height="352" key="GridCell.Tab.0.right/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140085" />
+    <state width="1638" height="267" key="GridCell.Tab.0.right/0.23.1680.956@0.23.1680.956" timestamp="1596260019553" />
+    <state width="1878" height="424" key="GridCell.Tab.0.right/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642254" />
+    <state width="1878" height="443" key="GridCell.Tab.0.right/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368517465" />
+    <state width="1878" height="288" key="GridCell.Tab.0.right/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034379" />
+    <state width="1638" height="277" key="GridCell.Tab.0.right/0.23.1680.971@0.23.1680.971" timestamp="1598885864309" />
+    <state width="1638" height="473" key="GridCell.Tab.0.right/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850305" />
+    <state width="1638" height="473" key="GridCell.Tab.0.right/0.23.1680.973@0.23.1680.973" timestamp="1596793698647" />
+    <state width="1878" height="242" key="GridCell.Tab.0.right/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498694" />
+    <state width="1638" height="189" key="GridCell.Tab.0.right/0.23.1920.993@0.23.1920.993" timestamp="1594255523546" />
+    <state width="1878" height="288" key="GridCell.Tab.1.bottom" timestamp="1598925034381">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="305" key="GridCell.Tab.1.bottom/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594797000338" />
+    <state width="1638" height="366" key="GridCell.Tab.1.bottom/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840351" />
+    <state width="1638" height="388" key="GridCell.Tab.1.bottom/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334923" />
+    <state width="1638" height="334" key="GridCell.Tab.1.bottom/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982374" />
+    <state width="1878" height="431" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881806" />
+    <state width="1878" height="283" key="GridCell.Tab.1.bottom/0.23.1680.1027/-1920.0.1920.1016@-1920.0.1920.1016" timestamp="1594713426616" />
+    <state width="1878" height="424" key="GridCell.Tab.1.bottom/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603709" />
+    <state width="1878" height="283" key="GridCell.Tab.1.bottom/0.23.1680.1027/-1920.23.1920.993@-1920.23.1920.993" timestamp="1594714059697" />
+    <state width="1878" height="352" key="GridCell.Tab.1.bottom/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140087" />
+    <state width="1638" height="267" key="GridCell.Tab.1.bottom/0.23.1680.956@0.23.1680.956" timestamp="1596260019554" />
+    <state width="1638" height="411" key="GridCell.Tab.1.bottom/0.23.1680.959@0.23.1680.959" timestamp="1595729026103" />
+    <state width="1878" height="424" key="GridCell.Tab.1.bottom/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642193" />
+    <state width="1878" height="424" key="GridCell.Tab.1.bottom/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594796253529" />
+    <state width="1638" height="221" key="GridCell.Tab.1.bottom/0.23.1680.963@0.23.1680.963" timestamp="1595258937207" />
+    <state width="1878" height="288" key="GridCell.Tab.1.bottom/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034381" />
+    <state width="1638" height="277" key="GridCell.Tab.1.bottom/0.23.1680.971@0.23.1680.971" timestamp="1598885864212" />
+    <state width="1638" height="473" key="GridCell.Tab.1.bottom/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850306" />
+    <state width="1638" height="473" key="GridCell.Tab.1.bottom/0.23.1680.973@0.23.1680.973" timestamp="1596793698650" />
+    <state width="1878" height="366" key="GridCell.Tab.1.bottom/0.23.1920.1001@0.23.1920.1001" timestamp="1598402767096" />
+    <state width="1878" height="242" key="GridCell.Tab.1.bottom/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498696" />
+    <state width="1878" height="514" key="GridCell.Tab.1.bottom/0.23.1920.993@0.23.1920.993" timestamp="1594861636076" />
+    <state width="1878" height="288" key="GridCell.Tab.1.center" timestamp="1598925034381">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="305" key="GridCell.Tab.1.center/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594797000336" />
+    <state width="1638" height="366" key="GridCell.Tab.1.center/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840349" />
+    <state width="1638" height="388" key="GridCell.Tab.1.center/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334922" />
+    <state width="1638" height="334" key="GridCell.Tab.1.center/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982373" />
+    <state width="1878" height="431" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881805" />
+    <state width="1878" height="283" key="GridCell.Tab.1.center/0.23.1680.1027/-1920.0.1920.1016@-1920.0.1920.1016" timestamp="1594713426614" />
+    <state width="1878" height="424" key="GridCell.Tab.1.center/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603707" />
+    <state width="1878" height="283" key="GridCell.Tab.1.center/0.23.1680.1027/-1920.23.1920.993@-1920.23.1920.993" timestamp="1594714059696" />
+    <state width="1878" height="352" key="GridCell.Tab.1.center/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140086" />
+    <state width="1638" height="267" key="GridCell.Tab.1.center/0.23.1680.956@0.23.1680.956" timestamp="1596260019554" />
+    <state width="1638" height="411" key="GridCell.Tab.1.center/0.23.1680.959@0.23.1680.959" timestamp="1595729026102" />
+    <state width="1878" height="424" key="GridCell.Tab.1.center/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642192" />
+    <state width="1878" height="424" key="GridCell.Tab.1.center/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594796253525" />
+    <state width="1638" height="221" key="GridCell.Tab.1.center/0.23.1680.963@0.23.1680.963" timestamp="1595258937205" />
+    <state width="1878" height="288" key="GridCell.Tab.1.center/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034381" />
+    <state width="1638" height="277" key="GridCell.Tab.1.center/0.23.1680.971@0.23.1680.971" timestamp="1598885864211" />
+    <state width="1638" height="473" key="GridCell.Tab.1.center/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850306" />
+    <state width="1638" height="473" key="GridCell.Tab.1.center/0.23.1680.973@0.23.1680.973" timestamp="1596793698649" />
+    <state width="1878" height="366" key="GridCell.Tab.1.center/0.23.1920.1001@0.23.1920.1001" timestamp="1598402767095" />
+    <state width="1878" height="242" key="GridCell.Tab.1.center/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498695" />
+    <state width="1878" height="514" key="GridCell.Tab.1.center/0.23.1920.993@0.23.1920.993" timestamp="1594861636075" />
+    <state width="1878" height="288" key="GridCell.Tab.1.left" timestamp="1598925034380">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="305" key="GridCell.Tab.1.left/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594797000336" />
+    <state width="1638" height="366" key="GridCell.Tab.1.left/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840348" />
+    <state width="1638" height="388" key="GridCell.Tab.1.left/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334922" />
+    <state width="1638" height="334" key="GridCell.Tab.1.left/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982373" />
+    <state width="1878" height="431" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881805" />
+    <state width="1878" height="283" key="GridCell.Tab.1.left/0.23.1680.1027/-1920.0.1920.1016@-1920.0.1920.1016" timestamp="1594713426613" />
+    <state width="1878" height="424" key="GridCell.Tab.1.left/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603706" />
+    <state width="1878" height="283" key="GridCell.Tab.1.left/0.23.1680.1027/-1920.23.1920.993@-1920.23.1920.993" timestamp="1594714059695" />
+    <state width="1878" height="352" key="GridCell.Tab.1.left/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140086" />
+    <state width="1638" height="267" key="GridCell.Tab.1.left/0.23.1680.956@0.23.1680.956" timestamp="1596260019554" />
+    <state width="1638" height="411" key="GridCell.Tab.1.left/0.23.1680.959@0.23.1680.959" timestamp="1595729026102" />
+    <state width="1878" height="424" key="GridCell.Tab.1.left/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642191" />
+    <state width="1878" height="424" key="GridCell.Tab.1.left/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594796253524" />
+    <state width="1638" height="221" key="GridCell.Tab.1.left/0.23.1680.963@0.23.1680.963" timestamp="1595258937204" />
+    <state width="1878" height="288" key="GridCell.Tab.1.left/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034380" />
+    <state width="1638" height="277" key="GridCell.Tab.1.left/0.23.1680.971@0.23.1680.971" timestamp="1598885864210" />
+    <state width="1638" height="473" key="GridCell.Tab.1.left/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850306" />
+    <state width="1638" height="473" key="GridCell.Tab.1.left/0.23.1680.973@0.23.1680.973" timestamp="1596793698648" />
+    <state width="1878" height="366" key="GridCell.Tab.1.left/0.23.1920.1001@0.23.1920.1001" timestamp="1598402767094" />
+    <state width="1878" height="242" key="GridCell.Tab.1.left/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498694" />
+    <state width="1878" height="514" key="GridCell.Tab.1.left/0.23.1920.993@0.23.1920.993" timestamp="1594861636074" />
+    <state width="1878" height="288" key="GridCell.Tab.1.right" timestamp="1598925034381">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state width="1878" height="305" key="GridCell.Tab.1.right/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594797000337" />
+    <state width="1638" height="366" key="GridCell.Tab.1.right/0.0.1680.1050/-1920.0.1920.1080@0.0.1680.1050" timestamp="1597730840350" />
+    <state width="1638" height="388" key="GridCell.Tab.1.right/0.0.1680.1050@0.0.1680.1050" timestamp="1598840334923" />
+    <state width="1638" height="334" key="GridCell.Tab.1.right/0.0.1680.986/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594361982374" />
+    <state width="1878" height="431" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1598406881806" />
+    <state width="1878" height="283" key="GridCell.Tab.1.right/0.23.1680.1027/-1920.0.1920.1016@-1920.0.1920.1016" timestamp="1594713426615" />
+    <state width="1878" height="424" key="GridCell.Tab.1.right/0.23.1680.1027/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795603708" />
+    <state width="1878" height="283" key="GridCell.Tab.1.right/0.23.1680.1027/-1920.23.1920.993@-1920.23.1920.993" timestamp="1594714059696" />
+    <state width="1878" height="352" key="GridCell.Tab.1.right/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173140087" />
+    <state width="1638" height="267" key="GridCell.Tab.1.right/0.23.1680.956@0.23.1680.956" timestamp="1596260019554" />
+    <state width="1638" height="411" key="GridCell.Tab.1.right/0.23.1680.959@0.23.1680.959" timestamp="1595729026103" />
+    <state width="1878" height="424" key="GridCell.Tab.1.right/0.23.1680.963/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594795642193" />
+    <state width="1878" height="424" key="GridCell.Tab.1.right/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594796253528" />
+    <state width="1638" height="221" key="GridCell.Tab.1.right/0.23.1680.963@0.23.1680.963" timestamp="1595258937206" />
+    <state width="1878" height="288" key="GridCell.Tab.1.right/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598925034381" />
+    <state width="1638" height="277" key="GridCell.Tab.1.right/0.23.1680.971@0.23.1680.971" timestamp="1598885864211" />
+    <state width="1638" height="473" key="GridCell.Tab.1.right/0.23.1680.973/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596777850306" />
+    <state width="1638" height="473" key="GridCell.Tab.1.right/0.23.1680.973@0.23.1680.973" timestamp="1596793698649" />
+    <state width="1878" height="366" key="GridCell.Tab.1.right/0.23.1920.1001@0.23.1920.1001" timestamp="1598402767095" />
+    <state width="1878" height="242" key="GridCell.Tab.1.right/0.23.1920.1003@0.23.1920.1003" timestamp="1596768498695" />
+    <state width="1878" height="514" key="GridCell.Tab.1.right/0.23.1920.993@0.23.1920.993" timestamp="1594861636075" />
+    <state x="168" y="94" key="MergeDialog" timestamp="1597417306191">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="168" y="94" key="MergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1597417306191" />
+    <state x="551" y="244" width="1062" height="409" key="MultipleFileMergeDialog" timestamp="1598721048904">
+      <screen x="0" y="23" width="1680" height="971" />
+    </state>
+    <state x="551" y="239" width="1002" height="555" key="MultipleFileMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1597417306278" />
+    <state x="551" y="244" key="MultipleFileMergeDialog/0.23.1680.971@0.23.1680.971" timestamp="1598721048904" />
+    <state x="551" y="244" width="1062" height="409" key="MultipleFileMergeDialog/0.23.1680.973@0.23.1680.973" timestamp="1596726058795" />
+    <state x="595" y="130" key="RollbackChangesDialog" timestamp="1593599167543">
+      <screen x="0" y="23" width="1680" height="963" />
+    </state>
+    <state x="595" y="130" key="RollbackChangesDialog/0.23.1680.963@0.23.1680.963" timestamp="1593599167543" />
+    <state x="-1678" y="128" key="SettingsEditor" timestamp="1598926018621">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state x="606" y="116" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1596985466099" />
+    <state x="481" y="150" key="SettingsEditor/0.23.1680.969@0.23.1680.969" timestamp="1591264475370" />
+    <state x="-1678" y="128" key="SettingsEditor/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598926018621" />
+    <state x="212" y="119" key="SettingsEditor/0.23.1680.971@0.23.1680.971" timestamp="1597137611363" />
+    <state x="606" y="130" key="SettingsEditor/0.23.1680.973@0.23.1680.973" timestamp="1596465766163" />
+    <state x="606" y="157" key="SettingsEditor/0.23.1920.993@0.23.1920.993" timestamp="1594174381522" />
+    <state x="-1417" y="285" key="Vcs.Push.Dialog.v2" timestamp="1598926819057">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state x="-1417" y="269" key="Vcs.Push.Dialog.v2/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594796292809" />
+    <state x="440" y="261" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1598538564599" />
+    <state x="503" y="268" key="Vcs.Push.Dialog.v2/0.0.1920.1080@0.0.1920.1080" timestamp="1598411342706" />
+    <state x="-1417" y="286" key="Vcs.Push.Dialog.v2/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596171900242" />
+    <state x="-1417" y="286" key="Vcs.Push.Dialog.v2/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368282595" />
+    <state x="440" y="263" key="Vcs.Push.Dialog.v2/0.23.1680.963@0.23.1680.963" timestamp="1594435743141" />
+    <state x="-1417" y="285" key="Vcs.Push.Dialog.v2/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598926819057" />
+    <state x="440" y="264" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1598891100800" />
+    <state x="503" y="270" key="Vcs.Push.Dialog.v2/0.23.1920.993@0.23.1920.993" timestamp="1594254227953" />
+    <state x="175" y="71" width="1505" height="856" key="com.intellij.history.integration.ui.views.DirectoryHistoryDialog" timestamp="1597139502894">
+      <screen x="0" y="23" width="1680" height="971" />
+    </state>
+    <state x="-1392" y="73" width="1720" height="880" key="com.intellij.history.integration.ui.views.DirectoryHistoryDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596783276640" />
+    <state x="175" y="71" width="1505" height="856" key="com.intellij.history.integration.ui.views.DirectoryHistoryDialog/0.23.1680.971@0.23.1680.971" timestamp="1597139502894" />
+    <state x="175" y="175" width="1505" height="875" key="com.intellij.history.integration.ui.views.FileHistoryDialog" timestamp="1598676275923">
+      <screen x="0" y="23" width="1680" height="971" />
+    </state>
+    <state x="-1819" y="78" width="1720" height="900" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596783276641" />
+    <state x="372" y="186" width="1505" height="875" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1597139824219" />
+    <state x="-1820" y="100" width="1720" height="880" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594780577032" />
+    <state x="175" y="175" width="1505" height="875" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.23.1680.971@0.23.1680.971" timestamp="1598676275923" />
+    <state x="347" y="252" width="812" height="518" key="find.popup" timestamp="1598285457485">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="-1354" y="274" width="928" height="599" key="find.popup/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594797695565" />
+    <state x="347" y="252" width="812" height="518" key="find.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1598285457485" />
+    <state x="531" y="481" width="928" height="599" key="find.popup/0.0.1920.1080@0.0.1920.1080" timestamp="1597214866566" />
+    <state x="-1354" y="291" width="928" height="522" key="find.popup/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596173210139" />
+    <state x="495" y="270" width="812" height="518" key="find.popup/0.23.1680.973@0.23.1680.973" timestamp="1596729755678" />
+    <state x="566" y="275" width="928" height="551" key="find.popup/0.23.1920.993@0.23.1920.993" timestamp="1594253290775" />
+    <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog" timestamp="1598679101714">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="-1251" y="168" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596781650397" />
+    <state x="586" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1598679101714" />
+    <state x="-1250" y="187" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1593588772746" />
+    <state x="586" y="172" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.963@0.23.1680.963" timestamp="1594433274119" />
+    <state x="586" y="174" key="git4idea.branch.GitSmartOperationDialog/0.23.1680.973@0.23.1680.973" timestamp="1596725845302" />
+    <state x="-1193" y="342" key="git4idea.merge.GitMergeDialog" timestamp="1598926764189">
+      <screen x="-1920" y="23" width="1920" height="1057" />
+    </state>
+    <state x="-1193" y="326" key="git4idea.merge.GitMergeDialog/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1596778925847" />
+    <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1598538561244" />
+    <state x="727" y="326" key="git4idea.merge.GitMergeDialog/0.0.1920.1080@0.0.1920.1080" timestamp="1598410113701" />
+    <state x="-1193" y="342" key="git4idea.merge.GitMergeDialog/0.23.1680.956/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1596171895086" />
+    <state x="-1193" y="342" key="git4idea.merge.GitMergeDialog/0.23.1680.963/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1594368279652" />
+    <state x="636" y="314" key="git4idea.merge.GitMergeDialog/0.23.1680.963@0.23.1680.963" timestamp="1594435739322" />
+    <state x="-1193" y="342" key="git4idea.merge.GitMergeDialog/0.23.1680.971/-1920.23.1920.1057@-1920.23.1920.1057" timestamp="1598926764189" />
+    <state x="636" y="316" key="git4idea.merge.GitMergeDialog/0.23.1680.971@0.23.1680.971" timestamp="1598891097462" />
+    <state x="636" y="317" key="git4idea.merge.GitMergeDialog/0.23.1680.973@0.23.1680.973" timestamp="1596726052531" />
+    <state x="727" y="323" key="git4idea.merge.GitMergeDialog/0.23.1920.993@0.23.1920.993" timestamp="1594254221698" />
+    <state x="505" y="238" width="670" height="626" key="search.everywhere.popup" timestamp="1598888149565">
+      <screen x="0" y="23" width="1680" height="971" />
+    </state>
+    <state x="-1343" y="240" width="766" height="696" key="search.everywhere.popup/0.0.1680.1050/-1920.0.1920.1080@-1920.0.1920.1080" timestamp="1594705975232" />
+    <state x="505" y="233" width="670" height="676" key="search.everywhere.popup/0.0.1680.1050@0.0.1680.1050" timestamp="1597420311488" />
+    <state x="505" y="236" width="671" height="621" key="search.everywhere.popup/0.23.1680.963@0.23.1680.963" timestamp="1594311881968" />
+    <state x="505" y="238" width="670" height="626" key="search.everywhere.popup/0.23.1680.971@0.23.1680.971" timestamp="1598888149565" />
+    <state x="577" y="243" width="766" height="640" key="search.everywhere.popup/0.23.1920.993@0.23.1920.993" timestamp="1594254224306" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/app/promotions/operate_promotions.py</url>
+          <line>61</line>
+          <option name="timeStamp" value="28" />
+        </line-breakpoint>
+      </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
           <properties notifyOnTerminate="true" exception="BaseException">
@@ -501,7 +1060,15 @@
     </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/infinicalc_wechat$infinicalc_wechat.coverage" NAME="infinicalc_wechat Coverage Results" MODIFIED="1589766322928" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$access_token.coverage" NAME="access_token Coverage Results" MODIFIED="1596768455273" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/wechat" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$media_upload.coverage" NAME="media_upload Coverage Results" MODIFIED="1596771080056" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/wechat" />
     <SUITE FILE_PATH="coverage/infinicalc_wechat$untitled.coverage" NAME="untitled Coverage Results" MODIFIED="1585496934116" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$Flask__manage_py_.coverage" NAME="Flask (manage.py) Coverage Results" MODIFIED="1598885864171" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$banner_api.coverage" NAME="banner_api Coverage Results" MODIFIED="1595671737864" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/banners" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$infinicalc_wechat.coverage" NAME="infinicalc_wechat Coverage Results" MODIFIED="1593443911611" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$qcloud_cos.coverage" NAME="qqcos Coverage Results" MODIFIED="1594692620125" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/obj_storage" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$qqcos.coverage" NAME="qqcos Coverage Results" MODIFIED="1594776161683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/obj_storage" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$Flask__app___init___py_create_app_.coverage" NAME="Flask (app/__init__.py:create_app) Coverage Results" MODIFIED="1594431128438" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
+    <SUITE FILE_PATH="coverage/infinicalc_wechat$live_streaming.coverage" NAME="live_streaming Coverage Results" MODIFIED="1596776402949" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/app/wechat" />
   </component>
 </project>
