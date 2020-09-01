@@ -6,6 +6,7 @@ from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
+from collections import defaultdict
 
 layout_ns = default_api.namespace('layout', path='/layout', description='页面板块')
 
@@ -29,26 +30,21 @@ update_sku_layout_parser.replace_argument('sku', required=True, type=list, locat
 
 
 def query_sku_layout(layout_name=None):
-    fields_ = table_fields(SKULayout)
+    fields_ = table_fields(SKULayout, removes=['layout_id', 'sku_id', 'create_at'])
     if layout_name is None:
         all_layout = SKULayout.query.all()
     else:
         layout = Layout.query.filter_by(name=layout_name).first()
         all_layout = SKULayout.query.filter_by(layout_id=layout.id).all()
-    r = list()
+    r = defaultdict(dict)
     for lay in all_layout:
-        tmp = dict()
+        if not r.get(lay.layout.name):
+            r[lay.layout.name] = {
+                "sku": get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'price', 'objects'], table_fields(SKU)),
+                "create_at": str(lay.create_at)
+            }
         for f in fields_:
-            if f == 'layout_id':
-                tmp['layout'] = {'id': lay.layout_id, 'name': lay.layout.name}
-            elif f == 'sku_id':
-                tmp['sku'] = get_table_data_by_id(SKU, lay.sku_id, appends=['id', 'price', 'objects'],
-                                                  removes=table_fields(SKU))
-            elif f == 'create_at':
-                tmp['create_at'] = str(lay.create_at)
-            else:
-                tmp[f] = getattr(lay, f)
-        r.append(tmp)
+            r[lay.layout.name][f] = getattr(lay, f)
     return r
 
 
