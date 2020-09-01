@@ -39,10 +39,11 @@ def query_sku_layout(layout_name=None):
     r = defaultdict(dict)
     for lay in all_layout:
         if not r.get(lay.layout.name):
-            r[lay.layout.name] = {
-                "sku": get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'price', 'objects'], table_fields(SKU)),
-                "create_at": str(lay.create_at)
-            }
+            r[lay.layout.name]["create_at"] = str(lay.create_at)
+            if not r[lay.layout.name]["sku"]:
+                r[lay.layout.name]["sku"] = list()
+            r[lay.layout.name]["sku"].append(get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'price', 'objects'], table_fields(SKU)))
+
         for f in fields_:
             r[lay.layout.name][f] = getattr(lay, f)
     return r
