@@ -9,7 +9,7 @@ from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 import datetime
 
-rebates_ns = default_api.namespace('orders', path='/rebates', description='定单相关API')
+rebates_ns = default_api.namespace('rebates', path='/rebates', description='返佣API')
 
 return_json = rebates_ns.model('ReturnRegister', return_dict)
 
