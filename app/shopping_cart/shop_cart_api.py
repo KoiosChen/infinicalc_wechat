@@ -3,6 +3,7 @@ from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Bene
     PackingItemOrders
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, nesteddict, submit_return
+from ..public_method import calc_sku_price
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
@@ -62,8 +63,7 @@ def checkout_cart(**args):
             express_addr = 1
 
         # 若可以使用积分，则取整sku价格，目前没有促销活动，只有price和member_price两种
-        member_price = sku.member_price if sku.member_price else sku.price
-        sku_price = sku.price * sku.discount if not customer.member_card.all() else member_price * customer.member_card.first().discount
+        sku_price = calc_sku_price(customer, sku)
         if sku.score_type:
             total_score += int(sku.max_score) * cart_obj.quantity
 
@@ -290,14 +290,8 @@ class ShoppingCartApi(Resource):
                 price = combo_benefit.combo_price
 
             # 如果没有会员折扣，按照原价计算
-            elif member_card is None:
-                price = (sku_.price * sku_.discount).quantize(Decimal("0.00"))
-
-            # 如果没有套餐，如果有会员卡切有会员折扣，则按照会员折扣价计算
             else:
-                member_price = sku_.member_price if sku_.member_price else sku_.price
-                # 保留小数后两位, 可能存在四舍五入
-                price = (member_price * member_card.discount).quantize(Decimal("0.00"))
+                price = calc_sku_price(customer, sku_)
 
             tmp = {"sku": sku_, "shopping_cart_id": arg['shopping_cart_id'], "quantity": arg['quantity'],
                    "price": price, "combo": arg.get('combo')}

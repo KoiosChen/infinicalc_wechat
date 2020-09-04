@@ -12,6 +12,7 @@ from fdfs_client.client import *
 from qcloudsms_py import SmsSingleSender, SmsMultiSender
 import threading
 from flask_cors import CORS
+from flask_session import Session
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
@@ -27,6 +28,7 @@ redis_db = redis.Redis(host='localhost', port=6379, db=7, decode_responses=True)
 
 db = SQLAlchemy()
 scheduler = APScheduler()
+sess = Session()
 default_api = Api(title='Infinicalc API', version='v0.1', prefix='/api', contact='chjz1226@gmail.com')
 
 # 用于处理订单建议书的队列
@@ -77,6 +79,7 @@ def create_app(config_name):
     default_api.init_app(app)
     db.create_scoped_session()
     scheduler.init_app(app)
+    sess.init_app(app)
     scheduler.start()
 
     # @default_api.errorhandler(Exception)
@@ -158,5 +161,8 @@ def create_app(config_name):
 
     from .orders import orders as orders_blueprint
     app.register_blueprint(orders_blueprint)
+
+    from .refund_orders import refund as refund_blueprint
+    app.register_blueprint(refund_blueprint)
 
     return app

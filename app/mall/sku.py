@@ -10,6 +10,7 @@ from .mall_api import mall_ns, return_json
 import uuid
 import threading
 import json
+from flask import session
 
 add_sku_parser = reqparse.RequestParser()
 add_sku_parser.add_argument('spu_id', required=True, help="", location='json')
@@ -101,7 +102,7 @@ def change_sku_quantity(key, purchase_data, lock, ):
 class SKUApi(Resource):
     @mall_ns.marshal_with(return_json)
     @mall_ns.doc(body=sku_page_parser)
-    @permission_required("app.mall.sku.query_sku_all")
+    @permission_required([Permission.USER, "app.mall.sku.query_sku_all"])
     def get(self, **kwargs):
         """
         获取全部SKU
@@ -110,7 +111,8 @@ class SKUApi(Resource):
         args['search'] = dict()
         if args.get("home_page") in [0, 1]:
             args['search']['home_page'] = args.get('home_page')
-        return success_return(get_table_data(SKU, args, ['values', 'objects']))
+        return success_return(
+            get_table_data(SKU, args, ['values', 'objects', 'real_price'], ['price', 'member_price', 'discount']))
 
     @mall_ns.doc(body=add_sku_parser)
     @mall_ns.marshal_with(return_json)
@@ -154,11 +156,12 @@ class PerSKUApi(Resource):
         获取指定sku数据
         """
         return success_return(
-            get_table_data_by_id(SKU, kwargs['sku_id'], appends=['values', 'objects', 'sku_promotions']))
+            get_table_data_by_id(SKU, kwargs['sku_id'], ['values', 'objects', 'sku_promotions', 'real_price'],
+                                 ['price', 'member_price', 'discount']))
 
     @mall_ns.doc(body=update_sku_parser)
     @mall_ns.marshal_with(return_json)
-    @permission_required("app.mall.sku.update_sku")
+    @permission_required([Permission.USER, "app.mall.sku.update_sku"])
     def put(self, **kwargs):
         """更新SKU"""
         args = update_sku_parser.parse_args()

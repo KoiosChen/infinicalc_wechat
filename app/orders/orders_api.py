@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission
+from ..models import ShopOrders, Permission, ItemsOrders, Refund
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
@@ -27,6 +27,18 @@ cancel_parser = reqparse.RequestParser()
 cancel_parser.add_argument('cancel_reason', required=True, help='取消原因，让客户选择，不要填写')
 
 order_page_parser = page_parser.copy()
+
+refund_parser = reqparse.RequestParser()
+refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
+refund_parser.add_argument("collect_addr", required=True, help="取件地址")
+refund_parser.add_argument("refund_reason", required=True,
+                           choices=["商品损坏", "缺少件", "发错货", "商品与页面不相符", "商品降价", "不想要了", "质量问题", "其他"], help="退货原因")
+refund_parser.add_argument("refund_desc", required=True, help='问题描述, 不超过200字符')
+refund_parser.add_argument("images", type=list, location='json', help='前端限制最多传3张')
+
+refund_auditor_parser = reqparse.RequestParser()
+refund_auditor_parser.add_argument("audit_result", required=True, help="审核结果")
+refund_auditor_parser.add_argument("express_no", required=True, help="快递号由后台人员填写")
 
 
 @orders_ns.route('')
@@ -79,4 +91,39 @@ class ShopOrderCancelApi(Resource):
             return false_return(message=f"weixin pay failed: {str(e)}")
 
 
+@orders_ns.route('/<string:item_order_id>/refund')
+@orders_ns.expect(head_parser)
+class ShopOrderRefundApi(Resource):
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=order_page_parser)
+    @permission_required([Permission.USER, "app.shop_orders.refund.get"])
+    def get(self, **kwargs):
+        """获取某个商品订单的退货申请"""
+        args = order_page_parser.parse_args()
+        args['search'] = {"item_order_id": kwargs['item_order_id'], "delete_at": None}
+        return success_return(get_table_data(Refund, args))
 
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=refund_parser)
+    @permission_required(Permission.USER)
+    def post(self, **kwargs):
+        """针对某个商品订单提交申请退货"""
+        try:
+            args = refund_parser.parse_args()
+            images = args.pop('images')
+
+            item_order = ItemsOrders.query.get(kwargs['item_order_id'])
+            if not item_order:
+                raise Exception(f"{kwargs['item_order_id']}不存在")
+            if item_order.status != 1:
+                raise Exception(f"当前{item_order.status}不可退货")
+            args['item_order_id'] = kwargs['item_order_id']
+            new_refund = new_data_obj("Refund", **args)
+
+            if new_refund and new_refund.get('status'):
+                item_order.status = 3
+                return submit_return("退货申请成功", "退货申请失败")
+            else:
+                raise Exception("新建退货单失败")
+        except Exception as e:
+            return false_return(message=str(e))

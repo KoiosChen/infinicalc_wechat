@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import abort, request, make_response
+from flask import abort, request, make_response, session
 from . import logger
 from .common import false_return, exp_return
 from app.auth.auths import identify
@@ -49,12 +49,14 @@ def permission_required(permission):
                         logger.warn('This user\'s action is not permitted!')
                         # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
                     kwargs['current_user'] = customer
+                    session['current_user'] = customer.id
                 elif isinstance(permit, str) and 'Bearer' in request.headers.get('Authorization'):
                     current_user = identify(request)
 
                     if current_user.get('code') == 'success' and 'logout' in permit:
                         kwargs['info'] = current_user['data']
                         kwargs['current_user'] = current_user['data']['user']
+                        session['current_user'] = current_user['data']['user'].id
                         return f(*args, **kwargs)
 
                     if current_user.get("code") == "success" and "admin" not in [r.name for r in

@@ -7,6 +7,7 @@ from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj
 from sqlalchemy import or_, and_
 from ..public_method import table_fields, get_table_data_by_id
+from ..rebates.find_relationships import customer_member_card
 import json
 import traceback
 
@@ -60,8 +61,24 @@ def authenticate(login_ip, **kwargs):
         customer = new_customer['obj']
 
         # 如果父级id为空，那么将此次父级id作为自己的父级
-        if not customer.parent_id and kwargs.get('shared_id'):
-            customer.parent_id = Customers.query.filter(openid=kwargs['shared_id']).first().id
+        if kwargs.get('shared_id'):
+            shared_customer_ = Customers.query.filter(Customers.openid.__eq__(kwargs['shared_id']),
+                                                      Customers.delete_at.__eq__(None)).first()
+            if not shared_customer_:
+                logger.error(f"{kwargs.get('shared_id')} is not exist!")
+            else:
+                shared_customer, shared_member_card = customer_member_card(shared_customer_, member_type=1)
+                if not customer.parent_id:
+                    # 写入分享关系，不可修改
+                    customer.parent_id = shared_customer.id
+
+                if not customer.invitor_id:
+                    if shared_member_card:
+                        # 上级如果是代理商，那么invitor_id就写上级ID，利益关系挂在上级ID
+                        customer.invitor_id = shared_customer.id
+                    else:
+                        # 如果分享来自直客，那么就等于直客的invitor_id，如果直客没有invitor_id,则都没有利益关系
+                        customer.invitor_id = shared_customer.invitor_id
 
         # 查询并删除已经登陆的信息
         logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()
