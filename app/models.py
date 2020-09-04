@@ -294,6 +294,7 @@ class InvitationCode(db.Model):
     code = db.Column(db.String(64), unique=True, comment='邀请码')
     manager_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='管理者ID')
     used_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='使用者ID')
+    interest_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='利益关系ID')
     new_member_card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'), comment='开卡id')
     creator_id = db.Column(db.String(64), db.ForeignKey('users.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -361,7 +362,7 @@ class Customers(db.Model):
                                   lazy='dynamic')
     member_card_invitor = db.relationship('MemberCards', backref='card_invitor', foreign_keys='MemberCards.invitor_id',
                                           lazy='dynamic')
-    parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在invitor中")
+    parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在parent中")
     parent = db.relationship('Customers', backref="children", foreign_keys='Customers.parent_id', remote_side=[id])
     invitor_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="代理商邀请")
     invitor = db.relationship('Customers', backref="be_invited", foreign_keys='Customers.invitor_id', remote_side=[id])
@@ -375,9 +376,13 @@ class Customers(db.Model):
     invitation_user = db.relationship('InvitationCode', backref='user',
                                       foreign_keys='InvitationCode.used_customer_id',
                                       lazy='dynamic')
+    invitation_interested_user = db.relationship('InvitationCode', backref='interested_customer',
+                                                 foreign_keys='InvitationCode.interest_customer_id',
+                                                 lazy='dynamic')
 
     shopping_cart = db.relationship("ShoppingCart", backref='buyer', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='owner', lazy='dynamic')
+    refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -716,6 +721,23 @@ class RebatesGroup(db.Model):
     delete_at = db.Column(db.DateTime)
 
 
+class PersonalRebates(db.Model):
+    """
+    个人返佣表。 支付成功后，吊起返佣计算流程
+    """
+    __tablename__ = 'personal_rebates'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    shop_order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    rebate = db.Column(db.DECIMAL(5, 2), comment='支付成功时该账户应得的返佣比例')
+    rebate_value = db.Column(db.DECIMAL(9, 2), comment='返佣金额')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 不可提现（刚购买或者用户提出退货后） 1：可提现 2：已提现')
+    # 创建日期过一定天数后才能体现
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
 class Rebates(db.Model):
     """
     invitor 指提供邀请码的用户，可以是公司市场部，也可以是一级代理。 邀请码都由后台统一生成
@@ -736,7 +758,7 @@ class Rebates(db.Model):
     """
     __tablename__ = 'rebates'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    name = db.Column(db.String(64), comment="用来命名返佣表名称，例如‘封坛返佣’， 用来表示封坛类SKU的返佣，SKU表中外键关联此表")
+    name = db.Column(db.String(64), comment="用来命名返佣表名称")
     member_type = db.Column(db.SmallInteger, comment='0: 直客，1: 代理')
     member_grade = db.Column(db.SmallInteger, comment='1: 一级代理， 2： 二级代理；直客忽略此字段')
     parent_grade = db.Column(db.SmallInteger, default=1, comment="1 表示上级发展来的下级，0，表示平级或者下级发展来的代理")
@@ -837,13 +859,13 @@ class ItemsOrders(db.Model):
         secondary=itemsorders_benefits,
         backref=db.backref('item_orders')
     )
-    # 1：正常 2：禁用 0：取消
-    status = db.Column(db.SmallInteger, default=1)
+    status = db.Column(db.SmallInteger, default=0, comment='1：正常 2：禁用 0：订单未完成 3:退货中，4: 退货成功')
     special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
+    refund_order = db.relationship("Refund", backref='item_orders', lazy='dynamic')
 
 
 class ShopOrderStatus(db.Model):
@@ -1104,6 +1126,26 @@ class NewsCenter(db.Model):
     content = db.Column(db.Text(length=(2 ** 32) - 1), comment='富文本，sku描述')
     order = db.Column(db.SmallInteger, default=0, comment='文章排序')
     news_section_id = db.Column(db.String(64), db.ForeignKey('news_sections.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class Refund(db.Model):
+    """
+    退货申请单
+    """
+    __tablename__ = 'refund'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    refund_quantity = db.Column(db.SmallInteger, comment='退货数量')
+    refund_reason = db.Column(db.String(64), comment='退货原因')
+    refund_desc = db.Column(db.String(200), comment='问题描述')
+    collect_addr = db.Column(db.String(200), comment='取件地址')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 审核中，1: 审核成功，2：审核失败')
+    audit_result = db.Column(db.String(200), comment="审核结果描述")
+    auditor = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    express_no = db.Column(db.String(100), comment='快递单号')
+    item_order_id = db.Column(db.String(64), db.ForeignKey('items_orders.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)

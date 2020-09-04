@@ -49,7 +49,7 @@ class InviteToBeMember(Resource):
         """
         current_user = kwargs['current_user']
         today = datetime.datetime.now()
-        invitation_code = InvitationCode.query.filter(InvitationCode.code == kwargs['invitation_code'],
+        invitation_code = InvitationCode.query.filter(InvitationCode.code.__eq__(kwargs['invitation_code']),
                                                       InvitationCode.used_at.__eq__(None),
                                                       InvitationCode.validity_at.__ge__(today)).first()
 

@@ -3,6 +3,8 @@ from .models import *
 from sqlalchemy import and_
 import datetime
 import traceback
+from flask import session
+from decimal import Decimal
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -33,6 +35,22 @@ def new_data_obj(table, **kwargs):
         logger.debug(f">>> The line exist in {table} for {kwargs}")
         new_one = False
     return {'obj': __obj, 'status': new_one}
+
+
+def calc_sku_price(customer, table):
+    member_card = customer.member_card.filter_by(status=1).first()
+    if member_card:
+        member_discount = member_card.discount if member_card.discount else Decimal('1.00')
+        if table.member_price:
+            total_price = table.member_price * member_discount
+            return str(total_price.quantize(Decimal("0.00")))
+        else:
+            total_price = table.price * member_discount
+            return str(total_price.quantize(Decimal("0.00")))
+    else:
+        discount = table.discount if table.discount else Decimal("1.00")
+        total_price = table.price * discount
+        return str(total_price.quantize(Decimal("0.00")))
 
 
 def table_fields(table, appends=[], removes=[]):
@@ -78,8 +96,7 @@ def __make_table(fields, table, strainer=None):
             for e in elements_list:
                 if e.id not in exist_elements and e.type == 'menu' and e.parent_id is None:
                     tmp[f].append(
-                        get_table_data_by_id(Elements, e.id, appends=['children'],
-                                             strainer=['menu', elements_list_id]))
+                        get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
             tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
@@ -139,6 +156,10 @@ def __make_table(fields, table, strainer=None):
                       table.gifts]
         elif f == 'news_section':
             tmp['section_name'] = table.news_section.name if table.news_section else ''
+        elif f == 'real_price':
+            customer = Customers.query.get(session['current_user'])
+            if customer:
+                tmp[f] = calc_sku_price(customer, table)
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -178,6 +199,8 @@ def get_table_data(table, args, appends=[], removes=[]):
                 if k in fields:
                     if k == 'delete_at' and v is None:
                         and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
+                    elif k == 'validate_at' and v is not None:
+                        and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
                     else:
                         and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
             table_data = base_sql.filter(and_(*and_fields_list)).all()
