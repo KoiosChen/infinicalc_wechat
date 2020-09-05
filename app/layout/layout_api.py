@@ -1,5 +1,5 @@
 from flask_restplus import Resource, fields, reqparse
-from ..models import Layout, SKULayout, SKU
+from ..models import Layout, SKULayout, SKU, Permission
 from . import layout
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
@@ -51,7 +51,7 @@ def query_sku_layout(layout_name=None):
 class LayoutApi(Resource):
     @layout_ns.marshal_with(return_json)
     @layout_ns.doc(body=page_parser)
-    @permission_required("app.mall.layout.query_layouts")
+    @permission_required([Permission.USER, "app.mall.layout.query_layouts"])
     def get(self, **kwargs):
         """
         获取全部页面板块设置
@@ -77,7 +77,7 @@ class LayoutApi(Resource):
 @layout_ns.expect(head_parser)
 class AllSKULayoutApi(Resource):
     @layout_ns.marshal_with(return_json)
-    @permission_required("app.mall.layout.all_sku_in_layout")
+    @permission_required([Permission.USER, "app.mall.layout.all_sku_in_layout"])
     def get(self, **kwargs):
         """
         获取所有页面板块对应的SKU及其排序
@@ -90,7 +90,7 @@ class AllSKULayoutApi(Resource):
 @layout_ns.expect(head_parser)
 class SKULayoutApi(Resource):
     @layout_ns.marshal_with(return_json)
-    @permission_required("app.mall.layout.query_sku_in_layout")
+    @permission_required([Permission.USER, "app.mall.layout.query_sku_in_layout"])
     def get(self, **kwargs):
         """
         获取指定页面板块对应的SKU及其排序
