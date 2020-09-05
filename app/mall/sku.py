@@ -150,7 +150,7 @@ class SKUApi(Resource):
 @mall_ns.expect(head_parser)
 class PerSKUApi(Resource):
     @mall_ns.marshal_with(return_json)
-    @permission_required("app.mall.sku.query_per_sku")
+    @permission_required([Permission.USER, "app.mall.sku.query_per_sku"])
     def get(self, **kwargs):
         """
         获取指定sku数据
