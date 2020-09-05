@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import abort, request, make_response, session
 from . import logger
-from .common import false_return, exp_return
+from .common import false_return, exp_return, success_return
 from app.auth.auths import identify
 from app.frontstage_auth import auths
 from flask import make_response
@@ -39,54 +39,70 @@ def permission_required(permission):
         @wraps(f)
         def decorated_function(*args, **kwargs):
 
-            def __check(permit):
+            def __check_front(permit):
                 # 区分前后台，前端传递的permission为int类型，并且header中的Authorization 不包括Bearer关键字
                 # 后端传递的permission为str类型，并且必须在header中的Authorization包括Bearer
-                if isinstance(permit, int) and 'Bearer' not in request.headers.get('Authorization'):
-                    # 处理前端用户
-                    open_id = request.headers.get('Authorization')
-                    customer = Customers.query.filter_by(openid=open_id, status=1, delete_at=None).first()
-                    if not customer or not customer.can(permit):
-                        logger.warn('This user\'s action is not permitted!')
-                        # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
-                    kwargs['current_user'] = customer
-                    session['current_user'] = customer.id
-                elif isinstance(permit, str) and 'Bearer' in request.headers.get('Authorization'):
-                    # 处理后端用户
-                    current_user = identify(request)
-                    if current_user.get('code') == 'success' and 'logout' in permit:
-                        kwargs['info'] = current_user['data']
-                        kwargs['current_user'] = current_user['data']['user']
-                        session['current_user'] = current_user['data']['user'].id
-                        return f(*args, **kwargs)
+                open_id = request.headers.get('Authorization')
+                customer = Customers.query.filter_by(openid=open_id, status=1, delete_at=None).first()
+                if not customer or not customer.can(permit):
+                    logger.warn('This user\'s action is not permitted!')
+                    # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
+                    return false_return(message='This user\'s action is not permitted!')
+                kwargs['current_user'] = customer
+                session['current_user'] = customer.id
+                return success_return()
 
-                    if current_user.get("code") == "success" and "admin" not in [r.name for r in
-                                                                                 current_user['data']['user'].roles]:
-                        if permit not in [p.permission for p in current_user['data']['user'].permissions]:
-                            logger.warn('This user\'s action is not permitted!')
-                            # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
-                    elif current_user.get("code") == "success" and "admin" in [r.name for r in
-                                                                               current_user['data']['user'].roles]:
-                        session['current_user'] = current_user['data']['user'].id
-
-                    else:
-                        abort(make_response(exp_return(message=current_user.get("message")), 403))
-
+            def __check_back(permit):
+                # 处理后端用户
+                current_user = identify(request)
+                if current_user.get('code') == 'success' and 'logout' in permit:
                     kwargs['info'] = current_user['data']
+                    kwargs['current_user'] = current_user['data']['user']
+                    session['current_user'] = current_user['data']['user'].id
+                    return success_return()
+
+                if current_user.get("code") == "success" and "admin" not in [r.name for r in
+                                                                             current_user['data']['user'].roles]:
+                    if permit not in [p.permission for p in current_user['data']['user'].permissions]:
+                        logger.warn('This user\'s action is not permitted!')
+                        return false_return(message='This user\'s action is not permitted!')
+                elif current_user.get("code") == "success" and "admin" in [r.name for r in
+                                                                           current_user['data']['user'].roles]:
+                    session['current_user'] = current_user['data']['user'].id
+                    return success_return()
+
                 else:
-                    abort(make_response(exp_return(message=current_user.get("message")), 403))
+                    return exp_return(message=current_user.get("message"))
 
+                kwargs['info'] = current_user['data']
 
-            if isinstance(permission, list):
-                # 当permission为list时，表示这个接口是公共接口
-                for p in permission:
-                    __check(p)
+            check_result = dict()
+            if 'Bearer' not in request.headers.get('Authorization'):
+                # 说明是前端用户
+                if isinstance(permission, list):
+                    # 当permission为list时，表示这个接口是公共接口
+                    for p in permission:
+                        if isinstance(p, int):
+                            check_result = __check_front(p)
+                else:
+                    if isinstance(permission, int):
+                        check_result = __check_front(permission)
+                if not check_result or check_result['code'] == 'false':
+                    abort(make_response(exp_return(message=check_result), 403))
             else:
-                __check(permission)
+                # 说明是后端用户
+                if isinstance(permission, list):
+                    # 当permission为list时，表示这个接口是公共接口
+                    for p in permission:
+                        if isinstance(p, str):
+                            check_result = __check_back(p)
+                else:
+                    if isinstance(permission, str):
+                        check_result = __check_back(permission)
+                if not check_result or check_result['code'] == 'false':
+                    abort(make_response(exp_return(message=check_result), 403))
             return f(*args, **kwargs)
-
         return decorated_function
-
     return decorator
 
 
