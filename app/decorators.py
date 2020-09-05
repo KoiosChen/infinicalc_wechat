@@ -88,7 +88,8 @@ def permission_required(permission):
                     if isinstance(permission, int):
                         check_result = __check_front(permission)
                 if not check_result or check_result['code'] == 'false':
-                    abort(make_response(exp_return(message=check_result), 403))
+                    # abort(make_response(exp_return(message=check_result), 403))
+                    logger.error(check_result)
             else:
                 # 说明是后端用户
                 if isinstance(permission, list):
@@ -100,7 +101,8 @@ def permission_required(permission):
                     if isinstance(permission, str):
                         check_result = __check_back(permission)
                 if not check_result or check_result['code'] == 'false':
-                    abort(make_response(exp_return(message=check_result), 403))
+                    # abort(make_response(exp_return(message=check_result), 403))
+                    logger.error(check_result)
             return f(*args, **kwargs)
         return decorated_function
     return decorator
