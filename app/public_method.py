@@ -200,7 +200,8 @@ def get_table_data(table, args, appends=[], removes=[]):
     search = args.get('search')
     fields = table_fields(table, appends, removes)
     r = list()
-    if 'parent_id' in fields and table.__class__.__name__ in ('Elements'):
+    table_name = table.__name__
+    if 'parent_id' in fields and table_name == 'Elements':
         base_sql = table.query.filter(table.parent_id.__eq__(None))
     else:
         base_sql = table.query
@@ -223,7 +224,7 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     r = _make_data(table_data, fields)
 
-    if table.__class__.__name__ in ('Elements'):
+    if table.__name__ == 'Elements':
         pop_list = list()
         for record in r:
             if record.get('parent_id'):
