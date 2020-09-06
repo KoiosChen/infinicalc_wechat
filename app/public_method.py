@@ -50,7 +50,7 @@ def calc_sku_price(customer, table):
     else:
         discount = table.discount if table.discount else Decimal("1.00")
         total_price = table.price * discount
-        return str(total_price.quantize(Decimal("0.00")))
+        return total_price.quantize(Decimal("0.00"))
 
 
 def table_fields(table, appends=[], removes=[]):
