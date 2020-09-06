@@ -89,10 +89,10 @@ def permission_required(permission):
                     if isinstance(permission, int):
                         check_result = __check_front(permission)
                 if not check_result:
-                    abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
+                    # abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
                     logger.error(check_result)
                 elif check_result['code'] == 'false':
-                    abort(make_response(check_result, 403))
+                    # abort(make_response(check_result, 403))
                     logger.error(check_result)
             else:
                 # 说明是后端用户
