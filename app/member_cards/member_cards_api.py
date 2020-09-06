@@ -63,24 +63,16 @@ class InviteToBeMember(Resource):
                 member_card.grade) <= int(invitation_code.tobe_level):
             return false_return(message="当前用户已经是此级别(或更高级别），不可使用此邀请码"), 400
 
-        invitor_grade = 1  # how to set the params
-
         if not member_card:
             card_no = create_member_card_num()
-            new_member_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": current_user.id})
+            new_member_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": current_user.id, "open_date": datetime.datetime.now()})
         else:
             card_no = member_card.card_no
             new_member_card = {'obj': member_card, 'status': False}
 
         a = {"member_type": invitation_code.tobe_type,
              "grade": invitation_code.tobe_level,
-             "invitor_id": invitation_code.manager_customer_id,
-             "invitor_grade": invitor_grade,
              "validate_date": datetime.datetime.now() + datetime.timedelta(days=365)}
-
-        if new_member_card['status']:
-            a['open_date'] = datetime.datetime.now()
-            a['card_no'] = card_no
 
         for k, v in a.items():
             setattr(new_member_card['obj'], k, v)
@@ -88,7 +80,11 @@ class InviteToBeMember(Resource):
         if new_member_card:
             invitation_code.used_customer_id = current_user.id
             invitation_code.new_member_card_id = new_member_card['obj'].id
+            invitation_code.used_at = datetime.datetime.now()
+            current_user.invitor_id = invitation_code.manager_customer_id
+            current_user.interest_id = invitation_code.interest_customer_id
             db.session.add(invitation_code)
+            db.session.add(current_user)
         else:
             return false_return(message="邀请码有效，但是新增会员卡失败"), 400
 
