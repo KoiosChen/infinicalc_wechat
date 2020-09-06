@@ -27,14 +27,17 @@ member_cards_parser = page_parser.copy()
 
 @members_ns.route("")
 @members_ns.expect(head_parser)
-class MemberCards(Resource):
+class MemberCardsAPI(Resource):
     @members_ns.marshal_with(return_json)
+    @members_ns.doc(body=member_cards_parser)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         提交邀请码，升级用户类型
         """
-        return success_return(get_table_data(MemberCards))
+        args = member_cards_parser.parse_args()
+        args['search'] = {"customer_id": kwargs['current_user'].id, "status": 1, "delete_at": None}
+        return success_return(get_table_data(MemberCards, args))
 
 
 @members_ns.route("/<string:invitation_code>")
@@ -65,7 +68,8 @@ class InviteToBeMember(Resource):
 
         if not member_card:
             card_no = create_member_card_num()
-            new_member_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": current_user.id, "open_date": datetime.datetime.now()})
+            new_member_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": current_user.id,
+                                                             "open_date": datetime.datetime.now()})
         else:
             card_no = member_card.card_no
             new_member_card = {'obj': member_card, 'status': False}

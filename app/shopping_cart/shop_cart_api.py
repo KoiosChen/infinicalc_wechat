@@ -36,8 +36,8 @@ pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("select_items", type=list, help="传选中的shopping_cart表的id", location='json')
 pay_parser.add_argument("packing_order", help='当在分装流程中，传递预分配的分装ID，不用传select_items；正常订单，只传select_items，不传packing_order')
 pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
-pay_parser.add_argument("invoice_title", help='发票抬头')
-pay_parser.add_argument("invoice_tax_no", help="发票公司税号")
+pay_parser.add_argument("invoice_title", help='发票抬头， 如果invoice_type为1，显示此input框')
+pay_parser.add_argument("invoice_tax_no", help="发票公司税号， 如果invoice_type为1，显示此input框")
 pay_parser.add_argument("inovice_email", help="发票")
 
 shopping_cart_parser = page_parser.copy()
@@ -68,7 +68,7 @@ def checkout_cart(**args):
             total_score += int(sku.max_score) * cart_obj.quantity
 
         # 计算总价
-        total_price += sku_price * cart_obj.quantity
+        total_price += Decimal(sku_price) * cart_obj.quantity
     return total_price.quantize(Decimal("0.00")), total_score, express_addr
 
 
@@ -138,7 +138,7 @@ class CheckOut(Resource):
         try:
             total_price, total_score, express_addr = checkout_cart(**args)
             return success_return(
-                {"total_score": total_score,
+                {"total_score": str(total_score),
                  "total_price": str(total_price.quantize(Decimal("0.00"))),
                  "express_addr": express_addr},
                 'express_addr为0，表示此订单中没有需要快递的商品')
@@ -152,7 +152,7 @@ class PackingCheckOut(Resource):
     @shopping_cart_ns.marshal_with(return_json)
     @shopping_cart_ns.doc(body=packing_checkout_parser)
     @permission_required(Permission.USER)
-    def get(self, **kwargs):
+    def post(self, **kwargs):
         """分装流程，最后点击 ‘去结算’ 计算可用积分总数及总价，进入结算页"""
         args = packing_checkout_parser.parse_args()
         args['customer'] = kwargs['current_user']
@@ -246,31 +246,6 @@ class ShoppingCartApi(Resource):
     @permission_required(Permission.USER)
     def get(self, **kwargs):
         """显示购物车（不显示分装过程中的零时购物车内容），目前只有套餐一种促销活动，结果返回sku的list，包括价格、数量、总价、选择的套餐"""
-        all_p = defaultdict(list)
-        customer = kwargs['current_user']
-        params = shopping_cart_parser.parse_args()
-        packing_order = params.get("packing_order") if params.get("packing_order") else None
-        args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo} for c in
-                customer.shopping_cart.filter(ShoppingCart.delete_at.__eq__(None),
-                                              ShoppingCart.status.__eq__(1),
-                                              ShoppingCart.packing_item_order.__eq__(packing_order)).all()]
-        member_card = None
-        member_cards = customer.member_card
-        for card in member_cards:
-            if card and card.status == 1:
-                member_card = card
-        classifies_promotions = nesteddict()
-        brand_promotions = nesteddict()
-        spu_promotions = nesteddict()
-        sku_promotions = nesteddict()
-        global_promotions = {"global": {
-            "skus": [],
-            "promotions": Promotions.query.filter(Promotions.scope == 1,
-                                                  Promotions.status == 1,
-                                                  and_(Promotions.promotion_type != 4,
-                                                       Promotions.promotion_type != 7,
-                                                       Promotions.promotion_type != 8)).all()}
-        }
 
         def _check_promotions(the_promotions, key_, sku_, obj_, arg):
             """
@@ -330,125 +305,155 @@ class ShoppingCartApi(Resource):
                         the_promotions[obj_]['promotions'].append(pro)
 
             the_promotions[obj_]['skus'].append(tmp)
+        try:
+            all_p = defaultdict(list)
+            customer = kwargs['current_user']
+            params = shopping_cart_parser.parse_args()
+            packing_order = params.get("packing_order") if params.get("packing_order") else None
+            args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo} for c in
+                    customer.shopping_cart.filter(ShoppingCart.delete_at.__eq__(None),
+                                                  ShoppingCart.status.__eq__(1),
+                                                  ShoppingCart.packing_item_order.__eq__(packing_order)).all()]
+            member_card = None
+            member_cards = customer.member_card
+            for card in member_cards:
+                if card and card.status == 1:
+                    member_card = card
+            classifies_promotions = nesteddict()
+            brand_promotions = nesteddict()
+            spu_promotions = nesteddict()
+            sku_promotions = nesteddict()
+            global_promotions = {"global": {
+                "skus": [],
+                "promotions": Promotions.query.filter(Promotions.scope == 1,
+                                                      Promotions.status == 1,
+                                                      and_(Promotions.promotion_type != 4,
+                                                           Promotions.promotion_type != 7,
+                                                           Promotions.promotion_type != 8)).all()}
+            }
 
-        #
-        for sku in args:
-            sku_obj = SKU.query.get(sku['id'])
 
-            # 活动字典 promotion dict
-            pdict = {'sku': sku_obj,
-                     'spu': sku_obj.the_spu,
-                     'brand': sku_obj.the_spu.brand,
-                     'classifies': sku_obj.the_spu.classifies,
-                     'global': 'global'}
 
-            # 检查这个SKU 及对应的SPU 分类 品牌 或者全局是否有活动
-            for key, obj in pdict.items():
-                _check_promotions(eval(key + '_promotions'), key, sku_obj, obj, sku)
+            #
+            for sku in args:
+                sku_obj = SKU.query.get(sku['id'])
 
-        for s in ('sku', 'spu', 'brand', 'classifies', 'global'):
-            for key, sp in eval(s + '_promotions').items():
-                if sp.get('promotions'):
-                    total_fee = sum([sku['sku'].price * sku['quantity'] for sku in sp['skus']])
-                    total_quantity = sum([sku['quantity'] for sku in sp['skus']])
-                    """排除掉冲突的促销活动"""
-                    p_groups = defaultdict(list)
-                    # 把非group 0的组和对应的促销活动归类，然后把非0的促销活动POP出来
-                    pop_list = list()
-                    for p in sp['promotions']:
-                        if p.groups.group_id != 0:
-                            # 判断促销活动本身是否有效
-                            pop_list.append(p)
-                            p_groups[p.groups].append(p)
-                    for i in pop_list:
-                        sp['promotions'].remove(i)
+                # 活动字典 promotion dict
+                pdict = {'sku': sku_obj,
+                         'spu': sku_obj.the_spu,
+                         'brand': sku_obj.the_spu.brand,
+                         'classifies': sku_obj.the_spu.classifies,
+                         'global': 'global'}
 
-                    # 把非0的组进行排序，因为所有非0组都是互斥的，按照优先级排序得到最优组
-                    gs = [g for g in p_groups.keys() if g.group_id != -1 and g.group_id != 0]
-                    # 如果优先级相同，则随机取一个；所以在定义促销组的时候，应当检查优先级是否已存在，model中 unique=True
-                    gs.sort(key=lambda x: x.priority)
+                # 检查这个SKU 及对应的SPU 分类 品牌 或者全局是否有活动
+                for key, obj in pdict.items():
+                    _check_promotions(eval(key + '_promotions'), key, sku_obj, obj, sku)
 
-                    # 把选举出来的非0组，追加到归类中，最终得到对应归类的有效的促销活动，下一步是判断范围内的sku的消费总额或者数量是否满足
-                    if gs:
-                        sp['promotions'].extend(p_groups[gs[0]])
-
-                    # 判断用户属性及sku是否符合活动要求
-                    pop_list = list()
-                    for p in sp['promotions']:
-                        # 所购商品是否满足利益表
-                        total_fee = Decimal('0.00')
-                        for sku in sp['skus']:
-                            if sku.get('seckill_price'):
-                                total_fee += sku.get('seckill_price') * sku['quantity']
-                            else:
-                                total_fee += sku.get('price') * sku['quantity']
+            for s in ('sku', 'spu', 'brand', 'classifies', 'global'):
+                for key, sp in eval(s + '_promotions').items():
+                    if sp.get('promotions'):
+                        total_fee = sum([sku['sku'].price * sku['quantity'] for sku in sp['skus']])
                         total_quantity = sum([sku['quantity'] for sku in sp['skus']])
-                        the_benefit = None
-                        if p.accumulation == 0:
-                            if p.promotion_type != 6 and p.benefits:
-                                b = p.benefits[0]
-                                if p.promotion_type in (0, 2, 3):
-                                    if b.with_amount <= total_fee:
-                                        the_benefit = b
-                                elif p.promotion_type == 1:
-                                    if (Decimal('0.00') < b.with_amount <= total_fee) or (
-                                            Decimal("0.00") < b.with_quantity <= total_quantity):
-                                        the_benefit = b
+                        """排除掉冲突的促销活动"""
+                        p_groups = defaultdict(list)
+                        # 把非group 0的组和对应的促销活动归类，然后把非0的促销活动POP出来
+                        pop_list = list()
+                        for p in sp['promotions']:
+                            if p.groups.group_id != 0:
+                                # 判断促销活动本身是否有效
+                                pop_list.append(p)
+                                p_groups[p.groups].append(p)
+                        for i in pop_list:
+                            sp['promotions'].remove(i)
 
-                            elif p.promotion_type == 6:
-                                the_benefit = 6
-                        # 可叠加，则找最后一个符合的
-                        elif p.accumulation == 1:
-                            for b in p.benefits:
-                                if p.promotion_type in (0, 2, 3):
-                                    if b.with_amount <= total_fee:
-                                        the_benefit = b
-                                elif p.promotion_type == 1:
-                                    if b.with_amount <= total_fee or b.with_quantity <= total_quantity:
-                                        the_benefit = b
+                        # 把非0的组进行排序，因为所有非0组都是互斥的，按照优先级排序得到最优组
+                        gs = [g for g in p_groups.keys() if g.group_id != -1 and g.group_id != 0]
+                        # 如果优先级相同，则随机取一个；所以在定义促销组的时候，应当检查优先级是否已存在，model中 unique=True
+                        gs.sort(key=lambda x: x.priority)
+
+                        # 把选举出来的非0组，追加到归类中，最终得到对应归类的有效的促销活动，下一步是判断范围内的sku的消费总额或者数量是否满足
+                        if gs:
+                            sp['promotions'].extend(p_groups[gs[0]])
+
+                        # 判断用户属性及sku是否符合活动要求
+                        pop_list = list()
+                        for p in sp['promotions']:
+                            # 所购商品是否满足利益表
+                            total_fee = Decimal('0.00')
+                            for sku in sp['skus']:
+                                if sku.get('seckill_price'):
+                                    total_fee += sku.get('seckill_price') * sku['quantity']
                                 else:
-                                    break
+                                    total_fee += sku.get('price') * sku['quantity']
+                            total_quantity = sum([sku['quantity'] for sku in sp['skus']])
+                            the_benefit = None
+                            if p.accumulation == 0:
+                                if p.promotion_type != 6 and p.benefits:
+                                    b = p.benefits[0]
+                                    if p.promotion_type in (0, 2, 3):
+                                        if b.with_amount <= total_fee:
+                                            the_benefit = b
+                                    elif p.promotion_type == 1:
+                                        if (Decimal('0.00') < b.with_amount <= total_fee) or (
+                                                Decimal("0.00") < b.with_quantity <= total_quantity):
+                                            the_benefit = b
 
-                        if the_benefit is None:
-                            pop_list.append(p)
-                        else:
-                            if not isinstance(sp.get('benefits'), list):
-                                sp['benefits'] = list()
-                            if the_benefit != 6:
-                                sp['benefits'].append({p: the_benefit})
-                    for p in pop_list:
-                        sp['promotions'].remove(p)
+                                elif p.promotion_type == 6:
+                                    the_benefit = 6
+                            # 可叠加，则找最后一个符合的
+                            elif p.accumulation == 1:
+                                for b in p.benefits:
+                                    if p.promotion_type in (0, 2, 3):
+                                        if b.with_amount <= total_fee:
+                                            the_benefit = b
+                                    elif p.promotion_type == 1:
+                                        if b.with_amount <= total_fee or b.with_quantity <= total_quantity:
+                                            the_benefit = b
+                                    else:
+                                        break
 
-            # 计算促销活动后的价格
-            for k, v in eval(s + '_promotions').items():
-                print(k, v)
-                if v['promotions'] and v['benefits']:
-                    for sku in v['skus']:
-                        price = sku['seckill_price'] if sku.get('seckill_price') else sku['price']
-                        v['order_price'] += price * sku['quantity']
-                    for p, b in v['benefits'].items():
-                        if p.promotion_type == 0:
-                            v['order_price'] -= b.reduce_amount
-                        elif p.promotion_type == 1:
-                            pass
-                        elif p.promotion_type == 2:
-                            v['order_price'] *= b.discount_amount
-                        elif p.promotion_type == 3:
-                            pass
-                        elif p.promotion_type == 4:
-                            pass
-                        elif p.promotion_type == 5:
-                            pass
+                            if the_benefit is None:
+                                pop_list.append(p)
+                            else:
+                                if not isinstance(sp.get('benefits'), list):
+                                    sp['benefits'] = list()
+                                if the_benefit != 6:
+                                    sp['benefits'].append({p: the_benefit})
+                        for p in pop_list:
+                            sp['promotions'].remove(p)
 
-        return_result = list()
-        for skus in sku_promotions.values():
-            for sku in skus['skus']:
-                return_result.append(
-                    {"sku": get_table_data_by_id(SKU, sku['sku'].id, appends=['values', 'objects', 'sku_promotions'],
-                                                 removes=['price', 'seckill_price', 'member_price', 'discount']),
-                     "shopping_cart_id": sku['shopping_cart_id'],
-                     "quantity": sku['quantity'],
-                     'price': str(sku['price']),
-                     'total_price': str(sku['price'] * sku['quantity']),
-                     'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])})
-        return success_return(data=return_result)
+                # 计算促销活动后的价格
+                for k, v in eval(s + '_promotions').items():
+                    print(k, v)
+                    if v['promotions'] and v['benefits']:
+                        for sku in v['skus']:
+                            price = sku['seckill_price'] if sku.get('seckill_price') else sku['price']
+                            v['order_price'] += price * sku['quantity']
+                        for p, b in v['benefits'].items():
+                            if p.promotion_type == 0:
+                                v['order_price'] -= b.reduce_amount
+                            elif p.promotion_type == 1:
+                                pass
+                            elif p.promotion_type == 2:
+                                v['order_price'] *= b.discount_amount
+                            elif p.promotion_type == 3:
+                                pass
+                            elif p.promotion_type == 4:
+                                pass
+                            elif p.promotion_type == 5:
+                                pass
+
+            return_result = list()
+            for skus in sku_promotions.values():
+                for sku in skus['skus']:
+                    return_result.append(
+                        {"sku": get_table_data_by_id(SKU, sku['sku'].id, appends=['values', 'objects', 'sku_promotions'],
+                                                     removes=['price', 'seckill_price', 'member_price', 'discount']),
+                         "shopping_cart_id": sku['shopping_cart_id'],
+                         "quantity": sku['quantity'],
+                         'price': str(sku['price']),
+                         'total_price': str(sku['price'] * sku['quantity']),
+                         'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])})
+            return success_return(data=return_result)
+        except Exception as e:
+            return false_return(message=str(e))
