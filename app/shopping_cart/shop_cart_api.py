@@ -446,7 +446,7 @@ class ShoppingCartApi(Resource):
             return_result = list()
             for skus in sku_promotions.values():
                 for sku in skus['skus']:
-                    total_price = sku['price'] * sku['quantity']
+                    total_price = Decimal(sku['price']) * sku['quantity']
                     return_result.append(
                         {"sku": get_table_data_by_id(SKU, sku['sku'].id, appends=['values', 'objects', 'sku_promotions'],
                                                      removes=['price', 'seckill_price', 'member_price', 'discount']),
