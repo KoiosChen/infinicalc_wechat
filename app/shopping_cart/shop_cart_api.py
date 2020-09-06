@@ -50,7 +50,7 @@ def checkout_cart(**args):
     total_score = 0
     total_price = Decimal("0.00")
     customer = args.pop('customer')
-    shop_cart_ids = args.get('shopping_cart_id')
+    shop_cart_ids = args.values()
     for cart_id in shop_cart_ids:
         cart_obj = ShoppingCart.query.get(cart_id)
         if not cart_obj or cart_obj.delete_at:
