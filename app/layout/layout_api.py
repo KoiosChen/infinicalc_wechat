@@ -138,7 +138,7 @@ def put(self, **kwargs):
                 update_one.status = sl['status']
         else:
             return false_return(f'<{sl["id"]}> 此SKU 不存在 '), 400
-    return success_return(message="更新sku到页面板块中成功") if session_commit() else false_return(message='更新页面板块失败'), 400
+    return submit_return("更新sku到页面板块中成功", '更新页面板块失败')
 
 
 @layout_ns.doc(body=delete_sku_in_layout_parser)
@@ -151,4 +151,4 @@ def delete(self, **kwargs):
         to_delete = SKULayoutApi.query.filter_by(layout_id=kwargs['layout_id'], sku_id=sku).first()
         if to_delete:
             db.session.delete(to_delete)
-    return success_return(message="删除页面板块中的SKU失败") if session_commit() else false_return(message="删除页面板块中的SKU失败"), 400
+    return submit_return("删除页面板块中的SKU失败", "删除页面板块中的SKU失败")

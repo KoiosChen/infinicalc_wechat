@@ -139,7 +139,7 @@ class CheckOut(Resource):
             total_price, total_score, express_addr = checkout_cart(**args)
             return success_return(
                 {"total_score": str(total_score),
-                 "total_price": str(total_price.quantize(Decimal("0.00"))),
+                 "total_price": str(total_price),
                  "express_addr": express_addr},
                 'express_addr为0，表示此订单中没有需要快递的商品')
         except Exception as e:
@@ -446,13 +446,14 @@ class ShoppingCartApi(Resource):
             return_result = list()
             for skus in sku_promotions.values():
                 for sku in skus['skus']:
+                    total_price = sku['price'] * sku['quantity']
                     return_result.append(
                         {"sku": get_table_data_by_id(SKU, sku['sku'].id, appends=['values', 'objects', 'sku_promotions'],
                                                      removes=['price', 'seckill_price', 'member_price', 'discount']),
                          "shopping_cart_id": sku['shopping_cart_id'],
                          "quantity": sku['quantity'],
                          'price': str(sku['price']),
-                         'total_price': str(sku['price'] * sku['quantity']),
+                         'total_price': str(total_price.quantize(Decimal("0.00"))),
                          'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])})
             return success_return(data=return_result)
         except Exception as e:
