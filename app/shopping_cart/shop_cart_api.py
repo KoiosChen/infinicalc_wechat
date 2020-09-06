@@ -33,7 +33,7 @@ pay_parser = reqparse.RequestParser()
 pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分为1元')
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
-pay_parser.add_argument("select_items", type=list, help="传选中的shopping_cart表的id", location='json')
+pay_parser.add_argument("shopping_cart_id", type=list, help="传选中的shopping_cart表的id", location='json')
 pay_parser.add_argument("packing_order", help='当在分装流程中，传递预分配的分装ID，不用传select_items；正常订单，只传select_items，不传packing_order')
 pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
 pay_parser.add_argument("invoice_title", help='发票抬头， 如果invoice_type为1，显示此input框')
@@ -50,7 +50,7 @@ def checkout_cart(**args):
     total_score = 0
     total_price = Decimal("0.00")
     customer = args.pop('customer')
-    shop_cart_ids = args.values()
+    shop_cart_ids = args['shopping_cart_id']
     for cart_id in shop_cart_ids:
         cart_obj = ShoppingCart.query.get(cart_id)
         if not cart_obj or cart_obj.delete_at:
@@ -93,17 +93,17 @@ class Pay(Resource):
             packing_order = args.get("packing_order")
             # 若是分装流程
             if packing_order:
-                args.pop("select_items")
+                args.pop("shopping_cart_id")
                 select_items = [s.id for s in
                                 ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order"))]
             else:
-                select_items = args.pop('select_items')
+                select_items = args.pop('shopping_cart_id')
 
             for i in select_items:
                 if ShoppingCart.query.get(i).delete_at:
                     raise Exception(f"购物车订单{i}已删除")
             total_price, total_score, express_addr = checkout_cart(
-                **{"select_items": select_items, 'customer': kwargs['current_user']})
+                **{"shopping_cart_id": select_items, 'customer': kwargs['current_user']})
 
             if args.get('score_used') and total_score < args['score_used']:
                 raise Exception(f"欲使用积分{args['score_used']}此订单最大可消费积分为{total_score}")
