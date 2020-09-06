@@ -72,13 +72,13 @@ def authenticate(login_ip, **kwargs):
                     # 写入分享关系，不可修改
                     customer.parent_id = shared_customer.id
 
-                if not customer.invitor_id:
+                if not customer.interest_id:
                     if shared_member_card:
-                        # 上级如果是代理商，那么invitor_id就写上级ID，利益关系挂在上级ID
-                        customer.invitor_id = shared_customer.id
+                        # 上级如果是代理商，interest_id，利益关系挂在上级ID
+                        customer.interest_id = shared_customer.id
                     else:
-                        # 如果分享来自直客，那么就等于直客的invitor_id，如果直客没有invitor_id,则都没有利益关系
-                        customer.invitor_id = shared_customer.invitor_id
+                        # 如果分享来自直客，interest_id，如果直客没有interest_id,则都没有利益关系
+                        customer.interest_id = shared_customer.interest_id
 
         # 查询并删除已经登陆的信息
         logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()

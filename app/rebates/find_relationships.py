@@ -22,18 +22,24 @@ def find_rebate_relationships(customer, action="parent", member_type=1, level=1)
         false_return(message="用户无效")
     relationship_dict = defaultdict(dict)
     if not member_card or member_card.member_type == 0:
-        # 表明是直客, 直客只要找他的invitor是否有值，
+        # 表明是直客, 直客没有invitor，invitor定义为代理商邀请人，这里只有interest_id
         # 如果有，则为其上游代理商的id
-        if customer.invitor:
-            relationship_dict['invitor']['id'] = customer.invitor.id
-            relationship_dict['invitor']['grade'] = customer.member_card.filter_by(status=1, member_type=1).first().grade
+        if customer.interest:
+            # 利益关系上级
+            relationship_dict['interest']['id'] = customer.interest.id
+            relationship_dict['interest']['grade'] = customer.interest.member_card.filter_by(status=1,
+                                                                                             member_type=1).first().grade
+            # 分享上级
             relationship_dict['parent']['id'] = customer.parent.id
             relationship_dict['parent']['grade'] = customer.member_card.filter_by(status=1, member_type=1).first().grade
-            if relationship_dict['invitor']['grade'] == 2:
-                relationship_dict['grand_invitor']['id'] = customer.invitor.invitor.id
-                relationship_dict['grand_invitor']['grade'] = 1
-                relationship_dict['invitor_parent']['id'] = customer.parent.id
-                relationship_dict['invitor_parent']['grade'] = customer.parent.member_card.filter_by(status=1, member_type=1).first().grade
+            if relationship_dict['interest']['grade'] == 2:
+                # 如果自己的利益上级是2级代理，那么查找其一级代理
+                relationship_dict['grand_interest']['id'] = customer.interest.interest.id
+                relationship_dict['grand_interest']['grade'] = 1
+                # 利益上级的推荐人
+                relationship_dict['interest_invitor']['id'] = customer.interest.invitor.id
+                relationship_dict['interest_invitor']['grade'] = customer.interest.invitor.member_card.filter_by(
+                    status=1, member_type=1).first().grade
         else:
             # 如果当前用户是直客，那么没有invitor，说明他自己或者他的上级分享者没有上游代理商
             if customer.parent:
@@ -41,15 +47,17 @@ def find_rebate_relationships(customer, action="parent", member_type=1, level=1)
                 relationship_dict['parent']['grade'] = 0
     elif member_card and member_type == 1:
         # 表明是代理商身份，代理商级别是1 或者2
-        if member_card.grade == 1:
-            pass
-            # 如果是一级代理商，则返回空的relation_dict
+        if member_card.grade > 1:
+            # 如果非一级代理商
+            relationship_dict['interest']['id'] = customer.interest.id
+            relationship_dict['interest']['grade'] = customer.interest.member_card.filter_by(status=1,
+                                                                                             member_type=1).first().grade
 
-        else:
-            # 如果是二级代理商
-            relationship_dict['invitor']['id'] = customer.invitor.id
-            relationship_dict['invitor']['grade'] = 1
-            relationship_dict['parent']['id'] = customer.parent.id
-            relationship_dict['parent']['grade'] = customer.parent.member_card.filter_by(status=1, member_type=1).first().grade
+        relationship_dict['invitor']['id'] = customer.invitor.id
+        relationship_dict['invitor']['grade'] = customer.invitor.member_card.filter_by(status=1,
+                                                                                       member_type=1).first().grade
+        relationship_dict['parent']['id'] = customer.parent.id
+        relationship_dict['parent']['grade'] = customer.parent.member_card.filter_by(status=1,
+                                                                                     member_type=1).first().grade
 
     return success_return(data=relationship_dict)

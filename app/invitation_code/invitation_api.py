@@ -20,8 +20,10 @@ invitation_parser.add_argument('tobe_type', type=int, choices=[0, 1], default=1,
 invitation_parser.add_argument('tobe_level', type=int, required=True, choices=[1, 2],
                                help='目前仅邀请成为代理商，tobe_type传1；此处传1，表示一级代理商，传2 表示二级代理商。')
 invitation_parser.add_argument('number', type=int, default=1, required=True, help='生成数量')
-invitation_parser.add_argument('manager_customer_id', required=True, help='customers.id - 如果没有邀请人，则使用公司市场部ID，归属公司总部。')
-invitation_parser.add_argument('interest_customer_id', required=True, help='customers.id - 如果没有邀请人，则使用公司市场部ID，归属公司总部。')
+invitation_parser.add_argument('manager_customer_id', required=True,
+                               help='邀请码生成后在哪个customers.id下能够显示, 被邀请人的invitor_id写入此字段 - 如果没有邀请人，则使用公司市场部ID，归属公司总部。')
+invitation_parser.add_argument('interest_customer_id', required=True,
+                               help='被邀请人填入邀请码之后，其interest_id字段将写入此customers.id - 如果没有邀请人，则使用公司市场部ID，归属公司总部。')
 invitation_parser.add_argument('validity_days', help='有效天数，从生成日算起', type=int, default=30)
 
 invite_page_parser = page_parser.copy()
@@ -72,10 +74,11 @@ class InvitationApi(Resource):
             flag = True
             while flag:
                 code_ = generate_code()
-                if not InvitationCode.query.filter(InvitationCode.code == code_,
-                                                   InvitationCode.used_at is None).first():
+                if not InvitationCode.query.filter(InvitationCode.code == code_).first():
                     params['code'] = code_
-                    new_data_obj("InvitationCode", **params)
+                    new_invitation = new_data_obj("InvitationCode", **params)
+                    if not new_invitation:
+                        return false_return(message="生成邀请码失败")
                     flag = False
 
         return submit_return(f"共添加{number}个邀请码给用户ID<{args['manager_customer_id']}>", "新增邀请码失败")

@@ -178,12 +178,26 @@ def _make_data(data, fields, strainer=None):
     return rr
 
 
+def _search(table, fields, search):
+    and_fields_list = list()
+    for k, v in search.items():
+        if k in fields:
+            if k in ('delete_at', 'used_at') and v is None:
+                and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
+            elif k in ('manager_customer_id') and v:
+                and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
+            elif k == 'validity_at' and v is not None:
+                and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
+            else:
+                and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+    return and_fields_list
+
+
 def get_table_data(table, args, appends=[], removes=[]):
     page = args.get('page')
     current = args.get('current')
     size = args.get('size')
     search = args.get('search')
-    and_fields_list = list()
     fields = table_fields(table, appends, removes)
     r = list()
     if 'parent_id' in fields:
@@ -195,27 +209,12 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     if page != 'true':
         if search:
-            for k, v in search.items():
-                if k in fields:
-                    if k == 'delete_at' and v is None:
-                        and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
-                    elif k == 'validate_at' and v is not None:
-                        and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
-                    else:
-                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
-            table_data = base_sql.filter(and_(*and_fields_list)).all()
+            table_data = base_sql.filter(and_(*_search(table, fields, search))).all()
         else:
             table_data = base_sql.all()
     else:
         if search:
-            for k, v in search.items():
-                if k in fields:
-                    if k == 'delete_at' and v is None:
-                        and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
-                    else:
-                        and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
-
-            table_data = base_sql.filter(and_(*and_fields_list)).offset((current - 1) * size).limit(size).all()
+            table_data = base_sql.filter(and_(*_search(table, fields, search))).offset((current - 1) * size).limit(size).all()
         else:
             if current > 0:
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()
@@ -234,9 +233,13 @@ def get_table_data(table, args, appends=[], removes=[]):
     return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
 
-def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None):
+def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, search=None):
     fields = table_fields(table, appends, removes)
-    t = table.query.get(key_id)
+    base_sql = table.query
+    if search is None:
+        t = base_sql.get(key_id)
+    else:
+        t = base_sql.filter(and_(*_search(table, fields, search))).first()
     if t:
         return __make_table(fields, t, strainer)
     else:

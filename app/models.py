@@ -318,8 +318,6 @@ class MemberCards(db.Model):
     status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
     grade = db.Column(db.SmallInteger, default=1,
                       comment='会员卡等级，在OptionsDict表中查找card_grades来获取对应的文字描述.默认为1')
-    invitor_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    invitor_grade = db.Column(db.SmallInteger, default=1, comment="1,上级发展下级；0 下级或者评价发展成为的代理")
     discount = db.Column(db.DECIMAL(3, 2), default=1.00, comment="会员折扣")
     shop_id = db.Column(db.String(64), default='all', comment='预留，对于店铺发店铺会员卡，目前会员卡为商城全局')
     open_date = db.Column(db.DateTime, default=datetime.datetime.now, comment="开卡日期")
@@ -360,12 +358,13 @@ class Customers(db.Model):
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
     member_card = db.relationship('MemberCards', backref='card_owner', foreign_keys='MemberCards.customer_id',
                                   lazy='dynamic')
-    member_card_invitor = db.relationship('MemberCards', backref='card_invitor', foreign_keys='MemberCards.invitor_id',
-                                          lazy='dynamic')
     parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在parent中")
     parent = db.relationship('Customers', backref="children", foreign_keys='Customers.parent_id', remote_side=[id])
     invitor_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="代理商邀请")
     invitor = db.relationship('Customers', backref="be_invited", foreign_keys='Customers.invitor_id', remote_side=[id])
+    interest_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="利益关系")
+    interest = db.relationship('Customers', backref="children_market", foreign_keys='Customers.interest_id',
+                               remote_side=[id])
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)

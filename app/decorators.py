@@ -43,7 +43,8 @@ def permission_required(permission):
                 # 区分前后台，前端传递的permission为int类型，并且header中的Authorization 不包括Bearer关键字
                 # 后端传递的permission为str类型，并且必须在header中的Authorization包括Bearer
                 open_id = request.headers.get('Authorization')
-                customer = Customers.query.filter_by(openid=open_id, status=1, delete_at=None).first()
+                customer = Customers.query.filter(Customers.openid.__eq__(open_id), Customers.status.__eq__(1),
+                                                  Customers.delete_at.__eq__(None)).first()
                 if not customer or not customer.can(permit):
                     logger.warn('This user\'s action is not permitted!')
                     # abort(make_response(false_return(message='This user\'s action is not permitted!'), 403))
@@ -110,7 +111,9 @@ def permission_required(permission):
                     # abort(make_response(check_result, 403))
                     logger.error(check_result)
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 
