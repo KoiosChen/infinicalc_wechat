@@ -168,4 +168,7 @@ def create_app(config_name):
     from .rebates import rebates as rebates_blueprint
     app.register_blueprint(refund_blueprint)
 
+    from .item_orders import item_orders as item_orders_blueprint
+    app.register_blueprint(item_orders_blueprint)
+
     return app

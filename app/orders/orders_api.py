@@ -9,7 +9,7 @@ from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 import datetime
 
-orders_ns = default_api.namespace('orders', path='/shop_orders', description='定单相关API')
+orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
 
 return_json = orders_ns.model('ReturnRegister', return_dict)
 
@@ -91,39 +91,39 @@ class ShopOrderCancelApi(Resource):
             return false_return(message=f"weixin pay failed: {str(e)}")
 
 
-@orders_ns.route('/<string:item_order_id>/refund')
-@orders_ns.expect(head_parser)
-class ShopOrderRefundApi(Resource):
-    @orders_ns.marshal_with(return_json)
-    @orders_ns.doc(body=order_page_parser)
-    @permission_required([Permission.USER, "app.shop_orders.refund.get"])
-    def get(self, **kwargs):
-        """获取某个商品订单的退货申请"""
-        args = order_page_parser.parse_args()
-        args['search'] = {"item_order_id": kwargs['item_order_id'], "delete_at": None}
-        return success_return(get_table_data(Refund, args))
-
-    @orders_ns.marshal_with(return_json)
-    @orders_ns.doc(body=refund_parser)
-    @permission_required(Permission.USER)
-    def post(self, **kwargs):
-        """针对某个商品订单提交申请退货"""
-        try:
-            args = refund_parser.parse_args()
-            images = args.pop('images')
-
-            item_order = ItemsOrders.query.get(kwargs['item_order_id'])
-            if not item_order:
-                raise Exception(f"{kwargs['item_order_id']}不存在")
-            if item_order.status != 1:
-                raise Exception(f"当前{item_order.status}不可退货")
-            args['item_order_id'] = kwargs['item_order_id']
-            new_refund = new_data_obj("Refund", **args)
-
-            if new_refund and new_refund.get('status'):
-                item_order.status = 3
-                return submit_return("退货申请成功", "退货申请失败")
-            else:
-                raise Exception("新建退货单失败")
-        except Exception as e:
-            return false_return(message=str(e))
+# @orders_ns.route('/<string:item_order_id>/refund')
+# @orders_ns.expect(head_parser)
+# class ShopOrderRefundApi(Resource):
+#     @orders_ns.marshal_with(return_json)
+#     @orders_ns.doc(body=order_page_parser)
+#     @permission_required([Permission.USER, "app.shop_orders.refund.get"])
+#     def get(self, **kwargs):
+#         """获取某个商品订单的退货申请"""
+#         args = order_page_parser.parse_args()
+#         args['search'] = {"item_order_id": kwargs['item_order_id'], "delete_at": None}
+#         return success_return(get_table_data(Refund, args))
+#
+#     @orders_ns.marshal_with(return_json)
+#     @orders_ns.doc(body=refund_parser)
+#     @permission_required(Permission.USER)
+#     def post(self, **kwargs):
+#         """针对某个商品订单提交申请退货"""
+#         try:
+#             args = refund_parser.parse_args()
+#             images = args.pop('images')
+#
+#             item_order = ItemsOrders.query.get(kwargs['item_order_id'])
+#             if not item_order:
+#                 raise Exception(f"{kwargs['item_order_id']}不存在")
+#             if item_order.status != 1:
+#                 raise Exception(f"当前{item_order.status}不可退货")
+#             args['item_order_id'] = kwargs['item_order_id']
+#             new_refund = new_data_obj("Refund", **args)
+#
+#             if new_refund and new_refund.get('status'):
+#                 item_order.status = 3
+#                 return submit_return("退货申请成功", "退货申请失败")
+#             else:
+#                 raise Exception("新建退货单失败")
+#         except Exception as e:
+#             return false_return(message=str(e))
