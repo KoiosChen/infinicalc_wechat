@@ -200,7 +200,7 @@ def get_table_data(table, args, appends=[], removes=[]):
     search = args.get('search')
     fields = table_fields(table, appends, removes)
     r = list()
-    if 'parent_id' in fields:
+    if 'parent_id' in fields and table.__class__.__name__ in ('Elements'):
         base_sql = table.query.filter(table.parent_id.__eq__(None))
     else:
         base_sql = table.query
@@ -223,12 +223,13 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     r = _make_data(table_data, fields)
 
-    pop_list = list()
-    for record in r:
-        if record.get('parent_id'):
-            pop_list.append(record)
-    for p in pop_list:
-        r.remove(p)
+    if table.__class__.__name__ in ('Elements'):
+        pop_list = list()
+        for record in r:
+            if record.get('parent_id'):
+                pop_list.append(record)
+        for p in pop_list:
+            r.remove(p)
 
     return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
