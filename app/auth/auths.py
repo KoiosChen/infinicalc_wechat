@@ -41,7 +41,7 @@ def encode_auth_token(user_id, login_time, login_ip, platform):
         )
     except Exception as e:
         logger.error(str(e))
-        return false_return(message=str(e))
+        return false_return(message=str(e)), 400
 
 
 def authenticate(username, password, login_ip, platform, method='password'):
