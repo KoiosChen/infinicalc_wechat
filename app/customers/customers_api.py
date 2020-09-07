@@ -122,7 +122,7 @@ class Login(Resource):
                 return false_return(response, "请求失败"), 400
             return auths.authenticate(user_ip, **response)
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
 
 @customers_ns.route('/<string:customer_id>/role')

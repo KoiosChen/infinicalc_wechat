@@ -123,7 +123,7 @@ class Pay(Resource):
                                   openid=kwargs['current_user'].openid)
 
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
 
 @shopping_cart_ns.route('/checkout')
@@ -144,7 +144,7 @@ class CheckOut(Resource):
                  "express_addr": express_addr},
                 'express_addr为0，表示此订单中没有需要快递的商品')
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
 
 @shopping_cart_ns.route('/packing_checkout')
@@ -167,7 +167,7 @@ class PackingCheckOut(Resource):
                  "express_addr": express_addr},
                 'express_addr为0，表示此订单中没有需要快递的商品')
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
 
 @shopping_cart_ns.route('/<string:shopping_cart_id>')
@@ -203,7 +203,7 @@ class UpdateShoppingCart(Resource):
             db.session.add(shopping_cart_item)
             return submit_return(f"更新{kwargs['shopping_cart_id']}成功", f"更新{kwargs['shopping_cart_id']} 数据提交失败")
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
     @shopping_cart_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
@@ -222,7 +222,7 @@ class UpdateShoppingCart(Resource):
             db.session.add(to_be_deleted)
             return submit_return("删除成功", "删除时数据提交失败")
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 200
 
 
 @shopping_cart_ns.route('')
@@ -241,7 +241,7 @@ class ShoppingCartApi(Resource):
                 db.session.add(i)
             return submit_return("清空成功", "清空时数据提交失败")
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 200
 
     @shopping_cart_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
@@ -458,4 +458,4 @@ class ShoppingCartApi(Resource):
                          'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])})
             return success_return(data=return_result)
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400

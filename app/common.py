@@ -26,7 +26,7 @@ def session_commit():
     except SQLAlchemyError as e:
         db.session.rollback()
         logger.error(f"users::register::db_commit()::SQLAlchemyError --> {str(e)}")
-        return false_return(message=str(e))
+        return false_return(message=str(e)), 400
 
 
 def submit_return(success_msg, false_msg):

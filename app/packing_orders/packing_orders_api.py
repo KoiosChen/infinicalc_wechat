@@ -36,7 +36,7 @@ class PackingAPI(Resource):
             args['search']['total_cargoes_id'] = kwargs['cargo_id']
             return success_return(get_table_data(PackingItemOrders, args), "请求成功")
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
 
     @packing_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
@@ -66,4 +66,4 @@ class PackingAPI(Resource):
                 raise Exception("无法生成预订单")
 
         except Exception as e:
-            return false_return(message=str(e))
+            return false_return(message=str(e)), 400
