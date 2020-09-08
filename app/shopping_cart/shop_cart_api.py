@@ -138,10 +138,19 @@ class CheckOut(Resource):
         args['customer'] = kwargs['current_user']
         try:
             total_price, total_score, express_addr = checkout_cart(**args)
+            sku = list()
+            for cart_id in args['shopping_cart_id']:
+                cart = ShoppingCart.query.get(cart_id)
+                the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
+                                         ['price', 'member_price', 'discount', 'content', 'seckill_price', 'score_type', 'max_score'])
+                the_sku['quantity'] = cart.quantity
+                the_sku['shopping_cart_id'] = cart_id
+                sku.append(the_sku)
             return success_return(
                 {"total_score": str(total_score),
                  "total_price": str(total_price),
-                 "express_addr": express_addr},
+                 "express_addr": express_addr,
+                 "sku": sku},
                 'express_addr为0，表示此订单中没有需要快递的商品')
         except Exception as e:
             return false_return(message=str(e)), 400
@@ -306,6 +315,7 @@ class ShoppingCartApi(Resource):
                         the_promotions[obj_]['promotions'].append(pro)
 
             the_promotions[obj_]['skus'].append(tmp)
+
         try:
             all_p = defaultdict(list)
             customer = kwargs['current_user']
@@ -332,8 +342,6 @@ class ShoppingCartApi(Resource):
                                                            Promotions.promotion_type != 7,
                                                            Promotions.promotion_type != 8)).all()}
             }
-
-
 
             #
             for sku in args:
@@ -449,7 +457,8 @@ class ShoppingCartApi(Resource):
                 for sku in skus['skus']:
                     total_price = Decimal(sku['price']) * sku['quantity']
                     return_result.append(
-                        {"sku": get_table_data_by_id(SKU, sku['sku'].id, appends=['values', 'objects', 'sku_promotions'],
+                        {"sku": get_table_data_by_id(SKU, sku['sku'].id,
+                                                     appends=['values', 'objects', 'sku_promotions'],
                                                      removes=['price', 'seckill_price', 'member_price', 'discount']),
                          "shopping_cart_id": sku['shopping_cart_id'],
                          "quantity": sku['quantity'],
