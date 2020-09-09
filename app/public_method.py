@@ -10,6 +10,18 @@ str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birt
             'start_time', 'end_time', 'total_consumption', 'express_fee']
 
 
+def format_decimal(num, zero_format="0.00", to_str=False):
+    print(type(num))
+    if isinstance(num, float) or isinstance(num, int) or isinstance(num, str):
+        return str(num)
+    else:
+        formatted_ = num.quantize(Decimal(zero_format))
+        if to_str:
+            return str(num)
+        else:
+            return formatted_
+
+
 def new_data_obj(table, **kwargs):
     """
     创建新的数据对象
@@ -159,7 +171,11 @@ def __make_table(fields, table, strainer=None):
         elif f == 'real_price':
             customer = Customers.query.get(session['current_user'])
             if customer:
-                tmp[f] = calc_sku_price(customer, table)
+                tmp[f] = str(calc_sku_price(customer, table))
+        elif f == 'items_orders':
+            tmp[f] = list()
+            for o in table.items_orders_id.all():
+                tmp[f].append(get_table_data_by_id(ItemsOrders, o.id))
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -215,7 +231,8 @@ def get_table_data(table, args, appends=[], removes=[]):
             table_data = base_sql.all()
     else:
         if search:
-            table_data = base_sql.filter(and_(*_search(table, fields, search))).offset((current - 1) * size).limit(size).all()
+            table_data = base_sql.filter(and_(*_search(table, fields, search))).offset((current - 1) * size).limit(
+                size).all()
         else:
             if current > 0:
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()

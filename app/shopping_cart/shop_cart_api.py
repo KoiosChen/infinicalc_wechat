@@ -52,9 +52,9 @@ def checkout_cart(**args):
     customer = args.pop('customer')
     shop_cart_ids = args['shopping_cart_id']
     for cart_id in shop_cart_ids:
-        cart_obj = ShoppingCart.query.get(cart_id)
+        cart_obj = ShoppingCart.query.filter_by(id=cart_id, customer_id=customer.id).first()
         if not cart_obj or cart_obj.delete_at:
-            raise Exception(f"购物车id<{cart_id}>不存在")
+            raise Exception(f"用户ID<{customer.id}>无购物车id<{cart_id}>")
 
         sku = cart_obj.desire_skus
         if not sku or not sku.status or sku.delete_at:
@@ -140,7 +140,7 @@ class CheckOut(Resource):
             total_price, total_score, express_addr = checkout_cart(**args)
             sku = list()
             for cart_id in args['shopping_cart_id']:
-                cart = ShoppingCart.query.get(cart_id)
+                cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
                 the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
                                          ['price', 'member_price', 'discount', 'content', 'seckill_price', 'score_type', 'max_score'])
                 the_sku['quantity'] = cart.quantity

@@ -49,7 +49,8 @@ class ShopOrdersApi(Resource):
     @permission_required(Permission.USER)
     def get(self, **kwargs):
         args = order_page_parser.parse_args()
-        return success_return(data=get_table_data(ShopOrders, args))
+        args['search'] = {'customer_id': kwargs.get('current_user').id}
+        return success_return(data=get_table_data(ShopOrders, args, ['items_orders']))
 
 
 @orders_ns.route('/<string:shop_order_id>/pay')

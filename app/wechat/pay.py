@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from app import logger, db, redis_db, sku_lock
-from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders
+from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers
 from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
     WEIXIN_KEY, \
     WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
@@ -13,7 +13,7 @@ import time
 import datetime
 import random
 from hashlib import md5
-from app.public_method import new_data_obj
+from app.public_method import new_data_obj, calc_sku_price
 from app.common import submit_return, success_return, false_return, session_commit
 from app.mall.sku import compute_quantity
 import threading
@@ -154,9 +154,14 @@ def create_order(**kwargs):
                     if not sku or not sku.status or sku.delete_at:
                         raise Exception(f"购物车对应商品不存在")
 
+                    item_price = sku.show_price if sku.show_price else sku.price
+                    customer = Customers.query.get(order_info['customer_id'])
+                    transaction_price = calc_sku_price(customer, sku)
+
                     item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
-                                  "item_quantity": item_obj.quantity, "item_price": sku.price, "special": sku.special,
-                                  "transaction_price": sku.price}
+                                  "item_quantity": item_obj.quantity,
+                                  "item_price": item_price, "special": sku.special,
+                                  "transaction_price": transaction_price}
                     new_item_order = new_data_obj("ItemsOrders", **item_order)
 
                     if new_item_order and new_item_order.get('status'):

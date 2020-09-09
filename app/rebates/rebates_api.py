@@ -5,7 +5,7 @@ from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-from .find_relationships import find_rebate_relationships
+from .calc_rebate import calc
 from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 import datetime
@@ -15,6 +15,7 @@ rebates_ns = default_api.namespace('rebates', path='/rebates', description='返�
 return_json = rebates_ns.model('ReturnRegister', return_dict)
 
 rebate_page_parser = page_parser.copy()
+rebate_page_parser.add_argument('shop_order')
 
 
 @rebates_ns.route('')
@@ -27,5 +28,7 @@ class RebateApi(Resource):
         """获取所有返佣"""
         args = rebate_page_parser.parse_args()
         args['search'] = {"delete_at": None}
-        return success_return(data=find_rebate_relationships(kwargs['current_user']))
+        if not kwargs.get("current_user"):
+            return false_return(f"user does not exist"), 403
+        return calc(kwargs['current_user'], args['shop_order'])
 
