@@ -65,6 +65,7 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid):
         if 'sign' in params:
             params.pop('sign')
         src = '&'.join(['%s=%s' % (k, v) for k, v in sorted(params.items())]) + '&key=%s' % WEIXIN_KEY
+        logger.debug(src.encode('utf-8'))
         return md5(src.encode('utf-8')).hexdigest().upper()
 
     def generate_nonce_str():
@@ -90,15 +91,16 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid):
         req = requests.post(unified_order_url, data=data, headers=headers)
         if req.status_code == 200:
             result = json.loads(json.dumps(xmltodict.parse(req.content)))
+            logger.debug(result)
             xml_content = result['xml']
             if xml_content['return_code'] == 'SUCCESS' and xml_content['result_code'] == 'SUCCESS':
                 prepay_id = xml_content['prepay_id']
                 # 将组合数据再次签名
                 return generate_call_app_data(params_dict, prepay_id), result['xml']
             elif xml_content['return_code'] == 'SUCCESS':
-                return result['xml']['return_msg'], None
+                return result['xml']['err_code'] + ": " + result['xml']['err_code_des'], None
             else:
-                return result['xml']['err_code'] + ': ' + result['xml']['err_code_des'], None
+                return result['xml']['return_code'] + ': ' + result['xml']['return_msg'], None
         return None, None
 
     if float(total_fee) < 0.01:
