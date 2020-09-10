@@ -30,7 +30,7 @@ class CargoesAPI(Resource):
         """
         获取所有仓储货物清单
         """
-        args = cargoes_ns.parse_args()
+        args = cargo_page_parser.parse_args()
         if 'search' not in args.keys():
             args['search'] = {}
         args['search']['owner_id'] = kwargs['current_user'].id

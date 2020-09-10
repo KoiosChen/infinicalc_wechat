@@ -95,7 +95,8 @@ class Pay(Resource):
             if packing_order:
                 args.pop("shopping_cart_id")
                 select_items = [s.id for s in
-                                ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order"))]
+                                ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order")).all()]
+
             else:
                 select_items = args.pop('shopping_cart_id')
 
@@ -142,7 +143,8 @@ class CheckOut(Resource):
             for cart_id in args['shopping_cart_id']:
                 cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
                 the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
-                                         ['price', 'member_price', 'discount', 'content', 'seckill_price', 'score_type', 'max_score'])
+                                               ['price', 'member_price', 'discount', 'content', 'seckill_price',
+                                                'score_type', 'max_score'])
                 the_sku['quantity'] = cart.quantity
                 the_sku['shopping_cart_id'] = cart_id
                 sku.append(the_sku)
@@ -167,13 +169,24 @@ class PackingCheckOut(Resource):
         args = packing_checkout_parser.parse_args()
         args['customer'] = kwargs['current_user']
         packing_order_id = args.pop('packing_order')
-        args['cart_id'] = [sc.id for sc in ShoppingCart.query.filter_by(packing_item_order=packing_order_id).all()]
+        args['shopping_cart_id'] = [sc.id for sc in
+                                    ShoppingCart.query.filter_by(packing_item_order=packing_order_id).all()]
         try:
             total_price, total_score, express_addr = checkout_cart(**args)
+            sku = list()
+            for cart_id in args['shopping_cart_id']:
+                cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
+                the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
+                                               ['price', 'member_price', 'discount', 'content', 'seckill_price',
+                                                'score_type', 'max_score'])
+                the_sku['quantity'] = cart.quantity
+                the_sku['shopping_cart_id'] = cart_id
+                sku.append(the_sku)
             return success_return(
                 {"total_score": total_score,
                  "total_price": str(total_price.quantize(Decimal("0.00"))),
-                 "express_addr": express_addr},
+                 "express_addr": express_addr,
+                 "sku": sku},
                 'express_addr为0，表示此订单中没有需要快递的商品')
         except Exception as e:
             return false_return(message=str(e)), 400

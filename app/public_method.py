@@ -200,7 +200,7 @@ def _search(table, fields, search):
         if k in fields:
             if k in ('delete_at', 'used_at') and v is None:
                 and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
-            elif k in ('manager_customer_id') and v:
+            elif k in ('manager_customer_id', 'owner_id') and v:
                 and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
             elif k == 'validity_at' and v is not None:
                 and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))

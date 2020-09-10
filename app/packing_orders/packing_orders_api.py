@@ -1,4 +1,4 @@
-from flask_restplus import Resource
+from flask_restplus import Resource, reqparse
 from ..models import PackingItemOrders, Permission, make_order_id, TotalCargoes
 from .. import db, default_api, logger
 from ..common import success_return, false_return, submit_return, session_commit
@@ -14,6 +14,9 @@ return_json = packing_ns.model('ReturnResult', return_dict)
 packing_page_parser = page_parser.copy()
 packing_page_parser.add_argument('Authorization', required=True, location='headers')
 
+new_packing_order_parser = reqparse.RequestParser()
+new_packing_order_parser.add_argument('Authorization', required=True, location='headers')
+
 
 @packing_ns.route('/<string:cargo_id>')
 @packing_ns.param('cargo_id', 'TotalCargoes ID')
@@ -27,10 +30,10 @@ class PackingAPI(Resource):
         """
         try:
             cargo = TotalCargoes.query.get(kwargs['cargo_id'])
-            if not cargo.owner_id == kwargs['current_user'].id:
+            if cargo.owner_id != kwargs['current_user'].id:
                 raise Exception(f"货物{kwargs['cargo_id']}不属于当前用户{kwargs['current_user'].id}")
 
-            args = packing_ns.parse_args()
+            args = packing_page_parser.parse_args()
             if 'search' not in args.keys():
                 args['search'] = {}
             args['search']['total_cargoes_id'] = kwargs['cargo_id']
@@ -39,6 +42,7 @@ class PackingAPI(Resource):
             return false_return(message=str(e)), 400
 
     @packing_ns.marshal_with(return_json)
+    @packing_ns.expect(new_packing_order_parser)
     @permission_required(Permission.USER)
     def post(self, **kwargs):
         """

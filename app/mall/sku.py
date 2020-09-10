@@ -242,8 +242,8 @@ class SKUAddToShoppingCart(Resource):
                     cart_item['obj'].quantity += args['quantity']
 
                 # 如果是分装流程，那么就添加上packing_order到购物车商品上，表示特殊商品
-                if args.get('packing_order'):
-                    cart_item['obj'].packing_item_order = args.get('packing_order')
+                if args.get('packing_order_id'):
+                    cart_item['obj'].packing_item_order = args.get('packing_order_id')
                 return submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败")
             else:
                 return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400
