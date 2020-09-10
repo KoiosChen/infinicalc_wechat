@@ -17,9 +17,12 @@ from app.public_method import session_commit, new_data_obj
 import datetime
 
 
-@wechat.route('/wechat_pay/callback', methods=['POST'])
+@wechat.route('/wechat_pay/callback/', methods=['POST', 'GET'])
 def wechat_pay_callback():
-    return weixin_rollback(request)
+    if request.method == 'GET':
+        return 'GOT'
+    else:
+        return weixin_rollback(request)
 
 
 def weixinpay_call_back(request):
@@ -63,9 +66,11 @@ def weixinpay_call_back(request):
             print('FAIL')
         return
 
-    args = request.data
+    # args = request.data
+    # print(args)
     # 验证平台签名
-    resp_dict = handle_wx_response_xml(args)
+    # resp_dict = handle_wx_response_xml(args)
+    resp_dict = request.json
     if resp_dict is None:
         return None
     return resp_dict
@@ -81,10 +86,11 @@ def weixinpay_response_xml(params):
         字典转xml
         """
         return xmltodict.unparse({'xml': resp_dict}, pretty=True, full_document=False).encode('utf-8')
-
+    return_code = 'SUCCESS' if params == 'success' else 'FAIL'
+    return_msg = 'OK' if params == 'success' else params
     return_info = {
-        'return_code': params,
-        'return_msg': 'OK'
+        'return_code': return_code,
+        'return_msg': return_msg
     }
     return generate_response_data(return_info)
 
@@ -109,35 +115,38 @@ def weixin_rollback(request):
 
             trade_status = data['result_code']  # 业务结果  SUCCESS/FAIL
             out_trade_no = data['out_trade_no']  # 商户订单号
-            order = ShopOrders.query.get(out_trade_no)
+            order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
+                                                                          ShopOrders.is_pay.__eq__(3),
+                                                                          ShopOrders.status.__eq__(1),
+                                                                          ShopOrders.delete_at.__eq__(None)).first()
             if not order:
-                raise Exception(f"订单 {out_trade_no} 不存在")
+                raise Exception(f"订单 {out_trade_no} 不存在，或已完成支付")
 
             if trade_status == "SUCCESS":
-                status = 1
                 bank_type = data['bank_type']  # 付款银行
-                cash_fee = data['cash_fee']  # 现金支付金额(分)
-                pay_time = data['time_end']  # 支付完成时间
+                cash_fee = int(data['cash_fee']) / 100  # 现金支付金额(分)
+                pay_time = datetime.datetime.strptime(data['time_end'], "%Y%m%d%H%M%S")  # 支付完成时间
                 total_amount = int(data['total_fee']) / 100  # 总金额(单位由分转元)
-                trade_type = data['trade_type']  # 交易类型
+                # trade_type = data['trade_type']  # 交易类型
                 transaction_id = data['transaction_id']  # 微信支付订单号
-                seller_id = data['mch_id']  # 商户号
-                buyer_id = data['openid']  # 用户标识
-                if buyer_id != order.buyer.id:
-                    raise Exception(f"回调中openid {buyer_id}与订单记录不符{order.buyer.id}")
+                # seller_id = data['mch_id']  # 商户号
+                consumer_openid = data['openid']  # 用户标识
+                if consumer_openid != order.consumer.openid:
+                    raise Exception(f"回调中openid {consumer_openid}与订单记录不符{order.consumer.openid}")
 
                 # 更新订单数据
                 order.is_pay = 1
                 order.bank_type = bank_type
-                order.cash_free = cash_fee
+                order.cash_fee = cash_fee
                 order.pay_time = pay_time
                 order.transaction_id = transaction_id
                 items = order.items_orders_id.all()
                 if items:
                     for item_order in items:
+                        item_order.status = 1
                         if item_order.special >= 30:
                             for _ in range(0, item_order.item_quantity):
-                                standard_value = item_order.item_id.first().values
+                                standard_value = item_order.bought_sku.values
                                 # 查找单位是‘斤’的数值
                                 for s in standard_value:
                                     if s.standards.name == '斤':
@@ -165,6 +174,7 @@ def weixin_rollback(request):
                     order.pay_err_code = err_code
                     order.pay_err_code_des = err_code_des
                 db.session.add(order)
+
                 if session_commit().get("code") == 'success':
                     res = 'success'
             else:

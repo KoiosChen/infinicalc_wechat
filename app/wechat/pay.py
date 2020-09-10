@@ -17,6 +17,7 @@ from app.public_method import new_data_obj, calc_sku_price
 from app.common import submit_return, success_return, false_return, session_commit
 from app.mall.sku import compute_quantity
 import threading
+from sqlalchemy import and_
 
 
 def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid=None):
@@ -217,7 +218,12 @@ def weixin_pay(out_trade_no, price, openid):
     【API】: 创建订单,供商户app调用
     """
     # order = ShopOrders.query.get(out_trade_no)
-    order = db.session.query(ShopOrders).with_for_update().get(out_trade_no)
+    customer = Customers.query.filter_by(openid=openid).first()
+    order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
+                                                                  ShopOrders.customer_id.__eq__(customer.id),
+                                                                  and_(ShopOrders.is_pay.__ne__(1),
+                                                                       ShopOrders.is_pay.__ne__(3)),
+                                                                  ShopOrders.status.__eq__(1)).first()
     try:
         # 后台提交支付请求
         if not order:

@@ -766,8 +766,6 @@ class ShopOrders(db.Model):
     __tablename__ = 'shop_orders'
     id = db.Column(db.String(64), primary_key=True, default=make_order_id)
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    customer_type = db.Column(db.SmallInteger, comment='记录订单生成时用户的类型')
-    customer_grade = db.Column(db.SmallInteger, comment='记录订单生成时用户的级别')
     transaction_id = db.Column(db.String(64), comment="微信支付的订单号，回调中获取")
     items_total_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='未使用积分的总价')
     score_used = db.Column(db.Integer, default=0, comment="使用的积分")
@@ -800,6 +798,7 @@ class ShopOrders(db.Model):
     invoice_title = db.Column(db.String(100), comment='发票抬头，如果type是0，则此处为个人')
     invoice_tax_no = db.Column(db.String(20), comment='企业税号')
     inovice_email = db.Column(db.String(50), comment='发票发送邮箱')
+    rebate_records = db.relationship('PersonalRebates', backref='related_order', lazy='dynamic')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -825,19 +824,6 @@ class ItemsOrders(db.Model):
     delete_at = db.Column(db.DateTime)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
     refund_order = db.relationship("Refund", backref='item_orders', lazy='dynamic')
-
-
-class ShopOrderStatus(db.Model):
-    """
-    用于记录下单时本用户至根用户（parent级别直到parent_id ）及邀请者id
-    """
-    __tablename__ = 'shop_order_status'
-    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    shop_order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
-    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    character = db.Column(db.SmallInteger, comment='0: 购买者； 1: 代理关系上级 2: ')
-    member_type = db.Column(db.SmallInteger, comment='付款是用户的类型')
-    member_level = db.Column(db.SmallInteger, comment='付款时用户的级别')
 
 
 class ExpressAddress(db.Model):
