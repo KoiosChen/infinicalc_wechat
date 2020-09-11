@@ -21,7 +21,7 @@ class Config:
 
 
 class DevelopmentConfig(Config):
-    DEBUG = True
+    DEBUG = False
     DB_USERNAME = os.environ.get('DEV_DATABASE_USERNAME') or 'peter'
     DB_PASSWORD = os.environ.get('DEV_DATABASE_PASSWORD') or 'Ftp123buzhidao_'
     DB_HOST = os.environ.get('DEV_DATABASE_HOST') or '127.0.0.1'

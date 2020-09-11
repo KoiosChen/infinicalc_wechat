@@ -693,6 +693,7 @@ class PersonalRebates(db.Model):
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     rebate = db.Column(db.DECIMAL(5, 2), comment='支付成功时该账户应得的返佣比例')
     rebate_value = db.Column(db.DECIMAL(9, 2), comment='返佣金额')
+    score = db.Column(db.SmallInteger, default=0, comment='获赠的积分')
     status = db.Column(db.SmallInteger, default=0, comment='0: 不可提现（刚购买或者用户提出退货后） 1：可提现 2：已提现')
     # 创建日期过一定天数后才能体现
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)

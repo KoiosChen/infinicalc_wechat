@@ -2,7 +2,8 @@ from app.models import Customers, MemberCards, ShopOrders, ItemsOrders
 from app.common import success_return, false_return
 from collections import defaultdict
 from decimal import Decimal
-from app.public_method import format_decimal
+from app.public_method import new_data_obj, format_decimal
+from app.common import submit_return
 
 
 def customer_member_card(customer, member_type):
@@ -88,7 +89,7 @@ def find_relationships(customer, member_type=1):
         return false_return(message=str(e)), 400
 
 
-def calc(customer, shop_order_id):
+def checkout_rebates_ratio(customer, shop_order_id):
     try:
         relationships = find_relationships(customer).get('data')
         shop_order = ShopOrders.query.filter_by(id=shop_order_id, customer_id=customer.id).first()
@@ -120,7 +121,8 @@ def calc(customer, shop_order_id):
                             else:
                                 raise Exception("级别错误，不进行计算返佣")
                     elif relationships['interest']['grade'] == 1:
-                        relationships['interest']['rebate'] = format_decimal(item_rebate_policy.agent_first_rebate, to_str=True)
+                        relationships['interest']['rebate'] = format_decimal(item_rebate_policy.agent_first_rebate,
+                                                                             to_str=True)
                 if 'parent' in relationships.keys():
                     # 赠送积分给parent，如果rebate表里有数值
                     pass
@@ -150,3 +152,28 @@ def calc(customer, shop_order_id):
         return success_return(data=relationships)
     except Exception as e:
         return false_return(str(e))
+
+
+def calc(shop_order_id, customer):
+    def newPersonalRebates(rebate_relation_id):
+        if 'rebate' in detail.keys() or 'score' in detail.keys():
+            new_personal_rebate = new_data_obj('PersonalRebates',
+                                               **{'shop_order_id': shop_order_id,
+                                                  'customer_id': rebate_relation_id,
+                                                  'rebate': detail.get('rebate', 0.00),
+                                                  'score': detail.get('score', 0)})
+            if not new_personal_rebate or not new_personal_rebate.get('status'):
+                raise Exception('it is fail to create new personal rebate record')
+
+    try:
+        rebate_ratio = checkout_rebates_ratio(customer, shop_order_id)
+        if rebate_ratio.get('code') != 'success':
+            raise Exception('获取返佣比例失败')
+        for relation, detail in rebate_ratio['data'].items():
+            newPersonalRebates(detail.get('id'))
+            for key in ('interest', 'invitor', 'parent'):
+                if key in detail.keys():
+                    newPersonalRebates(detail.get('id'))
+        return submit_return('记录订单返佣成功', '记录订单返佣失败')
+    except Exception as e:
+        return false_return(message=str(e))
