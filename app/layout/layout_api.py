@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Layout, SKULayout, SKU, Permission
 from . import layout
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit, submit_return
+from ..common import success_return, false_return, session_commit, submit_return, sort_by_order
 from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
@@ -44,6 +44,7 @@ def query_sku_layout(layout_name=None):
                                         table_fields(SKU),
                                         search={"status": 1})
         sku_data['order'] = lay.order
+        sort_by_order(sku_data)
         r[lay.layout.name]["sku"].append(sku_data)
     return r
 
