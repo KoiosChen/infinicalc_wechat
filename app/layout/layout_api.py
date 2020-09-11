@@ -36,6 +36,7 @@ def query_sku_layout(layout_name=None):
         layout = Layout.query.filter_by(name=layout_name).first()
         all_layout = SKULayout.query.filter_by(layout_id=layout.id, status=1).all()
     r = defaultdict(dict)
+    sku_list = list()
     for lay in all_layout:
         if "sku" not in r[lay.layout.name].keys():
             r[lay.layout.name]["sku"] = list()
@@ -44,9 +45,10 @@ def query_sku_layout(layout_name=None):
                                         table_fields(SKU),
                                         search={"status": 1})
         sku_data['order'] = lay.order
-        # 按照order 排序
-        sort_by_order(sku_data)
-        r[lay.layout.name]["sku"].append(sku_data)
+
+        sku_list.append(sku_data)
+    sort_by_order(sku_list)
+    r[lay.layout.name]["sku"] = sku_list
     return r
 
 
