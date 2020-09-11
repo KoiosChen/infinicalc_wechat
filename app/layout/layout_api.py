@@ -2,7 +2,7 @@ from flask_restplus import Resource, fields, reqparse
 from ..models import Layout, SKULayout, SKU, Permission
 from . import layout
 from .. import db, redis_db, default_api, logger
-from ..common import success_return, false_return, session_commit, submit_return, sort_by_order
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, return_dict, page_parser
@@ -36,19 +36,16 @@ def query_sku_layout(layout_name=None):
         layout = Layout.query.filter_by(name=layout_name).first()
         all_layout = SKULayout.query.filter_by(layout_id=layout.id, status=1).all()
     r = defaultdict(dict)
-    sku_list = list()
+    sku_fields = table_fields(SKU)
     for lay in all_layout:
         if "sku" not in r[lay.layout.name].keys():
             r[lay.layout.name]["sku"] = list()
 
         sku_data = get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'real_price', 'objects', 'status'],
-                                        table_fields(SKU),
+                                        sku_fields,
                                         search={"status": 1})
         sku_data['order'] = lay.order
-
-        sku_list.append(sku_data)
-    sort_by_order(sku_list)
-    r[lay.layout.name]["sku"] = sku_list
+        r[lay.layout.name]["sku"].append(sku_data)
     return r
 
 

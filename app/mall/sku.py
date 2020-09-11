@@ -23,8 +23,8 @@ add_sku_parser.add_argument('contents', help='富文本内容', location='json')
 add_sku_parser.add_argument('status', type=int, choices=[0, 1], help='是否上架 1：上架 0：下架')
 add_sku_parser.add_argument("unit", required=True, help='SKU单位', location='json')
 add_sku_parser.add_argument('objects', type=list, help='sku对应的所有图片或视频', location='json')
-add_sku_parser.add_argument('agent_first_rebate', type=float, help='一级代理返佣金额（元）')
-add_sku_parser.add_argument('agent_second_rebate', type=float, help='二级代理返佣金额（元)')
+add_sku_parser.add_argument('need_express', type=int, choices=[0, 1], default=1, help='是否需要快递')
+add_sku_parser.add_argument('express_fee', type=float, default=0.00, help='邮费')
 add_sku_parser.add_argument('could_get_coupon_id', help='购买成功后可获取的优惠券', location='json')
 add_sku_parser.add_argument('score', type=int, help='购买成功后可获取的积分')
 
@@ -132,6 +132,8 @@ class SKUApi(Resource):
                                          "contents": args['contents'],
                                          "status": args['status'],
                                          "spu_id": args['spu_id'],
+                                         "need_express": args['need_express'],
+                                         "express_fee": args['express_fee'],
                                          "unit": args['unit']})
         if args['objects']:
             append_image = image_operate.operate(new_one['obj'], args['objects'], "append")
