@@ -258,7 +258,9 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, s
     if search is None:
         t = base_sql.get(key_id)
     else:
-        t = base_sql.filter(and_(*_search(table, fields, search))).first()
+        filter_args = _search(table, fields, search)
+        filter_args.append(getattr(getattr(table, 'id'), '__eq__')(key_id))
+        t = base_sql.filter(and_(*filter_args)).first()
     if t:
         return __make_table(fields, t, strainer)
     else:
