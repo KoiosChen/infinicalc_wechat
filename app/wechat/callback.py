@@ -15,6 +15,8 @@ from hashlib import md5
 from app.common import submit_return, false_return, success_return
 from app.public_method import session_commit, new_data_obj
 import datetime
+from app.rebates import calc_rebate
+
 
 
 @wechat.route('/wechat_pay/callback/', methods=['POST', 'GET'])
@@ -86,6 +88,7 @@ def weixinpay_response_xml(params):
         字典转xml
         """
         return xmltodict.unparse({'xml': resp_dict}, pretty=True, full_document=False).encode('utf-8')
+
     return_code = 'SUCCESS' if params == 'success' else 'FAIL'
     return_msg = 'OK' if params == 'success' else params
     return_info = {
@@ -134,14 +137,21 @@ def weixin_rollback(request):
                 if consumer_openid != order.consumer.openid:
                     raise Exception(f"回调中openid {consumer_openid}与订单记录不符{order.consumer.openid}")
 
-                # 更新订单数据
-                order.is_pay = 1
-                order.bank_type = bank_type
-                order.cash_fee = cash_fee
-                order.pay_time = pay_time
-                order.transaction_id = transaction_id
                 items = order.items_orders_id.all()
                 if items:
+                    # 更新订单数据
+                    order.is_pay = 1
+                    order.bank_type = bank_type
+                    order.cash_fee = cash_fee
+                    order.pay_time = pay_time
+                    order.transaction_id = transaction_id
+
+                    # 返佣计算
+                    calc_result = calc_rebate.calc(order.id, order.consumer)
+                    if calc_result.get('code') != 'success':
+                        res = calc_result.get('message')
+
+                    # 封坛记录，生成封坛订单
                     for item_order in items:
                         item_order.status = 1
                         if item_order.special >= 30:
@@ -162,23 +172,27 @@ def weixin_rollback(request):
                                               "owner_id": order.customer_id}
                                 new_cargo = new_data_obj("TotalCargoes", **cargo_data)
                                 if not new_cargo and not new_cargo.get('status'):
+                                    logger.error(f"{item_order.id}生成仓储记录失败，或者记录已存在")
                                     res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
-
+                    if res == 'success':
+                        if session_commit().get("code") == 'success':
+                            res = 'success'
+                        else:
+                            res = '数据提交失败'
                 else:
-                    res = "error: pay failed! "
-                    status = 0
-                    err_code = data['err_code']  # 错误代码
-                    err_code_des = data['err_code_des']  # 错误代码描述
-                    # 更新订单，把错误信息更新到订单中
-                    order.is_pay = 2
-                    order.pay_err_code = err_code
-                    order.pay_err_code_des = err_code_des
-                db.session.add(order)
-
-                if session_commit().get("code") == 'success':
-                    res = 'success'
+                    res = '此订单无关联商品订单'
             else:
-                res = "回调无内容"
+                res = "error: pay failed! "
+                err_code = data['err_code']  # 错误代码
+                err_code_des = data['err_code_des']  # 错误代码描述
+                # 更新订单，把错误信息更新到订单中
+                order.is_pay = 2
+                order.pay_err_code = err_code
+                order.pay_err_code_des = err_code_des
+                db.session.add(order)
+                session_commit()
+        else:
+            res = "回调无内容"
     except Exception as e:
         traceback.print_exc()
         res = str(e)
