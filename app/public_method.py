@@ -17,7 +17,7 @@ def format_decimal(num, zero_format="0.00", to_str=False):
     else:
         formatted_ = num.quantize(Decimal(zero_format))
         if to_str:
-            return str(num)
+            return str(formatted_)
         else:
             return formatted_
 
