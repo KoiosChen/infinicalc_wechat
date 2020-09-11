@@ -1,6 +1,6 @@
 from flask import request
 from flask_restplus import Resource, reqparse
-from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards
+from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders
 from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger
@@ -79,7 +79,7 @@ def if_default(sender, force_default):
 @customers_ns.route('')
 class CustomersAPI(Resource):
     @customers_ns.marshal_with(return_json)
-    @permission_required(Permission.USER)
+    @permission_required([Permission.USER, "app.customers.customers_api.get"])
     @customers_ns.expect(customer_page_parser)
     def get(self, **kwargs):
         """
@@ -232,3 +232,34 @@ class UpdateCustomerExpressAddress(Resource):
         addr.status = 0
         db.session.add(addr)
         return submit_return("删除地址成功", "删除地址失败")
+
+
+@customers_ns.route('/interests')
+@customers_ns.expect(head_parser)
+class CustomerInterests(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        try:
+            current_user = kwargs['current_user']
+            market = current_user.children_market
+            market_list = list()
+            for child in market:
+                payed_order_count = ShopOrders.query.filter(ShopOrders.customer_id.__eq__(child.id),
+                                                            ShopOrders.is_pay.__eq__(1),
+                                                            ShopOrders.status.__eq__(1),
+                                                            ShopOrders.delete_at.__eq__(None)).count()
+                paying_order_count = ShopOrders.query.filter(ShopOrders.customer_id.__eq__(child.id),
+                                                             ShopOrders.is_pay.__eq__(3),
+                                                             ShopOrders.status.__eq__(1),
+                                                             ShopOrders.delete_at.__eq__(None)).count()
+                child_member_card = child.member_card.filter_by(status=1).first()
+                if child_member_card:
+                    grade = child_member_card.grade
+                else:
+                    grade = 0
+                market_list.append({"id": child.id, "grade": grade, "payed_order": payed_order_count,
+                                    "paying_order": paying_order_count})
+            return success_return(market_list)
+        except Exception as e:
+            false_return(message=str(e))

@@ -1,9 +1,10 @@
-from app.models import Customers, MemberCards, ShopOrders, ItemsOrders
+from app.models import Customers, MemberCards, ShopOrders, ItemsOrders, PersonalRebates, RETURN_IN_DAYS
 from app.common import success_return, false_return
 from collections import defaultdict
 from decimal import Decimal
 from app.public_method import new_data_obj, format_decimal
 from app.common import submit_return
+import datetime
 
 
 def customer_member_card(customer, member_type):
@@ -177,3 +178,26 @@ def calc(shop_order_id, customer):
         return submit_return('记录订单返佣成功', '记录订单返佣失败')
     except Exception as e:
         return false_return(message=str(e))
+
+
+def self_rebate(customer):
+    frozen_rebate = Decimal("0.00")
+    current_rebate = Decimal("0.00")
+    frozen_count = 0
+    current_count = 0
+    percent = Decimal('0.01')
+    all_rebates = PersonalRebates.query.filter(PersonalRebates.customer_id.__eq__(customer.id)).all()
+    for r in all_rebates:
+        if r.related_order.is_pay == 1 and r.related_order.status == 1 and not r.related_order.delete_at:
+            if r.rebate:
+                if datetime.datetime.now() - r.create_at >= datetime.timedelta(days=7):
+                    current_rebate += r.related_order.cash_fee * r.rebate * percent
+                    current_rebate += 1
+                else:
+                    frozen_count += 1
+                    frozen_rebate += r.related_order.cash_fee * r.rebate * percent
+
+    return {"frozen_rebate": format_decimal(frozen_rebate, zero_format="0.00", to_str=True),
+            "frozen_count": frozen_count,
+            "current_rebate": format_decimal(current_rebate, zero_format="0.00", to_str=True),
+            "current_count": current_count}
