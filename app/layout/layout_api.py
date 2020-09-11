@@ -44,6 +44,7 @@ def query_sku_layout(layout_name=None):
                                         table_fields(SKU),
                                         search={"status": 1})
         sku_data['order'] = lay.order
+        # 按照order 排序
         sort_by_order(sku_data)
         r[lay.layout.name]["sku"].append(sku_data)
     return r
