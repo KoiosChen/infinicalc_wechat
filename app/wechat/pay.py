@@ -221,8 +221,6 @@ def weixin_pay(out_trade_no, price, openid):
     customer = Customers.query.filter_by(openid=openid).first()
     order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
                                                                   ShopOrders.customer_id.__eq__(customer.id),
-                                                                  and_(ShopOrders.is_pay.__ne__(1),
-                                                                       ShopOrders.is_pay.__ne__(3)),
                                                                   ShopOrders.status.__eq__(1)).first()
     try:
         # 后台提交支付请求
@@ -230,8 +228,8 @@ def weixin_pay(out_trade_no, price, openid):
             raise Exception(f"订单 {out_trade_no} 不存在")
         if order.is_pay == 1 and order.pay_time:
             raise Exception(f"订单 {out_trade_no} 已支付")
-        if order.is_pay == 3 and not order.pay_time:
-            raise Exception(f"订单 {out_trade_no} 支付中")
+        # if order.is_pay == 3 and not order.pay_time:
+        #     raise Exception(f"订单 {out_trade_no} 支付中")
 
         # 先把订单状态更新为支付中
         order.is_pay = 3
@@ -261,7 +259,8 @@ def weixin_pay(out_trade_no, price, openid):
             raise Exception("请求无响应")
     except Exception as e:
         traceback.print_exc()
-        order.is_pay = 2
-        db.session.add(order)
+        if order and order.is_pay != 1:
+            order.is_pay = 2
+            db.session.add(order)
         session_commit()
         return false_return(message=f"支付失败，{e}")

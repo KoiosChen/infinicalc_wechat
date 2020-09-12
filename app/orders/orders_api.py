@@ -24,7 +24,7 @@ checkout_parser.add_argument('group_id', required=True,
 checkout_parser.add_argument('priority', required=True, help='1-10, 10优先级最低，当有组互斥时，使用优先级最高的，0优先级最高')
 
 cancel_parser = reqparse.RequestParser()
-cancel_parser.add_argument('cancel_reason', required=True, help='取消原因，让客户选择，不要填写')
+cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择，不要填写')
 
 order_page_parser = page_parser.copy()
 
@@ -82,10 +82,11 @@ class ShopOrderCancelApi(Resource):
             order = ShopOrders.query.get(kwargs['shop_order_id'])
             if not order:
                 raise Exception(f"{kwargs['shop_order_id']} 不存在")
-            elif order.is_pay in (1, 2):
+            elif order.is_pay == 1:
                 raise Exception(f"当前支付状态不可退货")
             else:
                 order.delete_at = datetime.datetime.now()
+                order.status = 0
                 order.cancel_reason = args.get('cancel_reason')
             return submit_return("取消成功", "取消失败")
         except Exception as e:
