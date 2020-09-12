@@ -228,8 +228,8 @@ def weixin_pay(out_trade_no, price, openid):
             raise Exception(f"订单 {out_trade_no} 不存在")
         if order.is_pay == 1 and order.pay_time:
             raise Exception(f"订单 {out_trade_no} 已支付")
-        if order.is_pay == 3 and not order.pay_time:
-            raise Exception(f"订单 {out_trade_no} 支付中")
+        # if order.is_pay == 3 and not order.pay_time:
+        #     raise Exception(f"订单 {out_trade_no} 支付中")
 
         # 先把订单状态更新为支付中
         order.is_pay = 3
@@ -259,7 +259,7 @@ def weixin_pay(out_trade_no, price, openid):
             raise Exception("请求无响应")
     except Exception as e:
         traceback.print_exc()
-        if order and order.is_pay != 1 and order.is_pay != 3:
+        if order and order.is_pay != 1:
             order.is_pay = 2
             db.session.add(order)
         session_commit()
