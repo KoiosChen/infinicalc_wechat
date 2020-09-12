@@ -175,7 +175,21 @@ def __make_table(fields, table, strainer=None):
         elif f == 'items_orders':
             tmp[f] = list()
             for o in table.items_orders_id.all():
-                tmp[f].append(get_table_data_by_id(ItemsOrders, o.id))
+                sku_obj = o.bought_sku.objects
+                sku_thumbnail = ''
+                for obj in sku_obj:
+                    if obj.obj_type == 0 and obj.thumbnails:
+                        sku_thumbnail = obj.thumbnails[0].url
+                        break
+                sku_values = list()
+                for v in o.bought_sku.values:
+                    sku_values.append({'value': v.value, 'standard_name': v.standards.name})
+                order_detail = {'quantity': o.item_quantity, 'price': str(o.item_price), 'status': o.status,
+                                'create_at': str(o.create_at), 'rates': o.rates,
+                                'transaction_price': str(o.transaction_price),
+                                'special': o.special, 'sku_name': o.bought_sku.name, 'sku_thumbnail': sku_thumbnail,
+                                'values': sku_values}
+                tmp[f].append(order_detail)
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -206,6 +220,14 @@ def _search(table, fields, search):
                 and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
             else:
                 and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
+    return and_fields_list
+
+
+def _advance_search(table, fields, advance_search):
+    and_fields_list = list()
+    for search in advance_search:
+        if search['key'] in fields:
+            and_fields_list.append(getattr(getattr(table, search['key'], search['operator'])(search['value'])))
     return and_fields_list
 
 
@@ -252,11 +274,15 @@ def get_table_data(table, args, appends=[], removes=[]):
     return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
 
-def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, search=None):
+def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, search=None, advance_search=None):
     fields = table_fields(table, appends, removes)
     base_sql = table.query
-    if search is None:
+    if search is None and advance_search is None:
         t = base_sql.get(key_id)
+    elif advance_search is not None:
+        filter_args = _advance_search(table, fields, advance_search)
+        filter_args.append(getattr(getattr(table, 'id'), '__eq__')(key_id))
+        t = base_sql.filter(and_(*filter_args)).first()
     else:
         filter_args = _search(table, fields, search)
         filter_args.append(getattr(getattr(table, 'id'), '__eq__')(key_id))

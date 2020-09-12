@@ -25,6 +25,7 @@ add_sku_parser.add_argument("unit", required=True, help='SKU单位', location='j
 add_sku_parser.add_argument('objects', type=list, help='sku对应的所有图片或视频', location='json')
 add_sku_parser.add_argument('need_express', type=int, choices=[0, 1], default=1, help='是否需要快递')
 add_sku_parser.add_argument('express_fee', type=float, default=0.00, help='邮费')
+add_sku_parser.add_argument('special', type=int, default=0, help='30以上表示仓储类（例如窖藏），例如31表示窖藏酒，列在商品中；32表示可分装的瓶子，33表示用来分装的盒子，34表示手提袋，35表示纸箱，36表示胶带. 32以上的sku不在首页商品中显示')
 add_sku_parser.add_argument('could_get_coupon_id', help='购买成功后可获取的优惠券', location='json')
 add_sku_parser.add_argument('score', type=int, help='购买成功后可获取的积分')
 

@@ -19,7 +19,7 @@ from app.rebates import calc_rebate
 
 
 
-@wechat.route('/wechat_pay/callback/', methods=['POST', 'GET'])
+@wechat.route('/wechat_pay/callback/', methods=['POST'])
 def wechat_pay_callback():
     if request.method == 'GET':
         return 'GOT'
