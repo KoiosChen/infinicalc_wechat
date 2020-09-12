@@ -40,7 +40,8 @@ def weixinpay_call_back(request):
         """
         if 'sign' in params:
             params.pop('sign')
-        src = '&'.join(['%s=%s' % (k, v) for k, v in sorted(params.items())]) + '&key=%s' % WEIXIN_KEY
+        src = '&'.join(['%s=%s' % (k, v) for k, v in sorted(params.items(), key=lambda d:d[0]) if k != "#text"]) + '&key=%s' % WEIXIN_KEY
+        print(src)
         return md5(src.encode('utf-8')).hexdigest().upper()
 
     def validate_sign(resp_dict):
@@ -55,11 +56,11 @@ def weixinpay_call_back(request):
             return True
         return False
 
-    def handle_wx_response_xml(params):
+    def handle_wx_response_xml():
         """
         处理微信支付返回的xml格式数据
         """
-        resp_dict = xmltodict.parse(params)['xml']
+        resp_dict = xmltodict.parse(args)['xml']
         return_code = resp_dict.get('return_code')
         if return_code == 'SUCCESS':  # 仅仅判断通信标识成功，非交易标识成功，交易需判断result_code
             if validate_sign(resp_dict):
@@ -69,9 +70,8 @@ def weixinpay_call_back(request):
         return
 
     args = request.data
-    print(args)
     # 验证平台签名
-    resp_dict = handle_wx_response_xml(args)
+    resp_dict = handle_wx_response_xml()
     # resp_dict = request.json
     if resp_dict is None:
         return None
@@ -146,11 +146,6 @@ def weixin_rollback(request):
                     order.pay_time = pay_time
                     order.transaction_id = transaction_id
 
-                    # 返佣计算
-                    calc_result = calc_rebate.calc(order.id, order.consumer)
-                    if calc_result.get('code') != 'success':
-                        res = calc_result.get('message')
-
                     # 封坛记录，生成封坛订单
                     for item_order in items:
                         item_order.status = 1
@@ -174,6 +169,18 @@ def weixin_rollback(request):
                                 if not new_cargo and not new_cargo.get('status'):
                                     logger.error(f"{item_order.id}生成仓储记录失败，或者记录已存在")
                                     res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
+
+                    if res == 'success':
+                        if session_commit().get("code") == 'success':
+                            res = 'success'
+                        else:
+                            res = '数据提交失败'
+
+                    # 返佣计算
+                    calc_result = calc_rebate.calc(order.id, order.consumer)
+                    if calc_result.get('code') != 'success':
+                        res = calc_result.get('message')
+
                     if res == 'success':
                         if session_commit().get("code") == 'success':
                             res = 'success'
@@ -197,4 +204,5 @@ def weixin_rollback(request):
         traceback.print_exc()
         res = str(e)
     finally:
+        print(res)
         return weixinpay_response_xml(res)
