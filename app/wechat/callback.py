@@ -19,7 +19,7 @@ from app.rebates import calc_rebate
 
 
 
-@wechat.route('/wechat_pay/callback/', methods=['POST'])
+@wechat.route('/wechat_pay/callback/', methods=['POST','GET'])
 def wechat_pay_callback():
     if request.method == 'GET':
         return 'GOT'
@@ -68,11 +68,11 @@ def weixinpay_call_back(request):
             print('FAIL')
         return
 
-    # args = request.data
-    # print(args)
+    args = request.data
+    print(args)
     # 验证平台签名
-    # resp_dict = handle_wx_response_xml(args)
-    resp_dict = request.json
+    resp_dict = handle_wx_response_xml(args)
+    # resp_dict = request.json
     if resp_dict is None:
         return None
     return resp_dict
