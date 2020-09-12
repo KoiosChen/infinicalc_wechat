@@ -86,6 +86,7 @@ class ShopOrderCancelApi(Resource):
                 raise Exception(f"当前支付状态不可退货")
             else:
                 order.delete_at = datetime.datetime.now()
+                order.status = 0
                 order.cancel_reason = args.get('cancel_reason')
             return submit_return("取消成功", "取消失败")
         except Exception as e:
