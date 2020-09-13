@@ -15,7 +15,6 @@ rebates_ns = default_api.namespace('rebates', path='/rebates', description='è¿”ä
 return_json = rebates_ns.model('ReturnRegister', return_dict)
 
 rebate_page_parser = page_parser.copy()
-rebate_page_parser.add_argument('shop_order')
 
 
 @rebates_ns.route('')
