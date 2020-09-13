@@ -87,7 +87,7 @@ class CustomersAPI(Resource):
         """
         args = customer_page_parser.parse_args()
         return success_return(
-            get_table_data(Customers, args, ['role'], ['role_id']), "请求成功")
+            get_table_data(Customers, args, ['role', 'member_info'], ['role_id']), "请求成功")
 
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)

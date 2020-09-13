@@ -190,6 +190,12 @@ def __make_table(fields, table, strainer=None):
                                 'special': o.special, 'sku_name': o.bought_sku.name, 'sku_thumbnail': sku_thumbnail,
                                 'values': sku_values}
                 tmp[f].append(order_detail)
+        elif f == 'member_info':
+            member_card_ = table.member_card.filter(MemberCards.status.__eq__(1)).first()
+            if member_card_:
+                tmp[f] = get_table_data_by_id(MemberCards, member_card_.id, removes=['update_at'])
+            else:
+                tmp[f] = {"member_type": 0}
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
