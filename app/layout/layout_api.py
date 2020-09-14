@@ -41,7 +41,7 @@ def query_sku_layout(layout_name=None):
         if "sku" not in r[lay.layout.name].keys():
             r[lay.layout.name]["sku"] = list()
 
-        sku_data = get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'real_price', 'objects', 'status'],
+        sku_data = get_table_data_by_id(SKU, lay.sku_id, ['id', 'name', 'real_price', 'objects', 'status','values'],
                                         sku_fields,
                                         search={"status": 1})
         sku_data['order'] = lay.order

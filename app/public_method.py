@@ -196,6 +196,8 @@ def __make_table(fields, table, strainer=None):
                 tmp[f] = get_table_data_by_id(MemberCards, member_card_.id, removes=['update_at'])
             else:
                 tmp[f] = {"member_type": 0}
+        elif f == 'cargo_image':
+            tmp[f] = 'https://xxxxx'
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):

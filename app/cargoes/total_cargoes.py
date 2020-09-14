@@ -34,4 +34,4 @@ class CargoesAPI(Resource):
         if 'search' not in args.keys():
             args['search'] = {}
         args['search']['owner_id'] = kwargs['current_user'].id
-        return success_return(get_table_data(TotalCargoes, args), "请求成功")
+        return success_return(get_table_data(TotalCargoes, args, ['cargo_image']), "请求成功")
