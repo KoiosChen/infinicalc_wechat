@@ -6,6 +6,7 @@ from ..public_method import get_table_data, get_table_data_by_id, new_data_obj
 from ..decorators import permission_required
 from ..swagger import return_dict, page_parser
 import json
+from decimal import Decimal
 
 packing_ns = default_api.namespace('Packing Orders', path='/packing_orders', description='分装接口')
 
@@ -37,7 +38,9 @@ class PackingAPI(Resource):
             if 'search' not in args.keys():
                 args['search'] = {}
             args['search']['total_cargoes_id'] = kwargs['cargo_id']
-            return success_return(get_table_data(PackingItemOrders, args), "请求成功")
+            packing_order = get_table_data(PackingItemOrders, args, ['max_packing'])
+            packing_order['max_packing'] = int(cargo.last_total * 0.5 / (0.5 * 0.9255))
+            return success_return(packing_order, "请求成功")
         except Exception as e:
             return false_return(message=str(e)), 400
 
@@ -50,6 +53,7 @@ class PackingAPI(Resource):
         """
         try:
             cargo = TotalCargoes.query.get(kwargs['cargo_id'])
+            max_packing = str(cargo.last_total * Decimal('0.5') // (Decimal('0.5') * Decimal('0.9255')))
             if not cargo or cargo.delete_at or cargo.last_total <= 0.00:
                 raise Exception(f"货物{kwargs['cargo_id']}不存在或已经分装完")
 
@@ -63,7 +67,7 @@ class PackingAPI(Resource):
             if new_packing_order and new_packing_order.get('status'):
                 commit_result = session_commit()
                 if commit_result.get("code") == 'success':
-                    return success_return(data={'id': new_packing_order['obj'].id})
+                    return success_return(data={'id': new_packing_order['obj'].id, 'max_packing': max_packing})
                 else:
                     raise Exception(json.dumps(commit_result))
             else:
