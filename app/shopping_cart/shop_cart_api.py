@@ -211,7 +211,7 @@ class UpdateShoppingCart(Resource):
                 raise Exception(f"{kwargs['shopping_cart_id']} 不存在")
             sku = SKU.query.get(shopping_cart_item.sku_id)
 
-            if not sku or not sku.delete_at or not sku.status:
+            if not sku or sku.delete_at or not sku.status:
                 raise Exception(f"购物车对应SKU异常")
 
             if 'quantity' in args.keys() and args['quantity']:
