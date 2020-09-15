@@ -93,9 +93,16 @@ class Pay(Resource):
             packing_order = args.get("packing_order")
             # 若是分装流程
             if packing_order:
+                the_packing_order = PackingItemOrders.query.get(packing_order)
                 args.pop("shopping_cart_id")
                 select_items = [s.id for s in
-                                ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order")).all()]
+                                ShoppingCart.query.filter_by(packing_item_order=args.get("packing_order")).all()]
+                select_obj = ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order")).all()
+                for si in select_obj:
+                    if si.desire_skus.special == 32:
+                        the_packing_order.consumption = Decimal(str(si.quantity)) * Decimal(str(0.5)) * Decimal(
+                            str(0.9255))
+                db.session.commit()
 
             else:
                 select_items = args.pop('shopping_cart_id')
