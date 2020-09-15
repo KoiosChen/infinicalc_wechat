@@ -216,7 +216,7 @@ class UpdateShoppingCart(Resource):
 
             if 'quantity' in args.keys() and args['quantity']:
                 if isinstance(args['quantity'], str):
-                    quantity = eval(args['quantity'])
+                    quantity = int(args['quantity'])
                 else:
                     quantity = args['quantity']
                 if quantity > sku.quantity:

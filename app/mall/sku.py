@@ -1,5 +1,5 @@
 from flask_restplus import Resource, fields, reqparse
-from ..models import Brands, SKU, sku_standardvalue, PurchaseInfo, Permission
+from ..models import Brands, SKU, sku_standardvalue, PurchaseInfo, Permission, PackingItemOrders
 from . import mall, image_operate
 from .. import db, redis_db, default_api, logger, sku_lock
 from ..common import success_return, false_return, session_commit, submit_return
@@ -246,6 +246,8 @@ class SKUAddToShoppingCart(Resource):
 
                 # 如果是分装流程，那么就添加上packing_order到购物车商品上，表示特殊商品
                 if args.get('packing_order_id'):
+                    if not PackingItemOrders.query.get(args.get('packing_order_id')):
+                        return false_return(f"分装ID<{args.get('packing_order_id')}>不存在"), 400
                     cart_item['obj'].packing_item_order = args.get('packing_order_id')
                 return submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败")
             else:

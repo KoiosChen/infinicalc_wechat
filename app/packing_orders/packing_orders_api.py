@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import PackingItemOrders, Permission, make_order_id, TotalCargoes
+from ..models import PackingItemOrders, Permission, make_order_id, TotalCargoes, ShoppingCart
 from .. import db, default_api, logger
 from ..common import success_return, false_return, submit_return, session_commit
 from ..public_method import get_table_data, get_table_data_by_id, new_data_obj
@@ -59,6 +59,15 @@ class PackingAPI(Resource):
 
             if not cargo.owner_id == kwargs['current_user'].id:
                 raise Exception(f"货物{kwargs['cargo_id']}不属于当前用户{kwargs['current_user'].id}")
+
+            exist_packing_order = PackingItemOrders.query.filter(PackingItemOrders.shop_order_id.__eq__(None),
+                                                                 PackingItemOrders.packing_at.__eq__(None)).all()
+            for o in exist_packing_order:
+                exist_shopping_cart = ShoppingCart.query.filter(ShoppingCart.packing_item_order.__eq__(o.id)).all()
+                for so in exist_shopping_cart:
+                    db.session.delete(so)
+                db.session.delete(o)
+            db.session.commit()
 
             new_packing_order_id = make_order_id()
             new_packing_order = new_data_obj('PackingItemOrders',
