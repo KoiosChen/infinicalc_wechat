@@ -215,7 +215,11 @@ class UpdateShoppingCart(Resource):
                 raise Exception(f"购物车对应SKU异常")
 
             if 'quantity' in args.keys() and args['quantity']:
-                if args['quantity'] > sku.quantity:
+                if isinstance(args['quantity'], str):
+                    quantity = eval(args['quantity'])
+                else:
+                    quantity = args['quantity']
+                if quantity > sku.quantity:
                     raise Exception("所需购买数量大于库存")
                 shopping_cart_item.quantity = args['quantity']
 
