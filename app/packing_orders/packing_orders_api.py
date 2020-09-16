@@ -39,7 +39,7 @@ class PackingAPI(Resource):
                 args['search'] = {}
             args['search']['total_cargoes_id'] = kwargs['cargo_id']
             packing_order = get_table_data(PackingItemOrders, args)
-            packing_order['max_packing'] = int(cargo.last_total * 0.5 / (0.5 * 0.9255))
+            packing_order['max_packing'] = int(cargo.last_total * Decimal("0.5") / (Decimal("0.5") * Decimal("0.9255")))
             return success_return(packing_order, "请求成功")
         except Exception as e:
             return false_return(message=str(e)), 400
