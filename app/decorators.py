@@ -70,12 +70,13 @@ def permission_required(permission):
                 elif current_user.get("code") == "success" and "admin" in [r.name for r in
                                                                            current_user['data']['user'].roles]:
                     session['current_user'] = current_user['data']['user'].id
+                    kwargs['info'] = current_user['data']
                     return success_return()
 
                 else:
                     return exp_return(message=current_user.get("message"))
 
-                kwargs['info'] = current_user['data']
+
 
             check_result = dict()
             if 'Bearer' not in request.headers.get('Authorization'):
@@ -89,11 +90,11 @@ def permission_required(permission):
                     if isinstance(permission, int):
                         check_result = __check_front(permission)
                 if not check_result:
-                    # abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
                     logger.error(check_result)
+                    abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
                 elif check_result['code'] == 'false':
-                    # abort(make_response(check_result, 403))
                     logger.error(check_result)
+                    abort(make_response(check_result, 403))
             else:
                 # 说明是后端用户
                 if isinstance(permission, list):
@@ -105,11 +106,12 @@ def permission_required(permission):
                     if isinstance(permission, str):
                         check_result = __check_back(permission)
                 if not check_result:
-                    # abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
                     logger.error(check_result)
+                    abort(make_response(false_return(message="权限配置错误，没有权限"), 403))
                 elif check_result['code'] != 'success':
-                    # abort(make_response(check_result, 403))
                     logger.error(check_result)
+                    abort(make_response(check_result, 403))
+
             return f(*args, **kwargs)
 
         return decorated_function
