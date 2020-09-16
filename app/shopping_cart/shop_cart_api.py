@@ -94,6 +94,7 @@ class Pay(Resource):
             # 若是分装流程
             if packing_order:
                 the_packing_order = PackingItemOrders.query.get(packing_order)
+                the_packing_order.packing_at = datetime.datetime.now()
                 args.pop("shopping_cart_id")
                 select_items = [s.id for s in
                                 ShoppingCart.query.filter_by(packing_item_order=args.get("packing_order")).all()]
