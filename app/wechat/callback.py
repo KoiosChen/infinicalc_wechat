@@ -149,15 +149,19 @@ def weixin_rollback(request):
                     # 封坛记录，生成封坛订单
                     for item_order in items:
                         item_order.status = 1
-                        if item_order.special >= 30:
+                        if item_order.special == 31:
+                            # 封坛货物
+                            standard_value = item_order.bought_sku.values
+                            # 查找单位是‘斤’的数值
+                            unit = ""
+                            init_total = 0.00
+                            for s in standard_value:
+                                if s.standards.name == '斤':
+                                    init_total = s.value
+                                    unit = s.standards.name
+                                    break
+
                             for _ in range(0, item_order.item_quantity):
-                                standard_value = item_order.bought_sku.values
-                                # 查找单位是‘斤’的数值
-                                for s in standard_value:
-                                    if s.standards.name == '斤':
-                                        init_total = s.value
-                                        unit = s.standards.name
-                                        break
                                 cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
                                               "storage_date": datetime.datetime.now(),
                                               "init_total": init_total,
@@ -169,6 +173,10 @@ def weixin_rollback(request):
                                 if not new_cargo and not new_cargo.get('status'):
                                     logger.error(f"{item_order.id}生成仓储记录失败，或者记录已存在")
                                     res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
+                        elif item_order.special == 32:
+                            # 表示分装订单，此item为酒瓶
+                            packing_order = order.packing_order.first()
+                            packing_order.pay_at = pay_time
 
                     if res == 'success':
                         if session_commit().get("code") == 'success':
@@ -190,12 +198,10 @@ def weixin_rollback(request):
                     res = '此订单无关联商品订单'
             else:
                 res = "error: pay failed! "
-                err_code = data['err_code']  # 错误代码
-                err_code_des = data['err_code_des']  # 错误代码描述
                 # 更新订单，把错误信息更新到订单中
                 order.is_pay = 2
-                order.pay_err_code = err_code
-                order.pay_err_code_des = err_code_des
+                order.pay_err_code = data['err_code']  # 错误代码
+                order.pay_err_code_des = data['err_code_des']  # 错误代码描述
                 db.session.add(order)
                 session_commit()
         else:
@@ -204,5 +210,5 @@ def weixin_rollback(request):
         traceback.print_exc()
         res = str(e)
     finally:
-        print(res)
+        logger.debug(res)
         return weixinpay_response_xml(res)
