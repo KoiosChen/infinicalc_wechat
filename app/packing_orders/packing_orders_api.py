@@ -37,9 +37,8 @@ class PackingAPI(Resource):
             args = packing_page_parser.parse_args()
             if 'search' not in args.keys():
                 args['search'] = {}
-            args['search']['total_cargoes_id'] = kwargs['cargo_id']
+            args['search'] = {'total_cargoes_id': kwargs['cargo_id'], 'pay_at': 'not None'}
             packing_order = get_table_data(PackingItemOrders, args)
-            # packing_order['max_packing'] = int(cargo.last_total * Decimal("0.5") / (Decimal("0.5") * Decimal("0.9255")))
             return success_return(packing_order, "请求成功")
         except Exception as e:
             return false_return(message=str(e)), 400
