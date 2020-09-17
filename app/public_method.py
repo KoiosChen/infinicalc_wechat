@@ -226,6 +226,8 @@ def _search(table, fields, search):
                 and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
             elif k == 'validity_at' and v is not None:
                 and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
+            elif k == 'pay_at' and v == 'not None':
+                and_fields_list.append(getattr(getattr(table, k), '__ne__')(None))
             else:
                 and_fields_list.append(getattr(getattr(table, k), 'contains')(v))
     return and_fields_list

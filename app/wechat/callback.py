@@ -177,6 +177,7 @@ def weixin_rollback(request):
                             # 表示分装订单，此item为酒瓶
                             packing_order = order.packing_order.first()
                             packing_order.pay_at = pay_time
+                            packing_order.parent_cargo.last_total -= packing_order.consumption
 
                     if res == 'success':
                         if session_commit().get("code") == 'success':
