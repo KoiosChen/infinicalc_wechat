@@ -60,6 +60,7 @@ def authenticate(login_ip, **kwargs):
         customer = new_customer['obj']
 
         # 如果父级id为空，那么将此次父级id作为自己的父级
+        logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
             shared_customer_ = Customers.query.filter(Customers.openid.__eq__(kwargs['shared_id']),
