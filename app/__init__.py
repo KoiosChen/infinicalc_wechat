@@ -171,4 +171,7 @@ def create_app(config_name):
     from .item_orders import item_orders as item_orders_blueprint
     app.register_blueprint(item_orders_blueprint)
 
+    from .scene_invitation import scene_invitation as scene_invitation_blueprint
+    app.register_blueprint(scene_invitation_blueprint)
+
     return app

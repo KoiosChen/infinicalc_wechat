@@ -1,26 +1,15 @@
-from flask import request
-from flask_restplus import Resource, reqparse
-from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards
-from . import member_cards
-from app.frontstage_auth import auths
-from .. import db, default_api, logger
+from flask_restplus import Resource
+from ..models import Permission, InvitationCode, MemberCards
+from .. import db, default_api
 from ..common import success_return, false_return, submit_return
-from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj
+from ..public_method import get_table_data, new_data_obj, create_member_card_num
 import datetime
-from ..decorators import permission_required
+from app.decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-import random
 
 members_ns = default_api.namespace('member_cards', path='/member_cards', description='邀请码录入升级会员，会员信息查询')
 
 return_json = members_ns.model('ReturnResult', return_dict)
-
-
-def create_member_card_num():
-    today = datetime.datetime.now()
-    return "5199" + str(today.year) + str(today.month).zfill(2) + str(today.day).zfill(2) + str(
-        random.randint(1000, 9999))
-
 
 member_cards_parser = page_parser.copy()
 

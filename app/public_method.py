@@ -1,4 +1,7 @@
-from . import logger
+import random
+
+from . import logger, db
+from .common import false_return, submit_return
 from .models import *
 from sqlalchemy import and_
 import datetime
@@ -197,7 +200,8 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[
+                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -224,8 +228,10 @@ def _search(table, fields, search):
                 and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
             elif k in ('manager_customer_id', 'owner_id') and v:
                 and_fields_list.append(getattr(getattr(table, k), '__eq__')(v))
-            elif k == 'validity_at' and v is not None:
+            elif k in ('validity_at', 'end_at') and v is not None:
                 and_fields_list.append(getattr(getattr(table, k), '__ge__')(v))
+            elif k == 'start_at' and v is not None:
+                and_fields_list.append(getattr(getattr(table, k), '__le__')(v))
             elif k == 'pay_at' and v == 'not None':
                 and_fields_list.append(getattr(getattr(table, k), '__ne__')(None))
             else:
@@ -301,3 +307,54 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, s
         return __make_table(fields, t, strainer)
     else:
         return {}
+
+
+def create_member_card_by_invitation(current_user, invitation_code):
+    member_card = current_user.member_card.first()
+
+    # 此处目前仅支持邀请代理商
+    if member_card and int(member_card.member_type) >= int(invitation_code.tobe_type) and int(
+            member_card.grade) <= int(invitation_code.tobe_level):
+        return false_return(message="当前用户已经是此级别(或更高级别），不可使用此邀请码"), 400
+
+    if not member_card:
+        card_no = create_member_card_num()
+        new_member_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": current_user.id,
+                                                         "open_date": datetime.datetime.now()})
+    else:
+        card_no = member_card.card_no
+        new_member_card = {'obj': member_card, 'status': False}
+
+    a = {"member_type": invitation_code.tobe_type,
+         "grade": invitation_code.tobe_level,
+         "validate_date": datetime.datetime.now() + datetime.timedelta(days=365)}
+
+    for k, v in a.items():
+        setattr(new_member_card['obj'], k, v)
+
+    if new_member_card:
+        if hasattr(invitation_code, "used_customer_id"):
+            invitation_code.used_customer_id = current_user.id
+        if hasattr(invitation_code, "new_member_card_id"):
+            invitation_code.new_member_card_id = new_member_card['obj'].id
+        if hasattr(invitation_code, "used_at"):
+            invitation_code.used_at = datetime.datetime.now()
+        if hasattr(invitation_code, "invitees"):
+            invitation_code.invitees.append(new_member_card['obj'])
+
+        current_user.invitor_id = invitation_code.manager_customer_id
+        current_user.interest_id = invitation_code.interest_customer_id
+        current_user.role_id = 7
+        db.session.add(invitation_code)
+        db.session.add(current_user)
+    else:
+        return false_return(message="邀请码有效，但是新增会员卡失败"), 400
+
+    return submit_return(f"新增会员卡成功，卡号{card_no}, 会员级别{invitation_code.tobe_type} {invitation_code.tobe_level}",
+                         "新增会员卡失败")
+
+
+def create_member_card_num():
+    today = datetime.datetime.now()
+    return "5199" + str(today.year) + str(today.month).zfill(2) + str(today.day).zfill(2) + str(
+        random.randint(1000, 9999))

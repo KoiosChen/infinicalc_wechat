@@ -12,6 +12,7 @@ from ..swagger import return_dict, head_parser, page_parser
 from ..public_user_func import modify_user_profile
 import requests
 from app.wechat.wx_login import WxLogin
+import traceback
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -52,7 +53,7 @@ update_customer_parser.add_argument('true_name', help='真实姓名', location='
 update_customer_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
 update_customer_parser.add_argument('password', help='密码', location='json')
 update_customer_parser.add_argument('global_address', location='json', help='用户地址')
-update_customer_parser.add_argument('profile_photo', location='json', help='用户头像对应的obj_storage中的ID')
+update_customer_parser.add_argument('profile_photo', location='jso', help='用户头像对应的URL')
 update_customer_parser.add_argument('Authorization', required=True, location='headers')
 update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                                     help="生日，格式'%Y-%m-%d")
@@ -234,32 +235,63 @@ class UpdateCustomerExpressAddress(Resource):
         return submit_return("删除地址成功", "删除地址失败")
 
 
-@customers_ns.route('/interests')
+@customers_ns.route('/interests/verbose')
 @customers_ns.expect(head_parser)
-class CustomerInterests(Resource):
+class CustomerInterestsVerbose(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
+        def statistics_orders(related_object):
+            child_sql = related_object.orders.filter(ShopOrders.is_pay.__eq__(1), ShopOrders.status.__eq__(1),
+                                                     ShopOrders.delete_at.__eq__(None))
+
+            # 下级订单总数
+            payed_count = child_sql.count()
+            # 下级订单总金额
+            payed_fee = sum([c.cash_fee for c in child_sql.all()])
+            # 分析订单中封坛数量、金额；瓶装酒数量、金额； 分装数量、金额
+            pass
+
+            # 确认用户角色
+            child_member_card = related_object.member_card.filter_by(status=1, member_type=1).first()
+            if child_member_card:
+                # 如果child是代理，那一定是2级代理，这时候找这个二级下下游，就是直客，将这个代理的利益下级的消费都归属到此代理统计下
+                grade = child_member_card.grade
+                grand_children_market = related_object.children_market
+                for grandchild in grand_children_market:
+                    grand_sql = grandchild.orders.filter(ShopOrders.is_pay.__eq__(1),
+                                                         ShopOrders.status.__eq__(1),
+                                                         ShopOrders.delete_at.__eq__(None))
+                    payed_count += grand_sql.count()
+                    payed_fee += sum(gc.cash_fee for gc in grand_sql.all())
+            else:
+                grade = 0
+            username = f"{related_object.username}({related_object.phone})" if related_object.phone else f"{related_object.username}"
+            return {"id": related_object.id,
+                    "username": username,
+                    "grade": grade,
+                    "create_at": str(related_object.create_at),
+                    "payed_count": payed_count,
+                    "payed_fee": str(payed_fee)}
+
         try:
             current_user = kwargs['current_user']
             market = current_user.children_market
+            invitees = current_user.be_invited
+            invitees_list = list()
             market_list = list()
             for child in market:
-                payed_order_count = ShopOrders.query.filter(ShopOrders.customer_id.__eq__(child.id),
-                                                            ShopOrders.is_pay.__eq__(1),
-                                                            ShopOrders.status.__eq__(1),
-                                                            ShopOrders.delete_at.__eq__(None)).count()
-                paying_order_count = ShopOrders.query.filter(ShopOrders.customer_id.__eq__(child.id),
-                                                             ShopOrders.is_pay.__eq__(3),
-                                                             ShopOrders.status.__eq__(1),
-                                                             ShopOrders.delete_at.__eq__(None)).count()
-                child_member_card = child.member_card.filter_by(status=1).first()
-                if child_member_card:
-                    grade = child_member_card.grade
-                else:
-                    grade = 0
-                market_list.append({"id": child.id, "grade": grade, "payed_order": payed_order_count,
-                                    "paying_order": paying_order_count})
+                # 当前用户的利益下级的订单
+                market_list.append(statistics_orders(child))
+
+            for invitee in invitees:
+                # 统计不是自己利益下游的被邀请人的订单数量，这种情况只有用户是二级时才有
+                if invitee not in market:
+                    invitees_list.append(statistics_orders(invitee))
+
+            market_list.extend(invitees_list)
+            market_list.sort(key=lambda x: x["payed_fee"], reverse=True)
             return success_return(market_list)
         except Exception as e:
+            traceback.print_exc()
             false_return(message=str(e))

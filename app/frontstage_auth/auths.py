@@ -1,12 +1,10 @@
 import jwt
 import datetime
 import time
-from ..models import Elements, LoginInfo, Customers
+from ..models import Elements, LoginInfo, Customers, SceneInvitation
 from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
-from ..public_method import new_data_obj
-from sqlalchemy import or_, and_
-from ..public_method import table_fields, get_table_data_by_id
+from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id
 import json
 import traceback
 
@@ -61,6 +59,15 @@ def authenticate(login_ip, **kwargs):
 
         # 如果父级id为空，那么将此次父级id作为自己的父级
         logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
+        if kwargs.get('scene_invitation'):
+            # 如果有邀请码，调用邀请码模块
+            si_obj = db.session.query(SceneInvitation).with_for_update().filter(
+                SceneInvitation.id.__eq__(kwargs.get('scene_invitation')))
+            if si_obj and si_obj.start_at <= datetime.datetime.now <= si_obj.end_at:
+                now_invitees = len(si_obj.invitees)
+                if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
+                    create_member_card_by_invitation(kwargs['current_user'], si_obj)
+
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
             shared_customer_ = Customers.query.filter(Customers.openid.__eq__(kwargs['shared_id']),
@@ -81,6 +88,8 @@ def authenticate(login_ip, **kwargs):
                     else:
                         # 如果分享来自直客，interest_id，如果直客没有interest_id,则都没有利益关系
                         customer.interest_id = shared_customer_.interest_id
+
+
 
         # 查询并删除已经登陆的信息
         logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()
