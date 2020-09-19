@@ -82,4 +82,5 @@ def modify_user_profile(args, user, fields_):
         return submit_return("更新成功", "更新失败")
     except Exception as e:
         traceback.print_exc()
+        logger.error(f"modify customer profile fail, {str(e)}")
         return false_return(message=str(e)), 400
