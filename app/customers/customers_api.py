@@ -53,7 +53,7 @@ update_customer_parser.add_argument('true_name', help='真实姓名', location='
 update_customer_parser.add_argument('gender', help='性别 0:unknown 1:male, 2:female', location='json')
 update_customer_parser.add_argument('password', help='密码', location='json')
 update_customer_parser.add_argument('global_address', location='json', help='用户地址')
-update_customer_parser.add_argument('profile_photo', location='jso', help='用户头像对应的URL')
+update_customer_parser.add_argument('profile_photo', location='json', help='用户头像对应的URL')
 update_customer_parser.add_argument('Authorization', required=True, location='headers')
 update_customer_parser.add_argument('birthday', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                                     help="生日，格式'%Y-%m-%d")
