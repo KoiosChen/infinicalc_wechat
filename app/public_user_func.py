@@ -58,27 +58,28 @@ def modify_user_profile(args, user, fields_):
     try:
         unique_list = ["phone", "email"]
         user_class_name = user.__class__.__name__
-        for f in fields_:
-            if f == 'role_id' and args.get(f):
+        for the_field in fields_:
+            if the_field == 'role_id' and args.get(the_field):
                 user.roles = []
-                for r in args.get(f):
+                for r in args.get(the_field):
                     role = Roles.query.get(r)
                     user.roles.append(role)
-            elif args.get(f):
+            elif args.get(the_field):
                 u = eval(user_class_name)
-                if f in unique_list:
+                if the_field in unique_list:
                     tmp = getattr(getattr(getattr(u, 'query'), "filter")(getattr(getattr(u, 'status'), '__eq__')(1),
-                                                                         getattr(getattr(u, f), '__eq__')(args.get(f)),
+                                                                         getattr(getattr(u, the_field), '__eq__')(args.get(the_field)),
                                                                          getattr(getattr(u, 'id'), '__ne__')(user.id)),
                                   'first')()
                     logger.debug(tmp)
                     if not tmp:
-                        setattr(user, f, args.get(f))
+                        setattr(user, the_field, args.get(the_field))
                     else:
                         db.session.rollback()
-                        raise Exception(f"{f} 已存在")
+                        raise Exception(f"{the_field} 已存在")
                 else:
-                    setattr(user, f, args.get(f))
+                    logger.debug(f"{the_field}  {args.get(the_field)}")
+                    setattr(user, the_field, args.get(the_field))
         return submit_return("更新成功", "更新失败")
     except Exception as e:
         traceback.print_exc()
