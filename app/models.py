@@ -120,6 +120,13 @@ itemsorders_benefits = db.Table('itemsorders_benefits',
                                           primary_key=True),
                                 db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+scene_member_cards = db.Table('scene_member_cards',
+                              db.Column('scene_invitation_id', db.String(64), db.ForeignKey('scene_invitation.id'),
+                                        primary_key=True),
+                              db.Column('member_card_id', db.String(64), db.ForeignKey('member_cards.id'),
+                                        primary_key=True),
+                              db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 
 class Permission:
     READER = 0x01
@@ -289,6 +296,31 @@ class InvitationCode(db.Model):
     used_at = db.Column(db.DateTime, comment='如果不为空，则表示已经使用，软删除')
 
 
+class SceneInvitation(db.Model):
+    """
+    场景邀请码，用于生成一个在一定时间范围内有效的邀请码（二维码）
+    """
+    __tablename__ = 'scene_invitation'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(100), comment='邀请码名称')
+    tobe_type = db.Column(db.SmallInteger, comment='邀请后成为的类型，对应member_cards中的member_type')
+    tobe_level = db.Column(db.SmallInteger, comment='邀请后成为的等级，对应member_cards中的grade')
+    code = db.Column(db.String(64), unique=True, comment='邀请码')
+    manager_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='管理者ID')
+    interest_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='利益关系ID')
+    invitees = db.relationship(
+        'MemberCards',
+        secondary=scene_member_cards,
+        backref=db.backref(
+            'scene_invitation_code'
+        )
+    )
+    max_invitees = db.Column(db.Integer, default=0, comment='最大邀请数, 0表示不限制')
+    start_at = db.Column(db.DateTime, comment='有效期开始时间')
+    end_at = db.Column(db.DateTime, comment='有效期结束时间')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+
 class MemberCards(db.Model):
     """
     用户登陆小程序后，没有会员卡，获取邀请码之后，可升级为代理商，分别为1级和2级，通过member_type来区分.
@@ -339,7 +371,7 @@ class Customers(db.Model):
     address = db.Column(db.String(200))
     login_info = db.relationship('LoginInfo', backref='login_customer', lazy='dynamic')
     orders = db.relationship("ShopOrders", backref='consumer', lazy='dynamic')
-    profile_photo = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
+    profile_photo = db.Column(db.String(64), comment='微信头像url')
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
     member_card = db.relationship('MemberCards', backref='card_owner', foreign_keys='MemberCards.customer_id',
@@ -390,7 +422,7 @@ class Customers(db.Model):
         return self.role is not None and (self.role.permissions & permissions) == permissions
 
     def __repr__(self):
-        return '<Customer %r>' % self.phone
+        return f"<Customers {self.openid}::{self.phone}>"
 
 
 class Users(db.Model):
@@ -1023,7 +1055,7 @@ class ObjStorage(db.Model):
     coupons = db.relationship('Coupons', backref="icon_objects", lazy='dynamic')
     evaluates = db.relationship("Evaluates", backref="experience_objects", lazy='dynamic')
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
-    customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
+    # customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
     news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
 
 
