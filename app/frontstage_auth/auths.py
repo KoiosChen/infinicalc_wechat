@@ -89,8 +89,6 @@ def authenticate(login_ip, **kwargs):
                         # 如果分享来自直客，interest_id，如果直客没有interest_id,则都没有利益关系
                         customer.interest_id = shared_customer_.interest_id
 
-
-
         # 查询并删除已经登陆的信息
         logged_in_info = customer.login_info.filter_by(platform="wechat", status=True).all()
         for lg in logged_in_info:

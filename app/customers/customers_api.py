@@ -13,6 +13,7 @@ from ..public_user_func import modify_user_profile
 import requests
 from app.wechat.wx_login import WxLogin
 import traceback
+from decimal import Decimal
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -235,7 +236,7 @@ class UpdateCustomerExpressAddress(Resource):
         return submit_return("删除地址成功", "删除地址失败")
 
 
-@customers_ns.route('/interests/verbose')
+@customers_ns.route('/interests')
 @customers_ns.expect(head_parser)
 class CustomerInterestsVerbose(Resource):
     @customers_ns.marshal_with(return_json)
@@ -291,7 +292,30 @@ class CustomerInterestsVerbose(Resource):
 
             market_list.extend(invitees_list)
             market_list.sort(key=lambda x: x["payed_fee"], reverse=True)
-            return success_return(market_list)
+            brief_dict = dict()
+            consumer_count = 0
+            consumer_orders = 0
+            consumer_fee = Decimal("0.00")
+            agent_count = 0
+            agent_orders = 0
+            agent_fee = Decimal("0.00")
+            for m in market_list:
+                if m['grade'] == 0:
+                    consumer_count += 1
+                    consumer_orders += m['payed_count']
+                    consumer_fee += Decimal(m['payed_fee'])
+                else:
+                    agent_count += 1
+                    agent_orders += m['payed_count']
+                    consumer_fee += Decimal(m['payed_fee'])
+
+            return success_return({"verbose": market_list,
+                                   "brief": {"consumer": {"num": consumer_count,
+                                                          "orders": consumer_orders,
+                                                          "fee": consumer_fee},
+                                             "agent": {"num": agent_count,
+                                                       "orders": agent_orders,
+                                                       "fee": agent_fee}}})
         except Exception as e:
             traceback.print_exc()
             false_return(message=str(e))
