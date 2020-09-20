@@ -24,9 +24,9 @@ invitation_parser.add_argument('tobe_level', type=int, required=True, choices=[1
                                help='目前仅邀请成为代理商，tobe_type传1；此处传1，表示一级代理商，传2 表示二级代理商。')
 invitation_parser.add_argument('max_invitees', type=int, default=0, required=True, help='最大允许接入的被邀请人， 0表示没有限制')
 invitation_parser.add_argument('start_at', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
-                               help='有效开始时间')
+                               help='有效开始时间-"%Y-%m-%d %H:%M:%S"')
 invitation_parser.add_argument('end_at', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
-                               help='有效结束时间')
+                               help='有效结束时间-"%Y-%m-%d %H:%M:%S"')
 
 invite_page_parser = page_parser.copy()
 

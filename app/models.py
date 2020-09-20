@@ -422,7 +422,7 @@ class Customers(db.Model):
         return self.role is not None and (self.role.permissions & permissions) == permissions
 
     @property
-    def grad(self):
+    def grade(self):
         member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
                                                MemberCards.member_type.__eq__(1), MemberCards.delete_at.__eq__(None),
                                                MemberCards.status.__eq__(1)).first()
