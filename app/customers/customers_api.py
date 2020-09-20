@@ -312,10 +312,10 @@ class CustomerInterestsVerbose(Resource):
             return success_return({"verbose": market_list,
                                    "brief": {"consumer": {"num": consumer_count,
                                                           "orders": consumer_orders,
-                                                          "fee": consumer_fee},
+                                                          "fee": str(consumer_fee)},
                                              "agent": {"num": agent_count,
                                                        "orders": agent_orders,
-                                                       "fee": agent_fee}}})
+                                                       "fee": str(agent_fee)}}})
         except Exception as e:
             traceback.print_exc()
             false_return(message=str(e))
