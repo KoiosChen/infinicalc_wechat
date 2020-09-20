@@ -421,6 +421,14 @@ class Customers(db.Model):
     def can(self, permissions):
         return self.role is not None and (self.role.permissions & permissions) == permissions
 
+    @property
+    def grade(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.member_type.__eq__(1), MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card.grade if member_card else 0
+
     def __repr__(self):
         return f"<Customers {self.openid}::{self.phone}>"
 
