@@ -75,7 +75,6 @@ def authenticate(login_ip, **kwargs):
             if not shared_customer_:
                 logger.error(f"{kwargs.get('shared_id')} is not exist!")
             else:
-                # shared_customer = Customers.query.get(customer) if isinstance(customer, str) else customer
                 shared_member_card = shared_customer_.member_card.filter_by(status=1, member_type=1).first()
                 if not customer.parent_id:
                     # 写入分享关系，不可修改

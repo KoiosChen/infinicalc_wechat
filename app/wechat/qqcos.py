@@ -25,10 +25,10 @@ class QcloudCOS:
         secret_key = kwargs.get("secret_key")
         region = kwargs.get("region")
         bucket_id = kwargs.get("bucket_id")
-        self.__secret_id = 'AKIDLFsFKBs34oMcbJJ4XibFBpBG7hz0Ostb' if not secret_id else secret_id
-        self.__secret_key = 'av0oKejeId3B1bsa08zg7IAkaFdnesra' if not secret_key else secret_key
+        self.__secret_id = 'AKIDMTZaicplwwgEYiRIi7jw9Bqj7JGxuuBH' if not secret_id else secret_id
+        self.__secret_key = 'DDybLuLEtIJmP6bqtg0WmVszLBsLktlP' if not secret_key else secret_key
         self.__region = 'ap-shanghai' if not region else region
-        self.__bucket_id = 'wine-1301791406' if not bucket_id else bucket_id
+        self.__bucket_id = 'shengzhuan-1302873950' if not bucket_id else bucket_id
         self.url = f"{self.__bucket_id}.cos.{self.__region}.myqcloud.com"
         token = None  # 使用临时密钥需要传入 Token，默认为空，可不填
         self.scheme = 'https'  # 指定使用 http/https 协议来访问 COS，默认为 https，可不填

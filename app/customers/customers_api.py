@@ -292,7 +292,6 @@ class CustomerInterestsVerbose(Resource):
 
             market_list.extend(invitees_list)
             market_list.sort(key=lambda x: x["payed_fee"], reverse=True)
-            brief_dict = dict()
             consumer_count = 0
             consumer_orders = 0
             consumer_fee = Decimal("0.00")
