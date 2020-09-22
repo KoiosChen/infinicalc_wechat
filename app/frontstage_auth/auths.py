@@ -66,7 +66,7 @@ def authenticate(login_ip, **kwargs):
         if kwargs.get('scene_invitation'):
             # 如果有邀请码，调用邀请码模块
             si_obj = db.session.query(SceneInvitation).with_for_update().filter(
-                SceneInvitation.code.__eq__(kwargs.get('scene_invitation')))
+                SceneInvitation.code.__eq__(kwargs.get('scene_invitation'))).first()
             if si_obj and si_obj.start_at <= datetime.datetime.now <= si_obj.end_at:
                 now_invitees = len(si_obj.invitees)
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
