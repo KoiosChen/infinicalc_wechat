@@ -320,3 +320,24 @@ class CustomerInterestsVerbose(Resource):
         except Exception as e:
             traceback.print_exc()
             false_return(message=str(e)), 400
+
+
+@customers_ns.route('/total_points')
+@customers_ns.expect(head_parser)
+class CustomerPointsResource(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """
+        获取用户当前积分
+        """
+        try:
+            current_user = kwargs.get('current_user')
+            if not current_user:
+                raise ExpressAddress("当前用户不存在")
+            else:
+                total_points = current_user.total_points if current_user.total_points else 0
+            return success_return({"id": current_user.id, "total_points": total_points})
+        except Exception as e:
+            traceback.print_exc()
+            return false_return(message=str(e))
