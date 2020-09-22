@@ -21,6 +21,7 @@ customers_ns = default_api.namespace('customers', path='/customers',
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('js_code', required=True, help='前端获取的临时code')
 login_parser.add_argument('shared_id', help="分享链接中分享者的customer id")
+login_parser.add_argument('scene_invitation', help='邀请码')
 
 bind_role_parser = reqparse.RequestParser()
 bind_role_parser.add_argument('role_id', required=True, type=int, help='customer_role表中的id')
@@ -118,7 +119,8 @@ class Login(Resource):
 
             wx_login = WxLogin(args['js_code'])
             response = wx_login.response
-            response['shared_id'] = args['shared_id']
+            response['shared_id'] = args.get('shared_id')
+            response['scene_invitation'] = args.get('scene_invitation')
             logger.debug(response)
             if 'errcode' in response.keys():
                 return false_return(response, "请求失败"), 400
