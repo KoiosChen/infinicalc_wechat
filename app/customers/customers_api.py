@@ -166,7 +166,7 @@ class CustomerExpressAddress(Resource):
         """
         current_user = kwargs['current_user']
         if current_user is None:
-            return false_return(message="用户未登陆")
+            return false_return(message="用户未登陆"), 400
         return success_return(
             get_table_data_by_id(Customers, current_user.id, ["express_addresses"], table_fields(Customers)))
 
@@ -180,7 +180,7 @@ class CustomerExpressAddress(Resource):
         args = bind_express_addr_parser.parse_args()
         args['sender'] = kwargs['current_user'].id
         if not if_default(kwargs['current_user'].id, args['force_default']):
-            return false_return("已存在默认地址")
+            return false_return("已存在默认地址"), 400
         new_express_address = ExpressAddress()
         db.session.flush()
         for k, v in args.items():
@@ -204,7 +204,7 @@ class UpdateCustomerExpressAddress(Resource):
                                             addr.status == 1]:
             return success_return(data=get_table_data_by_id(ExpressAddress, kwargs['express_address_id']))
         else:
-            return false_return(message="当前用户没有改地址")
+            return false_return(message="当前用户没有改地址"), 400
 
     @customers_ns.doc(body=update_express_addr_parser)
     @customers_ns.marshal_with(return_json)
@@ -218,7 +218,7 @@ class UpdateCustomerExpressAddress(Resource):
         express_address = ExpressAddress.query.filter_by(id=kwargs['express_address_id'],
                                                          sender=current_user.id, status=1).first()
         if not if_default(current_user.id, args['force_default']):
-            return false_return("已存在默认地址")
+            return false_return("已存在默认地址"), 400
 
         for k, v in args.items():
             if hasattr(express_address, k) and v:
@@ -319,4 +319,4 @@ class CustomerInterestsVerbose(Resource):
                                                        "fee": str(agent_fee)}}})
         except Exception as e:
             traceback.print_exc()
-            false_return(message=str(e))
+            false_return(message=str(e)), 400

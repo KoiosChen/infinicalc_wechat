@@ -200,7 +200,8 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[
+                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         else:
@@ -359,3 +360,23 @@ def create_member_card_num():
     today = datetime.datetime.now()
     return "5199" + str(today.year) + str(today.month).zfill(2) + str(today.day).zfill(2) + str(
         random.randint(1000, 9999))
+
+
+def order_cancel(cancel_reason, shop_order_id):
+    try:
+        order = ShopOrders.query.get(shop_order_id)
+        if not order:
+            raise Exception(f"{shop_order_id} 不存在")
+        elif order.is_pay == 1:
+            raise Exception(f"当前支付状态不可取消")
+        else:
+            items = order.items_orders_id.all()
+            # 恢复SKU数量
+            for item in items:
+                item.bought_sku.quantity += item.item_quantity
+            order.delete_at = datetime.datetime.now()
+            order.status = 0
+            order.cancel_reason = cancel_reason
+        return submit_return("取消成功", "数据提交失败，取消失败")
+    except Exception as e:
+        return false_return(message=f"订单取消失败: {str(e)}"), 400

@@ -1,8 +1,8 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, SKU
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
+from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, order_cancel
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
@@ -80,20 +80,8 @@ class ShopOrderCancelApi(Resource):
     @permission_required(Permission.USER)
     def delete(self, **kwargs):
         """提交取消申请，如果订单是正在支付或者已支付，则不可取消，只能退货"""
-        try:
-            args = cancel_parser.parse_args()
-            order = ShopOrders.query.get(kwargs['shop_order_id'])
-            if not order:
-                raise Exception(f"{kwargs['shop_order_id']} 不存在")
-            elif order.is_pay == 1:
-                raise Exception(f"当前支付状态不可退货")
-            else:
-                order.delete_at = datetime.datetime.now()
-                order.status = 0
-                order.cancel_reason = args.get('cancel_reason')
-            return submit_return("取消成功", "取消失败")
-        except Exception as e:
-            return false_return(message=f"weixin pay failed: {str(e)}")
+        args = cancel_parser.parse_args()
+        return order_cancel(args.get('cancel_reason'), kwargs['shop_order_id'])
 
 
 # @orders_ns.route('/<string:item_order_id>/refund')
