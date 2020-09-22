@@ -118,12 +118,14 @@ class Pay(Resource):
             score_used = args.get('score_used') if args.get('score_used') else 0
             logger.debug(f"customer wanna use {score_used} scores in this order")
             if score_used and total_score < score_used:
-                raise Exception(f"欲使用积分{args['score_used']}此订单最大可消费积分为{total_score}")
+                raise Exception(f"欲使用积分{args['score_used']}, 此订单最大可消费积分为{total_score}")
 
             if not express_addr and addr:
                 raise Exception("此订单货物都不可快递")
 
             args['items_total_price'] = total_price
+            args['score_used'] = score_used
+            kwargs['current_user'].total_point -= score_used
             create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
             create_result = pay.create_order(**create_data)
 
