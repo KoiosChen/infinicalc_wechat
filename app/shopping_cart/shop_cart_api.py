@@ -115,7 +115,7 @@ class Pay(Resource):
             total_price, total_score, express_addr = checkout_cart(
                 **{"shopping_cart_id": select_items, 'customer': kwargs['current_user']})
 
-            score_used = eval(args.get('score_used')) if args.get('score_used') else 0
+            score_used = args.get('score_used') if args.get('score_used') else 0
             logger.debug(f"customer wanna use {score_used} scores in this order")
             if score_used and total_score < score_used:
                 raise Exception(f"欲使用积分{args['score_used']}此订单最大可消费积分为{total_score}")
