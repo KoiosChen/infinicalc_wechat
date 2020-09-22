@@ -45,6 +45,18 @@ class ProductionConfig(Config):
     DB_DATABASE = os.environ.get('DATABASE_DATABASE') or 'shengzhuan'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
 
+    JOBS = [
+        {
+            'id': 'check_order',
+            'func': 'app.r2d2.UpsMonitor:ups_monitor',
+            'args': (),
+            'trigger': 'interval',
+            'seconds': 300,
+        },
+    ]
+
+    SCHEDULER_VIEWS_ENABLED = True
+
 
 config = {
     'development': DevelopmentConfig,

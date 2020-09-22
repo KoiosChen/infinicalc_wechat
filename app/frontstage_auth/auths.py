@@ -1,7 +1,7 @@
 import jwt
 import datetime
 import time
-from ..models import Elements, LoginInfo, Customers, SceneInvitation
+from ..models import Elements, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD
 from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id
@@ -57,6 +57,9 @@ def authenticate(login_ip, **kwargs):
         new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
         customer = new_customer['obj']
 
+        if new_customer['status']:
+            new_customer['obj'].total_points = NEW_ONE_SCORES
+
         # 如果父级id为空，那么将此次父级id作为自己的父级
         logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
         logger.debug(f">>> scene invitation is {kwargs.get('scene_invitation')}")
@@ -77,6 +80,7 @@ def authenticate(login_ip, **kwargs):
                 logger.error(f"{kwargs.get('shared_id')} is not exist!")
             else:
                 shared_member_card = shared_customer_.member_card.filter_by(status=1, member_type=1).first()
+                shared_member_card.total_points += SHARE_AWARD
                 if not customer.parent_id and new_customer['status']:
                     # 写入分享关系，不可修改
                     customer.parent_id = shared_customer_.id

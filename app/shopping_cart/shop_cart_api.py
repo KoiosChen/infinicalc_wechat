@@ -115,7 +115,9 @@ class Pay(Resource):
             total_price, total_score, express_addr = checkout_cart(
                 **{"shopping_cart_id": select_items, 'customer': kwargs['current_user']})
 
-            if args.get('score_used') and total_score < args['score_used']:
+            score_used = eval(args.get('score_used')) if args.get('score_used') else 0
+            logger.debug(f"customer wanna use {score_used} scores in this order")
+            if score_used and total_score < score_used:
                 raise Exception(f"欲使用积分{args['score_used']}此订单最大可消费积分为{total_score}")
 
             if not express_addr and addr:
@@ -128,7 +130,6 @@ class Pay(Resource):
             if create_result.get("code") == "false":
                 return create_result
             out_trade_no = create_result.get("data")
-            score_used = 0 if not args.get('score_used') else args.get('score_used')
             return pay.weixin_pay(out_trade_no=out_trade_no, price=total_price - score_used,
                                   openid=kwargs['current_user'].openid)
 
