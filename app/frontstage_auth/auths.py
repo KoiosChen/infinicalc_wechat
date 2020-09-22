@@ -59,10 +59,11 @@ def authenticate(login_ip, **kwargs):
 
         # 如果父级id为空，那么将此次父级id作为自己的父级
         logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
+        logger.debug(f">>> scene invitation is {kwargs.get('scene_invitation')}")
         if kwargs.get('scene_invitation'):
             # 如果有邀请码，调用邀请码模块
             si_obj = db.session.query(SceneInvitation).with_for_update().filter(
-                SceneInvitation.id.__eq__(kwargs.get('scene_invitation')))
+                SceneInvitation.code.__eq__(kwargs.get('scene_invitation')))
             if si_obj and si_obj.start_at <= datetime.datetime.now <= si_obj.end_at:
                 now_invitees = len(si_obj.invitees)
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
