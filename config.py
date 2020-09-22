@@ -48,7 +48,7 @@ class ProductionConfig(Config):
     JOBS = [
         {
             'id': 'check_order',
-            'func': 'app.r2d2.UpsMonitor:ups_monitor',
+            'func': 'app.app_schedule:check_orders',
             'args': (),
             'trigger': 'interval',
             'seconds': 300,

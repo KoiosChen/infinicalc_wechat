@@ -5,6 +5,7 @@ from decimal import Decimal
 from app.public_method import new_data_obj, format_decimal
 from app.common import submit_return
 import datetime
+import traceback
 
 
 def customer_member_card(customer, member_type):
@@ -152,6 +153,7 @@ def checkout_rebates_ratio(customer, shop_order_id):
                     relationships['self']['rebate'] = format_decimal(item_rebate_policy.agent_first_rebate, to_str=True)
         return success_return(data=relationships)
     except Exception as e:
+        traceback.print_exc()
         return false_return(str(e))
 
 

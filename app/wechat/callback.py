@@ -180,9 +180,7 @@ def weixin_rollback(request):
                             packing_order.parent_cargo.last_total -= packing_order.consumption
 
                     if res == 'success':
-                        if session_commit().get("code") == 'success':
-                            res = 'success'
-                        else:
+                        if session_commit().get("code") != 'success':
                             res = '数据提交失败'
 
                     # 返佣计算
