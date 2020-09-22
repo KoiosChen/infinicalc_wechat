@@ -46,6 +46,8 @@ def query_sku_layout(layout_name=None):
                                         search={"status": 1})
         sku_data['order'] = lay.order
         r[lay.layout.name]["sku"].append(sku_data)
+    for layout_name in r.keys():
+        r[layout_name]['sku'].sort(key=lambda x:x["order"])
     return r
 
 

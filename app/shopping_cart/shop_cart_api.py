@@ -91,6 +91,7 @@ class Pay(Resource):
             args['customer_id'] = kwargs['current_user'].id
             args['id'] = make_order_id()
             packing_order = args.get("packing_order")
+            logger.debug(f">>> args in shopping_cart::pay is {args}")
             # 若是分装流程
             if packing_order:
                 the_packing_order = PackingItemOrders.query.get(packing_order)
