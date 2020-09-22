@@ -349,6 +349,17 @@ class MemberCards(db.Model):
     recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
 
 
+class Scores(db.Model):
+    __tablename__ = 'scores'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    reason = db.Column(db.String(64), comment='变更原因')
+    quantity = db.Column(db.Integer, comment='积分数值')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
 class Customers(db.Model):
     __tablename__ = 'customers'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
@@ -399,7 +410,8 @@ class Customers(db.Model):
 
     shopping_cart = db.relationship("ShoppingCart", backref='buyer', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='owner', lazy='dynamic')
-    refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
+    refund_orders = db.relationship("Refund", backref='auditor', lazy='dynamic')
+    score_changes = db.relationship("Scores", backre='score_owner', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
