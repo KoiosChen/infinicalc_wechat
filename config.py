@@ -37,6 +37,18 @@ class TestingConfig(Config):
     DB_DATABASE = os.environ.get('TEST_DATABASE_DATABASE') or 'shengzhuan'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
 
+    JOBS = [
+        {
+            'id': 'check_order',
+            'func': 'app.app_schedule.check_orders',
+            'args': (),
+            'trigger': 'interval',
+            'seconds': 300,
+        },
+    ]
+
+    SCHEDULER_VIEWS_ENABLED = True
+
 
 class ProductionConfig(Config):
     DB_USERNAME = os.environ.get('DATABASE_USERNAME') or 'peter'
