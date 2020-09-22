@@ -76,11 +76,11 @@ def authenticate(login_ip, **kwargs):
                 logger.error(f"{kwargs.get('shared_id')} is not exist!")
             else:
                 shared_member_card = shared_customer_.member_card.filter_by(status=1, member_type=1).first()
-                if not customer.parent_id:
+                if not customer.parent_id and new_customer['status']:
                     # 写入分享关系，不可修改
                     customer.parent_id = shared_customer_.id
 
-                if not customer.interest_id:
+                if not customer.interest_id and new_customer['status']:
                     if shared_member_card:
                         # 上级如果是代理商，interest_id，利益关系挂在上级ID
                         customer.interest_id = shared_customer_.id
