@@ -345,7 +345,7 @@ def create_member_card_by_invitation(current_user, invitation_code):
 
         current_user.invitor_id = invitation_code.manager_customer_id
         current_user.interest_id = invitation_code.interest_customer_id
-        current_user.role_id = 7
+        current_user.role_id = 2
         db.session.add(invitation_code)
         db.session.add(current_user)
     else:
