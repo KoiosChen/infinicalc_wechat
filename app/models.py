@@ -411,7 +411,7 @@ class Customers(db.Model):
     shopping_cart = db.relationship("ShoppingCart", backref='buyer', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='owner', lazy='dynamic')
     refund_orders = db.relationship("Refund", backref='auditor', lazy='dynamic')
-    score_changes = db.relationship("Scores", backre='score_owner', lazy='dynamic')
+    score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
