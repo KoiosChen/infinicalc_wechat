@@ -80,7 +80,7 @@ def authenticate(login_ip, **kwargs):
                 logger.error(f"{kwargs.get('shared_id')} is not exist!")
             else:
                 shared_member_card = shared_customer_.member_card.filter_by(status=1, member_type=1).first()
-                shared_member_card.total_points += SHARE_AWARD
+                shared_customer_.total_points += SHARE_AWARD
                 if not customer.parent_id and new_customer['status']:
                     # 写入分享关系，不可修改
                     customer.parent_id = shared_customer_.id
