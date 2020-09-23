@@ -67,7 +67,8 @@ class ShopOrderPayApi(Resource):
             order = ShopOrders.query.get(kwargs['shop_order_id'])
             if not order:
                 raise Exception(f"{kwargs['shop_order_id']} 不存在")
-            return weixin_pay(kwargs['shop_order_id'], order.items_total_price, kwargs['current_user'].openid)
+            return weixin_pay(kwargs['shop_order_id'], order.items_total_price - order.score_used,
+                              kwargs['current_user'].openid)
         except Exception as e:
             return false_return(message=f"weixin pay failed: {str(e)}")
 
@@ -82,7 +83,6 @@ class ShopOrderCancelApi(Resource):
         """提交取消申请，如果订单是正在支付或者已支付，则不可取消，只能退货"""
         args = cancel_parser.parse_args()
         return order_cancel(args.get('cancel_reason'), kwargs['shop_order_id'])
-
 
 # @orders_ns.route('/<string:item_order_id>/refund')
 # @orders_ns.expect(head_parser)
