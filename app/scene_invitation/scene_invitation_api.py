@@ -12,6 +12,7 @@ import datetime
 from sqlalchemy import or_
 import traceback
 import datetime
+from collections import defaultdict
 
 scene_invite_ns = default_api.namespace('Scene Invitation', path='/scene_invitation', description='场景邀请码自助生成')
 
@@ -52,12 +53,16 @@ class SceneInvitationApi(Resource):
         if kwargs.get('current_user') and kwargs['current_user'].__class__.__name__ == 'Customers':
             args['search'] = {"manager_customer_id": kwargs['current_user'].id}
         invite_qrcode = get_table_data(SceneInvitation, args, ['my_invitees'])
-        return_result = list()
+        return_result = dict()
+        return_result['records'] = list()
+        return_result['out_service'] = list()
         for qr in invite_qrcode["records"]:
             max_check = qr['max_invitees'] > qr['my_invitees']
             validate_time = datetime.datetime.strptime(qr['start_at'], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.now() <= datetime.datetime.strptime(qr['end_at'], "%Y-%m-%d %H:%M:%S")
             if max_check and validate_time:
-                return_result.append(qr)
+                return_result['records'].append(qr)
+            else:
+                return_result['out_service'].append(qr)
         return success_return(return_result)
 
     @scene_invite_ns.doc(body=invitation_parser)
