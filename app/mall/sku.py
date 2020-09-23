@@ -244,6 +244,19 @@ class SKUAddToShoppingCart(Resource):
                 else:
                     cart_item['obj'].quantity += args['quantity']
 
+                if sku_id in ("be0547c8-bb2b-4fc5-9471-9eb6e9f59ac0", "1c751dce-1118-4eb3-ab36-fbfcfa03dd4e", "9cef190e-6f5c-4557-93eb-c1d2e0d4cf24"):
+                    manager_fee = new_data_obj("ShoppingCart", **{"customer_id": current_user.id,
+                                                                  "sku_id": "b54c2fdf-1022-4070-acb7-e6fe48ddaa4e",
+                                                                  "delete_at": None})
+
+                    if manager_fee:
+                        if manager_fee['status']:
+                            manager_fee['obj'].quantity = args['quantity']
+                        else:
+                            manager_fee['obj'].quantity += args['quantity']
+                    else:
+                        return false_return(f"管理费绑定失败"), 400
+
                 # 如果是分装流程，那么就添加上packing_order到购物车商品上，表示特殊商品
                 if args.get('packing_order_id'):
                     if not PackingItemOrders.query.get(args.get('packing_order_id')):
