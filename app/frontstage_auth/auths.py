@@ -60,7 +60,7 @@ def authenticate(login_ip, **kwargs):
         if new_customer['status']:
             new_customer['obj'].total_points = NEW_ONE_SCORES
             new_data_obj("Scores", **{"id": make_uuid(),
-                                      "customer_id": new_customer.id,
+                                      "customer_id": new_customer['obj'].id,
                                       "reason": f"login from {kwargs.get('shared_id')}",
                                       "quantity": NEW_ONE_SCORES})
 
