@@ -57,7 +57,10 @@ class SceneInvitationApi(Resource):
         return_result['records'] = list()
         return_result['out_service'] = list()
         for qr in invite_qrcode["records"]:
-            max_check = qr['max_invitees'] > qr['my_invitees']
+            if qr['max_invitees'] != 0:
+                max_check = qr['max_invitees'] > qr['my_invitees']
+            else:
+                max_check = True
             validate_time = datetime.datetime.strptime(qr['start_at'], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.now() <= datetime.datetime.strptime(qr['end_at'], "%Y-%m-%d %H:%M:%S")
             if max_check and validate_time:
                 return_result['records'].append(qr)
