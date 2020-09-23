@@ -74,7 +74,7 @@ def authenticate(login_ip, **kwargs):
             if si_obj and si_obj.start_at <= datetime.datetime.now() <= si_obj.end_at:
                 now_invitees = len(si_obj.invitees)
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
-                    create_member_card_by_invitation(kwargs['current_user'], si_obj)
+                    create_member_card_by_invitation(new_customer['obj'], si_obj)
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在

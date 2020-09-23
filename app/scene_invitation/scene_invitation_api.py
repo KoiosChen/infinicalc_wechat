@@ -51,7 +51,14 @@ class SceneInvitationApi(Resource):
         # 如果是前端客户，则只显示本人管理的邀请码，且只显示有效的
         if kwargs.get('current_user') and kwargs['current_user'].__class__.__name__ == 'Customers':
             args['search'] = {"manager_customer_id": kwargs['current_user'].id}
-        return success_return(get_table_data(SceneInvitation, args, ['my_invitees']))
+        invite_qrcode = get_table_data(SceneInvitation, args, ['my_invitees'])
+        return_result = list()
+        for qr in invite_qrcode["records"]:
+            max_check = qr['max_invitees'] > qr['my_invitees']
+            validate_time = datetime.datetime.strptime(qr['start_at'], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.now() <= datetime.datetime.strptime(qr['end_at'], "%Y-%m-%d %H:%M:%S")
+            if max_check and validate_time:
+                return_result.append(qr)
+        return success_return(return_result)
 
     @scene_invite_ns.doc(body=invitation_parser)
     @scene_invite_ns.marshal_with(return_json)
