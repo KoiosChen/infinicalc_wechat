@@ -249,7 +249,7 @@ def _advance_search(table, fields, advance_search):
     return and_fields_list
 
 
-def get_table_data(table, args, appends=[], removes=[]):
+def get_table_data(table, args, appends=[], removes=[], advance_search=None):
     page = args.get('page')
     current = args.get('current')
     size = args.get('size')
@@ -266,12 +266,20 @@ def get_table_data(table, args, appends=[], removes=[]):
 
     if page != 'true':
         if search:
-            table_data = base_sql.filter(and_(*_search(table, fields, search))).all()
+            filter_args = list()
+            filter_args.extend(_search(table, fields, search))
+            if advance_search is not None:
+                filter_args.extend(_advance_search(table, fields, advance_search))
+            table_data = base_sql.filter(and_(*filter_args)).all()
         else:
             table_data = base_sql.all()
     else:
         if search:
-            table_data = base_sql.filter(and_(*_search(table, fields, search))).offset((current - 1) * size).limit(
+            filter_args = list()
+            filter_args.extend(_search(table, fields, search))
+            if advance_search is not None:
+                filter_args.extend(_advance_search(table, fields, advance_search))
+            table_data = base_sql.filter(and_(*filter_args)).offset((current - 1) * size).limit(
                 size).all()
         else:
             if current > 0:
