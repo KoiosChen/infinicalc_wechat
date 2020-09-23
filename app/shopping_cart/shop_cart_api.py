@@ -125,7 +125,7 @@ class Pay(Resource):
 
             args['items_total_price'] = total_price
             args['score_used'] = score_used
-            kwargs['current_user'].total_point -= score_used
+            kwargs['current_user'].total_points -= score_used
             create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
             create_result = pay.create_order(**create_data)
 
