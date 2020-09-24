@@ -116,7 +116,6 @@ class Login(Resource):
         try:
             args = login_parser.parse_args()
             user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-
             wx_login = WxLogin(args['js_code'])
             response = wx_login.response
             response['shared_id'] = args.get('shared_id')

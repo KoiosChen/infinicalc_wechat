@@ -140,6 +140,7 @@ def __make_table(fields, table, strainer=None):
                                                'obj_type': value.thumbnails[0].obj_type}})
                 else:
                     tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
+            tmp1.sort(key=lambda x: x["obj_type"], reverse=True)
             tmp[f] = tmp1
         elif f == 'values':
             tmp1 = list()
