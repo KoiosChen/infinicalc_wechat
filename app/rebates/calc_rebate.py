@@ -177,7 +177,7 @@ def calc(shop_order_id, customer):
             newPersonalRebates(detail.get('id'), relation)
             for key in ('interest', 'invitor', 'parent'):
                 if key in detail.keys():
-                    newPersonalRebates(detail.get('id'), relation)
+                    newPersonalRebates(detail.get('id'), relation + ":" + key)
         return submit_return('记录订单返佣成功', '记录订单返佣失败')
     except Exception as e:
         return false_return(message=str(e))
