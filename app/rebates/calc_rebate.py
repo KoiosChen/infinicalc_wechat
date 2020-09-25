@@ -4,6 +4,7 @@ from collections import defaultdict
 from decimal import Decimal
 from app.public_method import new_data_obj, format_decimal
 from app.common import submit_return
+from app import logger
 import datetime
 import traceback
 
@@ -158,16 +159,16 @@ def checkout_rebates_ratio(customer, shop_order_id):
 
 
 def calc(shop_order_id, customer):
-    def newPersonalRebates(rebate_relation_id, relation):
+    def newPersonalRebates(rebate_relation_id, relation_):
         if 'rebate' in detail.keys() or 'score' in detail.keys():
             new_personal_rebate = new_data_obj('PersonalRebates',
                                                **{'shop_order_id': shop_order_id,
                                                   'customer_id': rebate_relation_id,
-                                                  "relation": relation,
+                                                  "relation": relation_,
                                                   'rebate': detail.get('rebate', 0.00),
                                                   'score': detail.get('score', 0)})
             if not new_personal_rebate or not new_personal_rebate.get('status'):
-                raise Exception('it is fail to create new personal rebate record')
+                logger.error('it is fail to create new personal rebate record')
 
     try:
         rebate_ratio = checkout_rebates_ratio(customer, shop_order_id)
