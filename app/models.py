@@ -748,7 +748,7 @@ class PersonalRebates(db.Model):
     score = db.Column(db.SmallInteger, default=0, comment='获赠的积分')
     status = db.Column(db.SmallInteger, default=0, comment='0: 不可提现（刚购买或者用户提出退货后） 1：可提现 2：已提现')
     # 创建日期过一定天数后才能体现
-    relation = db.Column(db.String(20), comment='返佣关系')
+    relation = db.Column(db.String(40), comment='返佣关系')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
