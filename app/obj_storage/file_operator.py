@@ -39,7 +39,7 @@ class OperateObject:
                                                    self.upload_object.stream if hasattr(self.upload_object,
                                                                                         'stream') else self.upload_object)
         if self.store_result['code'] != 'false':
-            self.store_result['obj_type'] = args['obj_type']
+            self.store_result['data']['obj_type'] = args['obj_type']
         logger.debug(self.store_result)
 
     def do_upload(self):
