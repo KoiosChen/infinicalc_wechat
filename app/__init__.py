@@ -174,4 +174,7 @@ def create_app(config_name):
     from .scene_invitation import scene_invitation as scene_invitation_blueprint
     app.register_blueprint(scene_invitation_blueprint)
 
+    from .wechat import wechat as wechat_blueprint
+    app.register_blueprint(wechat_blueprint)
+
     return app

@@ -7,6 +7,7 @@ from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
+from ..wechat.order_check import weixin_orderquery
 import datetime
 
 orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
@@ -120,3 +121,18 @@ class ShopOrderCancelApi(Resource):
 #                 raise Exception("新建退货单失败")
 #         except Exception as e:
 #             return false_return(message=str(e))
+
+
+@orders_ns.route('/wechat_pay/<string:order_id>')
+@orders_ns.expect(head_parser)
+@orders_ns.param("order_id", "订单编号")
+class OrderQuery(Resource):
+    @orders_ns.marshal_with(return_json)
+    @permission_required([Permission.USER, "app.order.order_query"])
+    def get(self, **kwargs):
+        """
+        获取订单状态
+        """
+        logger.debug(kwargs['order_id'])
+        return success_return(weixin_orderquery(kwargs['order_id']))
+
