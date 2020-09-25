@@ -1,4 +1,4 @@
-from app.models import Customers, MemberCards, ShopOrders, ItemsOrders, PersonalRebates, RETURN_IN_DAYS
+from app.models import Customers, MemberCards, ShopOrders, ItemsOrders, PersonalRebates, RETURN_IN_DAYS, make_uuid
 from app.common import success_return, false_return
 from collections import defaultdict
 from decimal import Decimal
@@ -88,7 +88,7 @@ def find_relationships(customer, member_type=1):
 
         return success_return(data=relationship_dict)
     except Exception as e:
-        return false_return(message=str(e)), 400
+        return false_return(message=str(e))
 
 
 def checkout_rebates_ratio(customer, shop_order_id):
@@ -161,7 +161,8 @@ def calc(shop_order_id, customer):
     def newPersonalRebates(rebate_relation_id):
         if 'rebate' in detail.keys() or 'score' in detail.keys():
             new_personal_rebate = new_data_obj('PersonalRebates',
-                                               **{'shop_order_id': shop_order_id,
+                                               **{'id': make_uuid(),
+                                                  'shop_order_id': shop_order_id,
                                                   'customer_id': rebate_relation_id,
                                                   'rebate': detail.get('rebate', 0.00),
                                                   'score': detail.get('score', 0)})
