@@ -158,12 +158,12 @@ def checkout_rebates_ratio(customer, shop_order_id):
 
 
 def calc(shop_order_id, customer):
-    def newPersonalRebates(rebate_relation_id):
+    def newPersonalRebates(rebate_relation_id, relation):
         if 'rebate' in detail.keys() or 'score' in detail.keys():
             new_personal_rebate = new_data_obj('PersonalRebates',
-                                               **{'id': make_uuid(),
-                                                  'shop_order_id': shop_order_id,
+                                               **{'shop_order_id': shop_order_id,
                                                   'customer_id': rebate_relation_id,
+                                                  "relation": relation,
                                                   'rebate': detail.get('rebate', 0.00),
                                                   'score': detail.get('score', 0)})
             if not new_personal_rebate or not new_personal_rebate.get('status'):
@@ -174,10 +174,10 @@ def calc(shop_order_id, customer):
         if rebate_ratio.get('code') != 'success':
             raise Exception('获取返佣比例失败')
         for relation, detail in rebate_ratio['data'].items():
-            newPersonalRebates(detail.get('id'))
+            newPersonalRebates(detail.get('id'), relation)
             for key in ('interest', 'invitor', 'parent'):
                 if key in detail.keys():
-                    newPersonalRebates(detail.get('id'))
+                    newPersonalRebates(detail.get('id'), relation)
         return submit_return('记录订单返佣成功', '记录订单返佣失败')
     except Exception as e:
         return false_return(message=str(e))
