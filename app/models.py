@@ -74,6 +74,11 @@ cargo_obj = db.Table('cargo_obj',
                      db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
                      db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+refund_images = db.Table('refund_images',
+                         db.Column('refund_id', db.String(64), db.ForeignKey('refund.id'), primary_key=True),
+                         db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
+                         db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 sku_shoporders = db.Table('sku_shoporders',
                           db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
                           db.Column('shoporders_id', db.String(64), db.ForeignKey('shop_orders.id'), primary_key=True),
@@ -1145,6 +1150,11 @@ class Refund(db.Model):
     auditor = db.Column(db.String(64), db.ForeignKey('customers.id'))
     express_no = db.Column(db.String(100), comment='快递单号')
     item_order_id = db.Column(db.String(64), db.ForeignKey('items_orders.id'))
+    images = db.relationship(
+        'ObjStorage',
+        secondary=refund_images,
+        backref=db.backref('refunds')
+    )
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
