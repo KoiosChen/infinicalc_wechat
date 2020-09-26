@@ -90,7 +90,7 @@ def update_it(data):
             else:
                 res = '此订单无关联商品订单'
         else:
-            res = "error: pay failed! "
+            res = "ERROR: pay failed! "
             # 更新订单，把错误信息更新到订单中
             order.is_pay = 2
             order.pay_err_code = data['err_code']  # 错误代码
