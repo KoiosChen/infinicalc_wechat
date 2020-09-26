@@ -83,8 +83,8 @@ class Pay(Resource):
         """点击支付后，提交此接口"""
         try:
             args = pay_parser.parse_args()
-            if args.get('express_addr_id'):
-                addr = ExpressAddress.query.get(args.pop("express_addr_id"))
+            addr = ExpressAddress.query.get(args.pop("express_addr_id"))
+            if addr:
                 args['express_address'] = str(addr.address1) + str(addr.address2)
                 args['express_postcode'] = addr.postcode
                 args['express_recipient'] = addr.recipient
