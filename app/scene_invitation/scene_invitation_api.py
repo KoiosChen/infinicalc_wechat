@@ -78,10 +78,10 @@ class SceneInvitationApi(Resource):
 
             params = {k: v for k, v in args.items() if v}
             if not params:
-                params['name'] = f"一次性邀请码（{datetime.datetime.now()}）"
+                params['name'] = "永久"
                 params['start_at'] = datetime.datetime.now()
-                params['end_at'] = datetime.datetime.now() + datetime.timedelta(hours=24)
-                params['max_invitees'] = 1
+                params['end_at'] = datetime.datetime.now() + datetime.timedelta(days=36500)
+                params['max_invitees'] = 0
 
             params['tobe_type'] = 1
             params['tobe_level'] = 2
@@ -95,8 +95,8 @@ class SceneInvitationApi(Resource):
                     params['interest_customer_id'] = kwargs['current_user'].id
                 elif user_grade == 2:
                     params['interest_customer_id'] = kwargs['current_user'].interest_id
-            if SceneInvitation.query.filter(SceneInvitation.name.__eq__(args['name'])).first():
-                raise Exception("邀请码名称重复")
+            # if SceneInvitation.query.filter(SceneInvitation.name.__eq__(args['name'])).first():
+            #     raise Exception("邀请码名称重复")
             flag = True
             while flag:
                 code_ = generate_code()
