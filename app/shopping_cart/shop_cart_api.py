@@ -131,12 +131,21 @@ class Pay(Resource):
 
             args['items_total_price'] = total_price
             args['score_used'] = score_used
-            kwargs['current_user'].total_points -= score_used
             create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
-            create_result = pay.create_order(**create_data)
+            # 先扣除用户积分
+            if score_used > kwargs['current_user'].total_points:
+                # 如果用户填写的积分在某种情况下大于用户自己总积分，则score_used置为用户总积分
+                score_used = kwargs['current_user'].total_points
 
+            kwargs['current_user'].total_points -= score_used
+            session_commit()
+
+            create_result = pay.create_order(**create_data)
             if create_result.get("code") == "false":
+                kwargs['current_user'].total_points += score_used
+                session_commit()
                 return create_result
+
             out_trade_no = create_result.get("data")
             return pay.weixin_pay(out_trade_no=out_trade_no, price=total_price - score_used,
                                   openid=kwargs['current_user'].openid)
