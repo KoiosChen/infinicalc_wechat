@@ -78,7 +78,7 @@ class SceneInvitationApi(Resource):
 
             params = {k: v for k, v in args.items() if v}
             if not params:
-                params['name'] = "永久"
+                params['name'] = "永久二维码"
                 params['start_at'] = datetime.datetime.now()
                 params['end_at'] = datetime.datetime.now() + datetime.timedelta(days=36500)
                 params['max_invitees'] = 0
