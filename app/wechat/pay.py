@@ -153,7 +153,7 @@ def create_order(**kwargs):
                     item_obj = ShoppingCart.query.get(item)
                     if not item_obj:
                         raise Exception(f"购物车中{item}不存在")
-                    sku = item_obj.desire_skus
+                    sku = item_obj.desire_sku
                     if not sku or not sku.status or sku.delete_at:
                         raise Exception(f"购物车对应商品不存在")
 

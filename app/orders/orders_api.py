@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund, SKU
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, SKU, ObjStorage
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, order_cancel
@@ -9,6 +9,7 @@ from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 from ..wechat.order_check import weixin_orderquery
 import datetime
+from decimal import Decimal
 
 orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
 
@@ -28,6 +29,7 @@ cancel_parser = reqparse.RequestParser()
 cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择，不要填写')
 
 order_page_parser = page_parser.copy()
+order_page_parser.add_argument("is_pay", type=int, help='查询支付状态')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
@@ -35,7 +37,7 @@ refund_parser.add_argument("collect_addr", required=True, help="取件地址")
 refund_parser.add_argument("refund_reason", required=True,
                            choices=["商品损坏", "缺少件", "发错货", "商品与页面不相符", "商品降价", "不想要了", "质量问题", "其他"], help="退货原因")
 refund_parser.add_argument("refund_desc", required=True, help='问题描述, 不超过200字符')
-refund_parser.add_argument("images", type=list, location='json', help='前端限制最多传3张')
+refund_parser.add_argument("images", type=list, location='json', help='退货商品图片，前端限制最多传3张')
 
 refund_auditor_parser = reqparse.RequestParser()
 refund_auditor_parser.add_argument("audit_result", required=True, help="审核结果")
@@ -49,9 +51,28 @@ class ShopOrdersApi(Resource):
     @orders_ns.doc(body=order_page_parser)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
+        """获取当前登录用户账户下所有订单，按照创建时间倒序"""
         args = order_page_parser.parse_args()
         args['search'] = {'customer_id': kwargs.get('current_user').id}
         data = get_table_data(ShopOrders, args, ['items_orders'])
+        table = data['records']
+        table.sort(key=lambda x: x['create_at'], reverse=True)
+        return success_return(data=data)
+
+
+@orders_ns.route('/all')
+@orders_ns.expect(head_parser)
+class AllShopOrdersApi(Resource):
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=order_page_parser)
+    @permission_required("app.orders.all_shop_orders")
+    def get(self, **kwargs):
+        """后台管理员获取所有订单，按照创建时间倒序， 返回值中customer_info是下订单用户的用户信息"""
+        args = order_page_parser.parse_args()
+        args['search'] = dict()
+        if args.get("is_pay"):
+            args['search']['is_pay'] = args['is_pay']
+        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'])
         table = data['records']
         table.sort(key=lambda x: x['create_at'], reverse=True)
         return success_return(data=data)
@@ -63,12 +84,16 @@ class ShopOrderPayApi(Resource):
     @orders_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
     def post(self, **kwargs):
-        """提交支付"""
+        """若在购物车提交支付失败，或者支付中取消，可在订单管理中调用此接口进行支付"""
         try:
             order = ShopOrders.query.get(kwargs['shop_order_id'])
             if not order:
                 raise Exception(f"{kwargs['shop_order_id']} 不存在")
-            return weixin_pay(kwargs['shop_order_id'], order.items_total_price - order.score_used,
+            if order.coupon_used:
+                coupon_reduce = order.coupon_used.coupon_setting.promotion.benefits[0].reduce_amount
+            else:
+                coupon_reduce = Decimal("0.00")
+            return weixin_pay(kwargs['shop_order_id'], order.items_total_price - order.score_used - coupon_reduce,
                               kwargs['current_user'].openid)
         except Exception as e:
             return false_return(message=f"weixin pay failed: {str(e)}")
@@ -85,42 +110,46 @@ class ShopOrderCancelApi(Resource):
         args = cancel_parser.parse_args()
         return order_cancel(args.get('cancel_reason'), kwargs['shop_order_id'])
 
-# @orders_ns.route('/<string:item_order_id>/refund')
-# @orders_ns.expect(head_parser)
-# class ShopOrderRefundApi(Resource):
-#     @orders_ns.marshal_with(return_json)
-#     @orders_ns.doc(body=order_page_parser)
-#     @permission_required([Permission.USER, "app.shop_orders.refund.get"])
-#     def get(self, **kwargs):
-#         """获取某个商品订单的退货申请"""
-#         args = order_page_parser.parse_args()
-#         args['search'] = {"item_order_id": kwargs['item_order_id'], "delete_at": None}
-#         return success_return(get_table_data(Refund, args))
-#
-#     @orders_ns.marshal_with(return_json)
-#     @orders_ns.doc(body=refund_parser)
-#     @permission_required(Permission.USER)
-#     def post(self, **kwargs):
-#         """针对某个商品订单提交申请退货"""
-#         try:
-#             args = refund_parser.parse_args()
-#             images = args.pop('images')
-#
-#             item_order = ItemsOrders.query.get(kwargs['item_order_id'])
-#             if not item_order:
-#                 raise Exception(f"{kwargs['item_order_id']}不存在")
-#             if item_order.status != 1:
-#                 raise Exception(f"当前{item_order.status}不可退货")
-#             args['item_order_id'] = kwargs['item_order_id']
-#             new_refund = new_data_obj("Refund", **args)
-#
-#             if new_refund and new_refund.get('status'):
-#                 item_order.status = 3
-#                 return submit_return("退货申请成功", "退货申请失败")
-#             else:
-#                 raise Exception("新建退货单失败")
-#         except Exception as e:
-#             return false_return(message=str(e))
+
+@orders_ns.route('/<string:item_order_id>/refund')
+@orders_ns.expect(head_parser)
+class ItemOrderRefundApi(Resource):
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=order_page_parser)
+    @permission_required([Permission.USER, "app.shop_orders.refund.get"])
+    def get(self, **kwargs):
+        """获取某个商品订单的退货申请"""
+        args = order_page_parser.parse_args()
+        args['search'] = {"item_order_id": kwargs['item_order_id'], "delete_at": None}
+        return success_return(get_table_data(Refund, args))
+
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=refund_parser)
+    @permission_required(Permission.USER)
+    def post(self, **kwargs):
+        """针对某个商品订单提交申请退货"""
+        try:
+            args = refund_parser.parse_args()
+            images = args.pop('images')
+
+            item_order = ItemsOrders.query.get(kwargs['item_order_id'])
+            if not item_order:
+                raise Exception(f"{kwargs['item_order_id']}不存在")
+            if item_order.status != 1:
+                raise Exception(f"当前{item_order.status}不可退货")
+            args['item_order_id'] = kwargs['item_order_id']
+            new_refund = new_data_obj("Refund", **args)
+
+            if new_refund and new_refund.get('status'):
+                item_order.status = 3
+                if images:
+                    for image in images:
+                        new_refund.images.append(ObjStorage.query.get(image))
+                return submit_return("退货申请成功", "退货申请失败")
+            else:
+                raise Exception("新建退货单失败")
+        except Exception as e:
+            return false_return(message=str(e))
 
 
 @orders_ns.route('/wechat_pay/<string:order_id>')
@@ -131,8 +160,7 @@ class OrderQuery(Resource):
     @permission_required([Permission.USER, "app.order.order_query"])
     def get(self, **kwargs):
         """
-        获取订单状态
+        调用微信order_query接口，手工获取订单状态
         """
         logger.debug(kwargs['order_id'])
         return success_return(weixin_orderquery(kwargs['order_id']))
-

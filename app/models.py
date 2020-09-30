@@ -736,7 +736,7 @@ class SKU(db.Model):
     )
     purchase_info = db.relationship('PurchaseInfo', backref='purchase_sku', lazy='dynamic')
     sku_layout = db.relationship('SKULayout', backref='layout_sku', lazy='dynamic')
-    shopping_cart = db.relationship('ShoppingCart', backref='desire_skus', lazy='dynamic')
+    shopping_cart = db.relationship('ShoppingCart', backref='desire_sku', lazy='dynamic')
     sku_orders = db.relationship("ItemsOrders", backref='bought_sku', lazy='dynamic')
 
 
@@ -806,8 +806,8 @@ class Coupons(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     coupon_sent = db.relationship("CouponReady", backref='coupon_setting', lazy='dynamic')
-    promotions = db.relationship("Promotions", backref='coupons', lazy='dynamic')
-    skus = db.relationship("SKU", backref='could_get_coupon', lazy='dynamic')
+    promotion = db.relationship("Promotions", backref='coupon', uselist=False)
+    coupon_for_sku = db.relationship("SKU", backref='could_get_coupon', uselist=False)
 
 
 class CouponReady(db.Model):
@@ -815,6 +815,7 @@ class CouponReady(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     coupon_id = db.Column(db.String(64), db.ForeignKey('coupons.id'))
     status = db.Column(db.SmallInteger, default=1, comment="0: 作废，1：已领取未使用，2：已使用")
+    order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
     take_at = db.Column(db.DateTime, default=datetime.datetime.now)
     use_at = db.Column(db.DateTime)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -851,6 +852,7 @@ class ShopOrders(db.Model):
     items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='cargo_order', lazy='dynamic')
     packing_order = db.relationship("PackingItemOrders", backref='packing_item_order', lazy='dynamic')
+    coupon_used = db.relationship("CouponReady", backref='order_using_coupon', uselist=False)
     message = db.Column(db.String(500), comment='用户留言')
     cancel_reason = db.Column(db.String(64), comment='取消原因，给用户下拉选择')
     invoice_type = db.Column(db.SmallInteger, default=0, comment="0: 个人 1: 企业")
@@ -882,7 +884,7 @@ class ItemsOrders(db.Model):
     update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
-    refund_order = db.relationship("Refund", backref='item_orders', lazy='dynamic')
+    refund_order = db.relationship("Refund", backref='item_order', uselist=False)
 
 
 class ExpressAddress(db.Model):
@@ -1014,6 +1016,7 @@ class Promotions(db.Model):
     name = db.Column(db.String(64), comment="促销活动名称", unique=True, index=True)
     first_order = db.Column(db.SmallInteger, default=0, comment='0: 不是首单，1: 首单, 用户首单参加活动')
     reject_coupon = db.Column(db.SmallInteger, default=0, comment='是否排斥优惠券，默认0不排斥，1排斥')
+    reject_score = db.Column(db.SmallInteger, default=0, comment='是否排斥积分，默认0不排斥，1排斥')
     customer_level = db.Column(db.SmallInteger, default=1, comment='用户等级，1为最低')
     gender = db.Column(db.SmallInteger, default=0, comment='参与的性别，默认为0， 1为男性、2为女性')
     age_min = db.Column(db.SmallInteger, default=0, comment='参与最小年龄，默认为0')
@@ -1155,6 +1158,9 @@ class Refund(db.Model):
         secondary=refund_images,
         backref=db.backref('refunds')
     )
+    refund_id = db.Column(db.String(32), comment='微信退款单号')
+    refund_fee = db.Column(db.Integer, comment='退款总金额,单位为分,可以做部分退款')
+    cash_refund_fee = db.Column(db.Integer, comment='现金退款金额，单位为分，只能为整数')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1165,6 +1171,10 @@ aes_key = 'koiosr2d2c3p0000'
 PermissionIP = redis_db.lrange('permission_ip', 0, -1)
 
 PATH_PREFIX = os.path.abspath(os.path.dirname(__file__))
+
+CERT_PATH = PATH_PREFIX + '/cert/apiclient_cert.pem'
+
+KEY_PATH = PATH_PREFIX + '/cert/apiclient_key.pem'
 
 CONFIG_FILE_PATH = PATH_PREFIX + 'config_file/'
 

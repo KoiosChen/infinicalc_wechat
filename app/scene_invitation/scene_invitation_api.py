@@ -38,6 +38,41 @@ def generate_code(code_len=8):
     return salt
 
 
+@scene_invite_ns.route('/forever_qrcode')
+@scene_invite_ns.expect(head_parser)
+class ForeverInvitationApi(Resource):
+    @scene_invite_ns.marshal_with(return_json)
+    @permission_required(Permission.MEMBER)
+    def get(self, **kwargs):
+        """
+        获取本人永久邀请码
+        """
+        invite_qrcode = SceneInvitation.query.filter(SceneInvitation.end_at.__ge__("2100-01-01 00:00:00"),
+                                                     SceneInvitation.max_invitees.__eq__(0)).first()
+        if not invite_qrcode:
+            params = dict()
+            params['name'] = "永久二维码"
+            params['start_at'] = datetime.datetime.now()
+            params['end_at'] = datetime.datetime.now() + datetime.timedelta(days=36500)
+            params['max_invitees'] = 0
+            params['tobe_type'] = 1
+            params['tobe_level'] = 2
+
+            flag = True
+            while flag:
+                code_ = generate_code()
+                if not SceneInvitation.query.filter(SceneInvitation.code.__eq__(code_)).first():
+                    params['code'] = code_
+                    new_invitation = new_data_obj("SceneInvitation", **params)
+                    if not new_invitation:
+                        raise Exception("生成邀请码失败")
+                    flag = False
+                    session_commit()
+                    invite_qrcode = new_invitation['obj']
+
+        return success_return(data=invite_qrcode.code)
+
+
 @scene_invite_ns.route('')
 @scene_invite_ns.expect(head_parser)
 class SceneInvitationApi(Resource):
@@ -61,7 +96,9 @@ class SceneInvitationApi(Resource):
                 max_check = qr['max_invitees'] > qr['my_invitees']
             else:
                 max_check = True
-            validate_time = datetime.datetime.strptime(qr['start_at'], "%Y-%m-%d %H:%M:%S") <= datetime.datetime.now() <= datetime.datetime.strptime(qr['end_at'], "%Y-%m-%d %H:%M:%S")
+            validate_time = datetime.datetime.strptime(qr['start_at'],
+                                                       "%Y-%m-%d %H:%M:%S") <= datetime.datetime.now() <= datetime.datetime.strptime(
+                qr['end_at'], "%Y-%m-%d %H:%M:%S")
             if max_check and validate_time:
                 return_result['records'].append(qr)
             else:

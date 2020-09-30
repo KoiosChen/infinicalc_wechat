@@ -1,18 +1,20 @@
 from flask_restplus import Resource, reqparse
+from .check_out import checkout_cart, check_out
 from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Benefits, ExpressAddress, make_order_id, \
-    PackingItemOrders
-from .. import db, redis_db, default_api, logger
+    PackingItemOrders, CouponReady
+from .. import db, default_api, logger
 from ..common import success_return, false_return, session_commit, nesteddict, submit_return
 from ..public_method import calc_sku_price
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-from app.type_validation import checkout_sku_type
 from collections import defaultdict
 import datetime
 from decimal import Decimal
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from app.public_method import get_table_data_by_id
 from app.wechat import pay
+from app.shopping_cart.check_out import check_promotions_base_police
+import traceback
 
 shopping_cart_ns = default_api.namespace('Shopping Cart', path='/shopping_cart', description='购物车API')
 
@@ -34,6 +36,7 @@ pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分�
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("shopping_cart_id", type=list, help="传选中的shopping_cart表的id", location='json')
+pay_parser.add_argument("coupon_used", type=list, help='选中使用的优惠券id', location='json')
 pay_parser.add_argument("packing_order", help='当在分装流程中，传递预分配的分装ID，不用传select_items；正常订单，只传select_items，不传packing_order')
 pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
 pay_parser.add_argument("invoice_title", help='发票抬头， 如果invoice_type为1，显示此input框')
@@ -42,35 +45,6 @@ pay_parser.add_argument("inovice_email", help="发票")
 
 shopping_cart_parser = page_parser.copy()
 shopping_cart_parser.add_argument('packing_order', help='若是分装流程，获取购物车页面需传递此参数; 否则不传，或者为空', location='args')
-
-
-def checkout_cart(**args):
-    express_addr = 0
-    # 总的可用的积分数量
-    total_score = 0
-    total_price = Decimal("0.00")
-    customer = args.pop('customer')
-    shop_cart_ids = args['shopping_cart_id']
-    for cart_id in shop_cart_ids:
-        cart_obj = ShoppingCart.query.filter_by(id=cart_id, customer_id=customer.id).first()
-        if not cart_obj or cart_obj.delete_at:
-            raise Exception(f"用户ID<{customer.id}>无购物车id<{cart_id}>")
-
-        sku = cart_obj.desire_skus
-        if not sku or not sku.status or sku.delete_at:
-            raise Exception(f"购物车id<{cart_id}>对应的sku不存在或已下架")
-
-        if sku.need_express:
-            express_addr = 1
-
-        # 若可以使用积分，则取整sku价格，目前没有促销活动，只有price和member_price两种
-        sku_price = calc_sku_price(customer, sku)
-        if sku.score_type:
-            total_score += int(sku.max_score) * cart_obj.quantity
-
-        # 计算总价
-        total_price += Decimal(sku_price) * cart_obj.quantity
-    return total_price.quantize(Decimal("0.00")), total_score, express_addr
 
 
 @shopping_cart_ns.route('/pay')
@@ -83,6 +57,13 @@ class Pay(Resource):
         """点击支付后，提交此接口"""
         try:
             args = pay_parser.parse_args()
+            coupon_ready_to_use = args.pop('coupon_used')
+            args['customer_id'] = kwargs['current_user'].id
+            args['id'] = make_order_id()
+            packing_order = args.get("packing_order")
+            logger.debug(f">>> args in shopping_cart::pay is {args}")
+
+            # 判断地址是否有效
             addr = ExpressAddress.query.get(args.pop("express_addr_id"))
             if addr:
                 args['express_address'] = str(addr.address1) + str(addr.address2)
@@ -94,11 +75,8 @@ class Pay(Resource):
                 args['express_postcode'] = ""
                 args['express_recipient'] = ""
                 args['express_recipient_phone'] = ""
-            args['customer_id'] = kwargs['current_user'].id
-            args['id'] = make_order_id()
-            packing_order = args.get("packing_order")
-            logger.debug(f">>> args in shopping_cart::pay is {args}")
-            # 若是分装流程
+
+            # 若是分装流程，通过packing_order来获取对应的shopping_cart
             if packing_order:
                 the_packing_order = PackingItemOrders.query.get(packing_order)
                 the_packing_order.packing_at = datetime.datetime.now()
@@ -107,18 +85,20 @@ class Pay(Resource):
                                 ShoppingCart.query.filter_by(packing_item_order=args.get("packing_order")).all()]
                 select_obj = ShoppingCart.query.filter_by(packing_item_order=args.pop("packing_order")).all()
                 for si in select_obj:
-                    if si.desire_skus.special == 32:
+                    if si.desire_sku.special == 32:
                         the_packing_order.consumption = Decimal(str(si.quantity)) * Decimal(str(0.5)) * Decimal(
                             str(0.9255))
                 db.session.commit()
 
             else:
                 select_items = args.pop('shopping_cart_id')
+                select_obj = [ShoppingCart.query.get(sc_id) for sc_id in select_items]
 
-            for i in select_items:
-                if ShoppingCart.query.get(i).delete_at:
-                    raise Exception(f"购物车订单{i}已删除")
-            total_price, total_score, express_addr = checkout_cart(
+            for i in select_obj:
+                if i.delete_at:
+                    raise Exception(f"购物车订单{i.id}已删除")
+
+            total_price, total_score, express_addr, sku_statistic = checkout_cart(
                 **{"shopping_cart_id": select_items, 'customer': kwargs['current_user']})
 
             score_used = args.get('score_used') if args.get('score_used') else 0
@@ -128,6 +108,30 @@ class Pay(Resource):
 
             if not express_addr and addr:
                 raise Exception("此订单货物都不可快递")
+
+            # 再次检查优惠券是否有效，满足使用规则
+            if coupon_ready_to_use:
+                for used_coupon in coupon_ready_to_use:
+                    used_coupon_obj = CouponReady.query.filter(CouponReady.id.__eq__(used_coupon),
+                                                               CouponReady.status.__eq__(1),
+                                                               CouponReady.use_at.__eq__(None),
+                                                               CouponReady.order_id.__eq__(None)).first()
+                    if not used_coupon_obj:
+                        raise Exception(f"优惠券<{used_coupon}>已使用")
+
+                    sku_ = CouponReady.query.get(used_coupon).coupon_setting.promotion.sku[0]
+                    if sku_.id not in [s.sku_id for s in select_obj]:
+                        raise Exception("优惠券关联的sku与提交购买的sku不付")
+
+                    # 再次检测是否优惠券是否满足促销活动基础规则
+                    checked_coupon, _, _ = check_promotions_base_police(kwargs.get('current_user'), sku_)
+                    if not checked_coupon:
+                        raise Exception(f"优惠券{used_coupon.id}不符合用户{kwargs.get('current_user').id}")
+
+                    if used_coupon_obj.coupon_setting.promotion.benefits[0].with_amount > sku_statistic[sku_.id].get(
+                            'total_price'):
+                        raise Exception(
+                            f"当前购买的sku<{sku_.id}>, 总价<{sku_statistic[sku_.id].get('total_price')}>, 未满选择的优惠券<{used_coupon_obj.id}>满减价格")
 
             args['items_total_price'] = total_price
             args['score_used'] = score_used
@@ -145,12 +149,33 @@ class Pay(Resource):
                 kwargs['current_user'].total_points += score_used
                 session_commit()
                 return create_result
-
             out_trade_no = create_result.get("data")
-            return pay.weixin_pay(out_trade_no=out_trade_no, price=total_price - score_used,
-                                  openid=kwargs['current_user'].openid)
+            # 生成订单后检查时候有优惠券，检查优惠券有效性，同时把有效的优惠券关联至对应的订单
+            coupon_count = list()
+            coupon_reduce_price = 0
+            if coupon_ready_to_use:
+                for used_coupon in coupon_ready_to_use:
+                    sku_ = CouponReady.query.get(used_coupon).coupon_setting.promotion.sku[0]
+                    ready_coupon = CouponReady.query.get(used_coupon)
+
+                    if sku_.id not in coupon_count:
+                        coupon_count.append(sku_.id)
+                        ready_coupon.order_id = out_trade_no
+                        ready_coupon.use_at = datetime.datetime.now()
+                        ready_coupon.status = 2
+                        coupon_reduce_price += ready_coupon.coupon_setting.promotion.benefits[0].reduced_amount
+                    else:
+                        raise Exception("同一商品只能使用一张优惠券")
+
+            # 实际支付费用等于总价减去积分减去优惠券抵扣
+            pay_price = total_price - score_used - coupon_reduce_price
+
+            session_commit()
+
+            return pay.weixin_pay(out_trade_no=out_trade_no, price=pay_price, openid=kwargs['current_user'].openid)
 
         except Exception as e:
+            traceback.print_exc()
             return false_return(message=str(e)), 400
 
 
@@ -164,25 +189,7 @@ class CheckOut(Resource):
         """点击 ‘去结算’ 计算可用积分总数及总价，进入结算页"""
         args = checkout_parser.parse_args()
         args['customer'] = kwargs['current_user']
-        try:
-            total_price, total_score, express_addr = checkout_cart(**args)
-            sku = list()
-            for cart_id in args['shopping_cart_id']:
-                cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
-                the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
-                                               ['price', 'member_price', 'discount', 'content', 'seckill_price',
-                                                'score_type', 'max_score'])
-                the_sku['quantity'] = cart.quantity
-                the_sku['shopping_cart_id'] = cart_id
-                sku.append(the_sku)
-            return success_return(
-                {"total_score": str(total_score),
-                 "total_price": str(total_price),
-                 "express_addr": express_addr,
-                 "sku": sku},
-                'express_addr为0，表示此订单中没有需要快递的商品')
-        except Exception as e:
-            return false_return(message=str(e)), 400
+        return check_out(args, kwargs)
 
 
 @shopping_cart_ns.route('/packing_checkout')
@@ -198,25 +205,7 @@ class PackingCheckOut(Resource):
         packing_order_id = args.pop('packing_order')
         args['shopping_cart_id'] = [sc.id for sc in
                                     ShoppingCart.query.filter_by(packing_item_order=packing_order_id).all()]
-        try:
-            total_price, total_score, express_addr = checkout_cart(**args)
-            sku = list()
-            for cart_id in args['shopping_cart_id']:
-                cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
-                the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
-                                               ['price', 'member_price', 'discount', 'content', 'seckill_price',
-                                                'score_type', 'max_score'])
-                the_sku['quantity'] = cart.quantity
-                the_sku['shopping_cart_id'] = cart_id
-                sku.append(the_sku)
-            return success_return(
-                {"total_score": total_score,
-                 "total_price": str(total_price.quantize(Decimal("0.00"))),
-                 "express_addr": express_addr,
-                 "sku": sku},
-                'express_addr为0，表示此订单中没有需要快递的商品')
-        except Exception as e:
-            return false_return(message=str(e)), 400
+        return check_out(args, kwargs)
 
 
 @shopping_cart_ns.route('/<string:shopping_cart_id>')

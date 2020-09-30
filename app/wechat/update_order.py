@@ -40,7 +40,7 @@ def update_it(data):
                 order.pay_time = pay_time
                 order.transaction_id = transaction_id
 
-                # 封坛记录，生成封坛订单
+                # 商品订单处理
                 for item_order in items:
                     item_order.status = 1
                     if item_order.special == 31:
@@ -81,11 +81,11 @@ def update_it(data):
                 calc_result = calc_rebate.calc(order.id, order.consumer)
                 if calc_result.get('code') != 'success':
                     res = calc_result.get('message')
+                    logger.error(f"订单<{order.id}>返佣结果{res}")
 
                 if res == 'success':
-                    if session_commit().get("code") == 'success':
-                        res = 'success'
-                    else:
+                    if session_commit().get("code") != 'success':
+                        logger.error(f"订单<{order.id}>返佣结果数据提交失败")
                         res = '数据提交失败'
             else:
                 res = '此订单无关联商品订单'
