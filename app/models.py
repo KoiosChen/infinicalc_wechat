@@ -136,7 +136,7 @@ new_customer_awards_coupons = db.Table('new_customer_awards_coupons',
                                        db.Column('new_customer_awards_id',
                                                  db.String(64), db.ForeignKey('new_customer_awards.id'),
                                                  primary_key=True),
-                                       db.Column('coupons_id', db.String(64), db.ForeignKey('coupons.id'),
+                                       db.Column('awards_coupon_id', db.String(64), db.ForeignKey('coupons.id'),
                                                  primary_key=True),
                                        db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
