@@ -92,7 +92,7 @@ class AddPromotions:
                 setattr(new_coupon['obj'], 'valid_days', self.args.get('valid_days'))
             elif self.args.get('valid_type') not in (1, 2):
                 return false_return(message=f"valid_type 错误")
-            obj.coupons = new_coupon['obj']
+            obj.coupon = new_coupon['obj']
             return submit_return('create coupon setting success', "create coupon fail")
         else:
             return false_return(message=f"coupon already exist"), 400

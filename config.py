@@ -59,7 +59,7 @@ class ProductionConfig(Config):
 
     JOBS = [
         {
-            'id': 'check_order',
+            'id': 'check_orders',
             'func': 'app.app_schedule:check_orders',
             'args': (),
             'trigger': 'interval',

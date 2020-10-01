@@ -6,7 +6,7 @@ from ..public_method import new_data_obj, table_fields, get_table_data, get_tabl
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
-from ..wechat.pay import weixin_pay
+from ..wechat.refund import weixin_refund
 import datetime
 
 refund_ns = default_api.namespace('Refund', path='/refund', description='退货定单相关API')
@@ -51,12 +51,12 @@ class RefundByID(Resource):
         try:
             args = refund_auditor_parser.parse_args()
             refund_order = Refund.query.filter(Refund.id == kwargs['refund_id'], Refund.status == 1,
-                                                  Refund.delete_at==None).first()
+                                               Refund.delete_at == None).first()
             if not refund_order:
                 raise Exception(f"退货订单{kwargs['refund_id']}不存在, 或者状态不可退货")
 
             item_order = ItemsOrders.query.filter(ItemsOrders.id == refund_order.item_order_id,
-                                                     ItemsOrders.status==3, ItemsOrders.delete_at==None).first()
+                                                  ItemsOrders.status == 3, ItemsOrders.delete_at == None).first()
             if not item_order:
                 raise Exception(f"商品订单{refund_order.item_order_id}不存在, 或者状态不可退货")
 
@@ -71,3 +71,9 @@ class RefundByID(Resource):
             return submit_return("审核修改成功", "审核修改失败")
         except Exception as e:
             return false_return(message=str(e)), 400
+
+    @refund_ns.marshal_with(return_json)
+    @permission_required("app.refund.post_weixin_refund_query")
+    def post(self, **kwargs):
+        """请求微信退款接口"""
+        return success_return(weixin_refund(kwargs['refund_id']))
