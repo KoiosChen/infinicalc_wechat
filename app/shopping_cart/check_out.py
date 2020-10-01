@@ -6,6 +6,7 @@ from app.public_method import get_table_data_by_id
 from app import logger
 import datetime
 from collections import defaultdict
+import traceback
 
 
 def checkout_cart(**args):
@@ -92,7 +93,7 @@ def check_promotions_base_police(customer, sku):
 def check_out(args, kwargs):
     customer = args['customer']
     try:
-        total_price, total_score, express_addr = checkout_cart(**args)
+        total_price, total_score, express_addr, sku_statistic = checkout_cart(**args)
         sku = list()
         reject_score_flag = 0
         force_use_coupon = 0
@@ -121,7 +122,8 @@ def check_out(args, kwargs):
                         if not datetime.datetime.now() - customer_coupon.take_at > datetime.timedelta(
                                 days=customer_coupon.coupon_setting.valid_days):
                             continue
-                    if cart.quantity * Decimal(the_sku['real_price']) >= coupons_setting.promotion.benefits[0].with_amount:
+                    if cart.quantity * Decimal(the_sku['real_price']) >= coupons_setting.promotion.benefits[
+                        0].with_amount:
                         could_use_coupons[coupons_setting.promotion.sku[0].id].append({"name": coupons_setting.name,
                                                                                        "desc": coupons_setting.desc,
                                                                                        "coupon_id": customer_coupon.id,
@@ -147,4 +149,5 @@ def check_out(args, kwargs):
              "coupons": could_use_coupons},
             'express_addr为0，表示此订单中没有需要快递的商品')
     except Exception as e:
+        traceback.print_exc()
         return false_return(message=str(e)), 400
