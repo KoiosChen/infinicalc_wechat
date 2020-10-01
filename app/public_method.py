@@ -205,6 +205,8 @@ def __make_table(fields, table, strainer=None):
                 f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
+        elif f == 'customer_info':
+            tmp[f] = get_table_data_by_id(Customers, table.customer_id)
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
