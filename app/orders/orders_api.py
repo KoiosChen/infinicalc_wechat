@@ -29,7 +29,7 @@ cancel_parser = reqparse.RequestParser()
 cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择，不要填写')
 
 order_page_parser = page_parser.copy()
-order_page_parser.add_argument("is_pay", type=int, help='查询支付状态')
+order_page_parser.add_argument("is_pay", type=int, help='查询支付状态', location='args')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
