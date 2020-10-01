@@ -1166,6 +1166,28 @@ class Refund(db.Model):
     delete_at = db.Column(db.DateTime)
 
 
+class NewCustomerAwards(db.Model):
+    """
+    新注册用户奖励
+    """
+    __tablename__ = "new_customer_awards"
+    id = db.Column(db.Integer, primary_key=True)
+    score = db.Column(db.SmallInteger, default=0, comment='新用户奖励积分')
+    coupon = db.Column(db.String(64), db.ForeignKey('coupons.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+
+
+class Advertisements(db.Model):
+    """
+    页面广告
+    """
+    __tablename__ = "advertisements"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), index=True, comment='广告名称')
+
+
+
 aes_key = 'koiosr2d2c3p0000'
 
 PermissionIP = redis_db.lrange('permission_ip', 0, -1)
