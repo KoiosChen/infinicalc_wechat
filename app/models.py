@@ -132,6 +132,14 @@ scene_member_cards = db.Table('scene_member_cards',
                                         primary_key=True),
                               db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+new_customer_awards_coupons = db.Table('new_customer_awards_coupons',
+                                       db.Column('new_customer_awards_id',
+                                                 db.String(64), db.ForeignKey('new_customer_awards.id'),
+                                                 primary_key=True),
+                                       db.Column('coupons_id', db.String(64), db.ForeignKey('coupons.id'),
+                                                 primary_key=True),
+                                       db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 
 class Permission:
     READER = 0x01
@@ -1086,6 +1094,7 @@ class ObjStorage(db.Model):
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
     # customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
     news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
+    advertisement = db.relationship('Advertisement', backref='ad_image', uselist=False)
 
 
 class ShoppingCart(db.Model):
@@ -1173,9 +1182,14 @@ class NewCustomerAwards(db.Model):
     __tablename__ = "new_customer_awards"
     id = db.Column(db.Integer, primary_key=True)
     score = db.Column(db.SmallInteger, default=0, comment='新用户奖励积分')
-    coupon = db.Column(db.String(64), db.ForeignKey('coupons.id'))
+    could_get_coupons = db.relationship(
+        'Coupons',
+        secondary=new_customer_awards_coupons,
+        backref=db.backref('new_customers')
+    )
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class Advertisements(db.Model):
@@ -1185,7 +1199,15 @@ class Advertisements(db.Model):
     __tablename__ = "advertisements"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, comment='广告名称')
-
+    image = db.Column(db.String(64), db.ForeignKey('obj_storage'))
+    jump_to = db.Column(db.String(200), comment='跳转链接')
+    start_at = db.Column(db.DateTime, default=datetime.datetime.now, comment="广告开始时间")
+    end_at = db.Column(db.DateTime, comment="广告结束时间, 如果为空，则表示永久有效")
+    wide = db.Column(db.Integer, comment='广告宽度')
+    height = db.Column(db.Integer, comment='广告高度')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 aes_key = 'koiosr2d2c3p0000'

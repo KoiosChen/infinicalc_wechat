@@ -10,6 +10,7 @@ from ..wechat.pay import weixin_pay
 from ..wechat.order_check import weixin_orderquery
 import datetime
 from decimal import Decimal
+import traceback
 
 orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
 
@@ -25,11 +26,19 @@ checkout_parser.add_argument('group_id', required=True,
                              help='组ID， 0 为特殊组，特殊组和任何组不互斥。group_id 为-1表示是发优惠券，>=0的group，为活动')
 checkout_parser.add_argument('priority', required=True, help='1-10, 10优先级最低，当有组互斥时，使用优先级最高的，0优先级最高')
 
+order_ship_parser = reqparse.RequestParser()
+order_ship_parser.add_argument('express_company', required=True, help='快递公司, 必填')
+order_ship_parser.add_argument('express_number', required=True, help='快递单号, 必填')
+
+order_receive_parser = reqparse.RequestParser()
+order_receive_parser.add_argument('is_receipt', required=True, help='1, 已发货未签收，2，已发货已签收')
+
 cancel_parser = reqparse.RequestParser()
 cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择，不要填写')
 
 order_page_parser = page_parser.copy()
 order_page_parser.add_argument("is_pay", type=int, help='查询支付状态', location='args')
+order_page_parser.add_argument("id", help='订单ID', location='args')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
@@ -72,10 +81,71 @@ class AllShopOrdersApi(Resource):
         args['search'] = dict()
         if args.get("is_pay"):
             args['search']['is_pay'] = args['is_pay']
+        if args.get("id"):
+            args['search']['id'] = args['id']
         data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'])
         table = data['records']
         table.sort(key=lambda x: x['create_at'], reverse=True)
         return success_return(data=data)
+
+
+@orders_ns.route('/<string:shop_order_id>')
+@orders_ns.expect(head_parser)
+class ShopOrderShipApi(Resource):
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=order_ship_parser)
+    @permission_required("app.orders.order_api.shop_order_ship")
+    def put(self, **kwargs):
+        """修改订单发货"""
+        try:
+            args = order_ship_parser.parse_args()
+            order_obj = ShopOrders.query.get(kwargs['shop_order_id'])
+            if not order_obj or order_obj.consumer != kwargs['current_user']:
+                raise Exception(f"<{kwargs['shop_order_id']}>不存在，或者订单消费者与当前用户不付")
+
+            if not args.get('express_company') or not args.get('express_number'):
+                raise Exception("快递信息不能为空值")
+
+            order_obj.express_company = args.get('express_company')
+            order_obj.express_number = args.get('express_number')
+            order_obj.is_ship = 1
+            order_obj.ship_time = datetime.datetime.now()
+            order_obj.is_receipt = 1
+            if session_commit().get('code') != 'success':
+                raise Exception("数据提交失败")
+            else:
+                return success_return(message="发货成功")
+        except Exception as e:
+            traceback.print_exc()
+            return false_return(message=str(e))
+
+
+@orders_ns.route('/<string:shop_order_id>')
+@orders_ns.expect(head_parser)
+class ShopOrderReceiveApi(Resource):
+    @orders_ns.marshal_with(return_json)
+    @orders_ns.doc(body=order_receive_parser)
+    @permission_required("app.orders.order_api.shop_order_revceive")
+    def put(self, **kwargs):
+        """修改订单收货"""
+        try:
+            args = order_ship_parser.parse_args()
+            order_obj = ShopOrders.query.get(kwargs['shop_order_id'])
+            if not order_obj or order_obj.consumer != kwargs['current_user']:
+                raise Exception(f"<{kwargs['shop_order_id']}>不存在，或者订单消费者与当前用户不付")
+
+            if not args.get('is_receipt'):
+                raise Exception("收货状态不能为空值")
+
+            order_obj.is_receipt = 2
+            order_obj.receive_time = datetime.datetime.now()
+            if session_commit().get('code') != 'success':
+                raise Exception("数据提交失败")
+            else:
+                return success_return(message="收货状态修改成功")
+        except Exception as e:
+            traceback.print_exc()
+            return false_return(message=str(e))
 
 
 @orders_ns.route('/<string:shop_order_id>/pay')
