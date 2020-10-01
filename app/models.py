@@ -1199,7 +1199,7 @@ class Advertisements(db.Model):
     __tablename__ = "advertisements"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, comment='广告名称')
-    image = db.Column(db.String(64), db.ForeignKey('obj_storage'))
+    image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
     jump_to = db.Column(db.String(200), comment='跳转链接')
     start_at = db.Column(db.DateTime, default=datetime.datetime.now, comment="广告开始时间")
     end_at = db.Column(db.DateTime, comment="广告结束时间, 如果为空，则表示永久有效")
