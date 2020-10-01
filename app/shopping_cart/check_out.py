@@ -93,7 +93,7 @@ def check_promotions_base_police(customer, sku):
 def check_out(args, kwargs):
     customer = args['customer']
     try:
-        total_price, total_score, express_addr, sku_statistic = checkout_cart(**args)
+        total_price, total_score, express_addr, _ = checkout_cart(**args)
         sku = list()
         reject_score_flag = 0
         force_use_coupon = 0

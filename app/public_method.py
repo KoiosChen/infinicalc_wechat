@@ -188,10 +188,15 @@ def __make_table(fields, table, strainer=None):
                 sku_values = list()
                 for v in o.bought_sku.values:
                     sku_values.append({'value': v.value, 'standard_name': v.standards.name})
-                order_detail = {'quantity': o.item_quantity, 'price': str(o.item_price), 'status': o.status,
-                                'create_at': str(o.create_at), 'rates': o.rates,
+                order_detail = {'sku_name': o.bought_sku.name,
+                                'quantity': o.item_quantity,
+                                'price': str(o.item_price),
+                                'status': o.status,
+                                'create_at': str(o.create_at),
+                                'rates': o.rates,
                                 'transaction_price': str(o.transaction_price),
-                                'special': o.special, 'sku_name': o.bought_sku.name, 'sku_thumbnail': sku_thumbnail,
+                                'special': o.special,
+                                'sku_thumbnail': sku_thumbnail,
                                 'values': sku_values}
                 tmp[f].append(order_detail)
         elif f == 'member_info':
