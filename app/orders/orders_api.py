@@ -129,7 +129,7 @@ class ShopOrderReceiveApi(Resource):
     def put(self, **kwargs):
         """修改订单收货"""
         try:
-            args = order_ship_parser.parse_args()
+            args = order_receive_parser.parse_args()
             order_obj = ShopOrders.query.get(kwargs['shop_order_id'])
             if not order_obj:
                 raise Exception(f"<{kwargs['shop_order_id']}>不存在")
