@@ -1,13 +1,16 @@
+import json
 import random
-
-from . import logger, db
-from .common import false_return, submit_return
+import threading
+import uuid
+from . import logger, db, redis_db, coupon_lock
+from .common import false_return, submit_return, success_return, session_commit
 from .models import *
 from sqlalchemy import and_
 import datetime
 import traceback
 from flask import session
 from decimal import Decimal
+from .models import Coupons, CouponReady
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -142,6 +145,9 @@ def __make_table(fields, table, strainer=None):
                     tmp1.append({'id': value.id, 'url': value.url, 'obj_type': value.obj_type})
             tmp1.sort(key=lambda x: x["obj_type"], reverse=True)
             tmp[f] = tmp1
+        elif f == 'ad_image':
+            t1 = getattr(table, f)
+            tmp[f] = {'id': t1.id, 'url': t1.url, 'obj_type': t1.obj_type}
         elif f == 'values':
             tmp1 = list()
             t1 = getattr(table, f)
@@ -253,7 +259,7 @@ def _advance_search(table, fields, advance_search):
     and_fields_list = list()
     for search in advance_search:
         if search['key'] in fields:
-            and_fields_list.append(getattr(getattr(table, search['key'], search['operator'])(search['value'])))
+            and_fields_list.append(getattr(getattr(table, search['key']), search['operator'])(search['value']))
     return and_fields_list
 
 
@@ -270,7 +276,7 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
     else:
         base_sql = table.query
 
-    page_len = len(base_sql.all())
+
 
     if page != 'true':
         if search:
@@ -294,6 +300,8 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()
             else:
                 return False
+
+    page_len = len(table_data)
 
     r = _make_data(table_data, fields)
 
@@ -397,3 +405,59 @@ def order_cancel(cancel_reason, shop_order_id):
         return submit_return("取消成功", "数据提交失败，取消失败")
     except Exception as e:
         return false_return(message=f"订单取消失败: {str(e)}"), 400
+
+
+def take_coupon(coupon_id, take_coupon_id, user, lock):
+    if lock.acquire():
+        try:
+            coupon_setting = Coupons.query.get(coupon_id)
+            if coupon_setting:
+                if coupon_setting.quota > 0:
+                    already_take = CouponReady.query.filter_by(coupon_id=coupon_id, consumer=user).all()
+                    if len(already_take) >= coupon_setting.per_user:
+                        raise AttributeError(f"此用户已领优惠券<{coupon_id}>达到最大数量")
+                    new_coupon = new_data_obj("CouponReady", **{"id": take_coupon_id, "coupon_id": coupon_id})
+                    if new_coupon.get('status'):
+                        coupon_setting.quota -= 1
+                        coupon_setting.take_count += 1
+                        new_coupon['obj'].consumer = user
+                        redis_db.set(f"new_coupon::{take_coupon_id}",
+                                     json.dumps(success_return(message="领取成功")),
+                                     ex=6000) \
+                            if session_commit() else \
+                            redis_db.set(f"new_coupon::{take_coupon_id}",
+                                         json.dumps(false_return(message=f"领取优惠券<{coupon_id}>失败")),
+                                         ex=6000)
+
+                    else:
+                        redis_db.set(f"new_coupon::{take_coupon_id}", json.dumps(false_return(message=f"领取失败")),
+                                     ex=6000)
+                else:
+                    redis_db.set(f"new_coupon::{take_coupon_id}",
+                                 json.dumps(false_return(message=f'优惠券<{coupon_id}>已领完')), ex=6000)
+            else:
+                redis_db.set(f"new_coupon::{take_coupon_id}",
+                             json.dumps(false_return(message=f"未找到优惠券设置<{coupon_id}>")), ex=6000)
+        except Exception as e:
+            logger.error(f"领取优惠券失败，因为{e}")
+            redis_db.set(f"new_coupon::{take_coupon_id}", json.dumps(false_return(message=f"{e}")), ex=6000)
+        finally:
+            lock.release()
+
+
+def query_coupon(**kwargs):
+    take_coupon_id = str(uuid.uuid4())
+    user = kwargs['current_user']
+    coupon_thread = threading.Thread(target=take_coupon,
+                                     args=(kwargs.get('coupon_id'), take_coupon_id, user.id, coupon_lock))
+    coupon_thread.start()
+    coupon_thread.join()
+    k = f"new_coupon::{take_coupon_id}"
+    if redis_db.exists(k):
+        result = json.loads(redis_db.get(k))
+        redis_db.delete(k)
+
+        if result.get("code") == "success":
+            return result
+        else:
+            return result, 400
