@@ -39,6 +39,9 @@ cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择
 order_page_parser = page_parser.copy()
 order_page_parser.add_argument("is_pay", type=int, help='查询支付状态', location='args')
 order_page_parser.add_argument("id", help='订单ID', location='args')
+order_page_parser.add_argument("is_ship", help="0：未发货，1：已发货", location='args')
+order_page_parser.add_argument("is_receipt", help='0：未发货 1：已发货未签收 2：已发货已签收', location='args')
+order_page_parser.add_argument("status", help="1：正常 2：禁用 0：订单取消(delete_at 写入时间)", location='args')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
@@ -83,6 +86,12 @@ class AllShopOrdersApi(Resource):
             args['search']['is_pay'] = args['is_pay']
         if args.get("id"):
             args['search']['id'] = args['id']
+        if args.get("is_ship"):
+            args['search']['is_ship'] = args['is_ship']
+        if args.get('is_receipt'):
+            args['search']['is_receipt'] = args['is_receipt']
+        if args.get('status'):
+            args['search']['status'] = args['status']
         data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'])
         table = data['records']
         table.sort(key=lambda x: x['create_at'], reverse=True)
