@@ -31,7 +31,7 @@ order_ship_parser.add_argument('express_company', required=True, help='快递公
 order_ship_parser.add_argument('express_number', required=True, help='快递单号, 必填')
 
 order_receive_parser = reqparse.RequestParser()
-order_receive_parser.add_argument('is_receipt', required=True, help='1, 已发货未签收，2，已发货已签收')
+order_receive_parser.add_argument('is_receipt', required=True, help='1, 已发货未签收，2，已发货已签收', locaiton='json')
 
 cancel_parser = reqparse.RequestParser()
 cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择，不要填写')
