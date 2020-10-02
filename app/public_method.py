@@ -312,6 +312,9 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
         for p in pop_list:
             r.remove(p)
 
+    if not r or page_len <= size:
+        current = 1
+
     return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
 
