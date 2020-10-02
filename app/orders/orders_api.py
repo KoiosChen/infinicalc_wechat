@@ -89,7 +89,7 @@ class AllShopOrdersApi(Resource):
         return success_return(data=data)
 
 
-@orders_ns.route('/<string:shop_order_id>')
+@orders_ns.route('/<string:shop_order_id>/ship')
 @orders_ns.expect(head_parser)
 class ShopOrderShipApi(Resource):
     @orders_ns.marshal_with(return_json)
@@ -100,8 +100,8 @@ class ShopOrderShipApi(Resource):
         try:
             args = order_ship_parser.parse_args()
             order_obj = ShopOrders.query.get(kwargs['shop_order_id'])
-            if not order_obj or order_obj.consumer != kwargs['current_user']:
-                raise Exception(f"<{kwargs['shop_order_id']}>不存在，或者订单消费者与当前用户不付")
+            if not order_obj:
+                raise Exception(f"<{kwargs['shop_order_id']}>不存在")
 
             if not args.get('express_company') or not args.get('express_number'):
                 raise Exception("快递信息不能为空值")
@@ -120,7 +120,7 @@ class ShopOrderShipApi(Resource):
             return false_return(message=str(e))
 
 
-@orders_ns.route('/<string:shop_order_id>')
+@orders_ns.route('/<string:shop_order_id>/receive')
 @orders_ns.expect(head_parser)
 class ShopOrderReceiveApi(Resource):
     @orders_ns.marshal_with(return_json)
@@ -131,8 +131,8 @@ class ShopOrderReceiveApi(Resource):
         try:
             args = order_ship_parser.parse_args()
             order_obj = ShopOrders.query.get(kwargs['shop_order_id'])
-            if not order_obj or order_obj.consumer != kwargs['current_user']:
-                raise Exception(f"<{kwargs['shop_order_id']}>不存在，或者订单消费者与当前用户不付")
+            if not order_obj:
+                raise Exception(f"<{kwargs['shop_order_id']}>不存在")
 
             if not args.get('is_receipt'):
                 raise Exception("收货状态不能为空值")

@@ -1094,7 +1094,7 @@ class ObjStorage(db.Model):
     brands = db.relationship('Brands', backref='logo_objects', lazy='dynamic')
     # customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
     news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
-    advertisement = db.relationship('Advertisement', backref='ad_image', uselist=False)
+    advertisement = db.relationship('Advertisements', backref='ad_image', uselist=False)
 
 
 class ShoppingCart(db.Model):
