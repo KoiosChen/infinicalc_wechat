@@ -2,24 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
-      <change afterPath="$PROJECT_DIR$/app/advertisements/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/advertisements/advertisements_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/frontstage_auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/frontstage_auth/auths.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/orders/orders_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/orders/orders_api.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/promotions/coupons.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/coupons.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/manage.py" beforeDir="false" afterPath="$PROJECT_DIR$/manage.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/README" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/alembic.ini" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/script.py.mako" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/454098bbb729_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/8a29d205351e_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/9a221a853870_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/f62addb702d0_.py" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,6 +146,7 @@
       <workItem from="1601560629100" duration="366000" />
       <workItem from="1601561154722" duration="2486000" />
       <workItem from="1601603988782" duration="10262000" />
+      <workItem from="1601648168913" duration="905000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -300,7 +288,14 @@
       <option name="project" value="LOCAL" />
       <updated>1601604345416</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="默认更改列表">
+      <created>1601648289930</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1601648289930</updated>
+    </task>
+    <option name="localTasksCounter" value="22" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -327,10 +322,10 @@
     </state>
     <state x="643" y="113" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1601640756203" />
     <state x="735" y="131" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.23.1920.1001@0.23.1920.1001" timestamp="1601257227388" />
-    <state x="1985" y="-1485" width="775" height="1920" key="CommitChangelistDialog2" timestamp="1601604345240">
-      <screen x="1680" y="-1485" width="1080" height="1920" />
+    <state x="474" y="0" width="775" height="1920" key="CommitChangelistDialog2" timestamp="1601648289756">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="474" y="0" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1601574920413" />
+    <state x="474" y="0" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1601648289756" />
     <state x="567" y="23" width="785" height="1001" key="CommitChangelistDialog2/0.23.1920.1001@0.23.1920.1001" timestamp="1601193079941" />
     <state x="1985" y="-1485" width="775" height="1920" key="CommitChangelistDialog2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601560650449" />
     <state x="1985" y="-1485" width="775" height="1920" key="CommitChangelistDialog2/1680.-1485.1080.1920/0.23.1680.971/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601604345240" />
@@ -394,10 +389,10 @@
     <state width="1638" height="421" key="GridCell.Tab.1.right/0.23.1920.1001@0.23.1920.1001" timestamp="1601446460545" />
     <state width="1038" height="769" key="GridCell.Tab.1.right/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601635172234" />
     <state width="1038" height="769" key="GridCell.Tab.1.right/1680.-1485.1080.1920/0.23.1680.971/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601630017049" />
-    <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2" timestamp="1601603990033">
-      <screen x="1680" y="-1485" width="1080" height="1920" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1601648323971">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1601574947227" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1601648323971" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
@@ -420,10 +415,10 @@
     </state>
     <state x="661" y="264" width="598" height="518" key="find.popup/0.23.1920.1001@0.23.1920.1001" timestamp="1601446937560" />
     <state x="2052" y="-1023" width="570" height="994" key="find.popup/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601564780338" />
-    <state x="588" y="311" key="git4idea.merge.GitMergeDialog" timestamp="1601574942196">
+    <state x="588" y="311" key="git4idea.merge.GitMergeDialog" timestamp="1601648303625">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="588" y="311" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1601574942196" />
+    <state x="588" y="311" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1601648303625" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -457,16 +452,6 @@
           <url>file://$PROJECT_DIR$/app/shopping_cart/check_out.py</url>
           <line>32</line>
           <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/orders/orders_api.py</url>
-          <line>74</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/orders/orders_api.py</url>
-          <line>75</line>
-          <option name="timeStamp" value="25" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
