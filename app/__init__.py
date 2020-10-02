@@ -177,4 +177,7 @@ def create_app(config_name):
     from .wechat import wechat as wechat_blueprint
     app.register_blueprint(wechat_blueprint)
 
+    from .advertisements import advertisements as advertisements_blueprint
+    app.register_blueprint(advertisements_blueprint)
+
     return app

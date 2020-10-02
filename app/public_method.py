@@ -275,32 +275,54 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
     else:
         base_sql = table.query
 
-    page_len = len(base_sql.all())
-
-    if page != 'true':
-        if search:
-            filter_args = list()
-            filter_args.extend(_search(table, fields, search))
-            if advance_search is not None:
-                filter_args.extend(_advance_search(table, fields, advance_search))
-            table_data = base_sql.filter(and_(*filter_args)).all()
-            page_len = len(table_data)
+    if search:
+        filter_args = list()
+        filter_args.extend(_search(table, fields, search))
+        if advance_search is not None:
+            filter_args.extend(_advance_search(table, fields, advance_search))
+        search_sql = base_sql.filter(and_(*filter_args))
+        page_len = search_sql.count()
+        if page != 'true':
+            table_data = search_sql.all()
         else:
-            table_data = base_sql.all()
+            if page_len < (current-1) * size:
+                current = 1
+            table_data = search_sql.offset((current - 1) * size).limit(size).all()
     else:
-        if search:
-            filter_args = list()
-            filter_args.extend(_search(table, fields, search))
-            if advance_search is not None:
-                filter_args.extend(_advance_search(table, fields, advance_search))
-            table_data = base_sql.filter(and_(*filter_args)).offset((current - 1) * size).limit(
-                size).all()
-            page_len = len(base_sql.filter(and_(*filter_args)).all())
+        page_len = len(base_sql.all())
+        if page != 'true':
+            table_data = base_sql.all()
         else:
             if current > 0:
+                if page_len < (current - 1) * size:
+                    current = 1
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()
             else:
                 return False
+
+    # if page != 'true':
+    #     if search:
+    #         filter_args = list()
+    #         filter_args.extend(_search(table, fields, search))
+    #         if advance_search is not None:
+    #             filter_args.extend(_advance_search(table, fields, advance_search))
+    #         table_data = base_sql.filter(and_(*filter_args)).all()
+    #         page_len = len(table_data)
+    #     else:
+    #         table_data = base_sql.all()
+    # else:
+    #     if search:
+    #         filter_args = list()
+    #         filter_args.extend(_search(table, fields, search))
+    #         if advance_search is not None:
+    #             filter_args.extend(_advance_search(table, fields, advance_search))
+    #         table_data = base_sql.filter(and_(*filter_args)).offset((current - 1) * size).limit(size).all()
+    #         page_len = base_sql.filter(and_(*filter_args)).count()
+    #     else:
+    #         if current > 0:
+    #             table_data = base_sql.offset((current - 1) * size).limit(size).all()
+    #         else:
+    #             return False
 
     r = _make_data(table_data, fields)
 
@@ -311,9 +333,6 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
                 pop_list.append(record)
         for p in pop_list:
             r.remove(p)
-
-    # if not r or page_len <= size:
-    #     current = 1
 
     return {"records": r, "total": page_len, "size": size, "current": current} if page == 'true' else {"records": r}
 
