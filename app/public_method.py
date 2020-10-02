@@ -269,14 +269,13 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
     size = args.get('size')
     search = args.get('search')
     fields = table_fields(table, appends, removes)
-    r = list()
     table_name = table.__name__
     if 'parent_id' in fields and table_name == 'Elements':
         base_sql = table.query.filter(table.parent_id.__eq__(None))
     else:
         base_sql = table.query
 
-
+    page_len = len(base_sql.all())
 
     if page != 'true':
         if search:
@@ -285,6 +284,7 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
             if advance_search is not None:
                 filter_args.extend(_advance_search(table, fields, advance_search))
             table_data = base_sql.filter(and_(*filter_args)).all()
+            page_len = len(table_data)
         else:
             table_data = base_sql.all()
     else:
@@ -295,13 +295,12 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None):
                 filter_args.extend(_advance_search(table, fields, advance_search))
             table_data = base_sql.filter(and_(*filter_args)).offset((current - 1) * size).limit(
                 size).all()
+            page_len = len(base_sql.filter(and_(*filter_args)).all())
         else:
             if current > 0:
                 table_data = base_sql.offset((current - 1) * size).limit(size).all()
             else:
                 return False
-
-    page_len = len(table_data)
 
     r = _make_data(table_data, fields)
 
