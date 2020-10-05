@@ -66,7 +66,10 @@ class ShopOrdersApi(Resource):
         """获取当前登录用户账户下所有订单，按照创建时间倒序"""
         args = order_page_parser.parse_args()
         args['search'] = {'customer_id': kwargs.get('current_user').id}
-        return success_return(data=get_table_data(ShopOrders, args, ['items_orders'], order_by='create_at'))
+        data = get_table_data(ShopOrders, args, ['items_orders'])
+        table = data['records']
+        table.sort(key=lambda x: x['create_at'], reverse=True)
+        return success_return(data=data)
 
 
 @orders_ns.route('/all')
