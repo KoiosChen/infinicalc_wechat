@@ -40,14 +40,11 @@ bind_express_addr_parser.add_argument('force_default', required=True, type=int, 
                                       help='是否强制为默认地址')
 
 update_express_addr_parser = bind_express_addr_parser.copy()
-update_express_addr_parser.replace_argument('city_id', type=int)
-update_express_addr_parser.replace_argument('district', type=int)
 update_express_addr_parser.replace_argument('address1')
 update_express_addr_parser.replace_argument('recipient', help='收件人')
 update_express_addr_parser.replace_argument('recipient_phone', help='收件人电话')
 update_express_addr_parser.replace_argument('is_default', type=int, choices=[0, 1], default=0, help='是否为默认地址')
-update_express_addr_parser.add_argument('force_default', required=True, type=int, choices=[0, 1], default=0,
-                                        help='是否强制为默认地址')
+
 
 update_customer_parser = reqparse.RequestParser()
 update_customer_parser.add_argument('phone', help='用户手机号，如需更改，需要发送验证码认证，调用<string:phone>/verify_code 验证',
@@ -225,6 +222,11 @@ class UpdateCustomerExpressAddress(Resource):
                                                          sender=current_user.id, status=1).first()
         if not if_default(current_user.id, args['force_default']):
             return false_return("已存在默认地址"), 400
+
+        if args.get('lat') and args.get('lng'):
+            lbs_info = lbs_get_by_coordinate(args.get('lat'), args.get('lng'))
+            if lbs_info['code'] == 'success':
+                args['address1'] = lbs_info['data'] + args['address1']
 
         for k, v in args.items():
             if hasattr(express_address, k) and v:
