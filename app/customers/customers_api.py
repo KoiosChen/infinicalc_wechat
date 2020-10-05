@@ -12,6 +12,7 @@ from ..swagger import return_dict, head_parser, page_parser
 from ..public_user_func import modify_user_profile
 import requests
 from app.wechat.wx_login import WxLogin
+from app.wechat.qq_lbs import lbs_get_by_coordinate
 import traceback
 from decimal import Decimal
 
@@ -29,6 +30,8 @@ bind_role_parser.add_argument('role_id', required=True, type=int, help='customer
 bind_express_addr_parser = reqparse.RequestParser()
 bind_express_addr_parser.add_argument('address1', required=True, help='地图中定位的地址')
 bind_express_addr_parser.add_argument('address2', help='门牌号')
+bind_express_addr_parser.add_argument('lat', help='纬度')
+bind_express_addr_parser.add_argument('lng', help='经度')
 bind_express_addr_parser.add_argument('postcode', help='邮编, 可为空')
 bind_express_addr_parser.add_argument('recipient', required=True, help='收件人姓名')
 bind_express_addr_parser.add_argument('recipient_phone', required=True, help='收件人电话')
@@ -182,6 +185,10 @@ class CustomerExpressAddress(Resource):
             return false_return("已存在默认地址"), 400
         new_express_address = ExpressAddress()
         db.session.flush()
+        if args.get('lat') and args.get('lng'):
+            lbs_info = lbs_get_by_coordinate(args.get('lat'), args.get('lng'))
+            if lbs_info['code'] == 'success':
+                args['address1'] = lbs_info['data'] + args['address1']
         for k, v in args.items():
             if hasattr(new_express_address, k) and v is not None:
                 setattr(new_express_address, k, v)
