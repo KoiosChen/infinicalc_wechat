@@ -288,7 +288,7 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None, ord
         search_sql = base_sql
 
     if order_by is not None:
-        search_sql = search_sql.order_by(order_by)
+        search_sql = search_sql.order_by(getattr(getattr(table, order_by), "desc")())
 
     page_len = search_sql.count()
     if page != 'true':
