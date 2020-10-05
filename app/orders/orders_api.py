@@ -92,9 +92,7 @@ class AllShopOrdersApi(Resource):
             args['search']['is_receipt'] = args['is_receipt']
         if args.get('status'):
             args['search']['status'] = args['status']
-        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'])
-        table = data['records']
-        table.sort(key=lambda x: x['create_at'], reverse=True)
+        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'], order_by='create_at')
         return success_return(data=data)
 
 
