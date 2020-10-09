@@ -207,7 +207,10 @@ class CustomerCoupons(Resource):
         advance_search = [{"key": "consumer", "value": current_user.id, "operator": "__eq__"}]
         # if args.get('status'):
         #     advance_search.append({"key": "status", "value": args.get('status'), "operator": "__eq__"})
-        return success_return(get_table_data(CouponReady, args, advance_search=advance_search))
+        return success_return(get_table_data(CouponReady,
+                                             args,
+                                             appends=["coupon_brief"],
+                                             advance_search=advance_search))
 
 
 @customers_ns.route('/<string:express_address_id>')
