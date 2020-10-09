@@ -224,7 +224,14 @@ def __make_table(fields, table, strainer=None):
             reduced_amount = coupons_setting.promotion.benefits[0].reduced_amount
             name = coupons_setting.name
             desc = coupons_setting.desc
-            tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount}
+            if coupons_setting.valid_type == 1:
+                start_at = table.take_at
+                end_at = coupons_setting.absolute_date
+            else:
+                start_at = table.take_at
+                end_at = table.take_at + datetime.timedelta(days=coupons_setting.valid_days)
+            tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount,
+                      "start_at": start_at, "end_at": end_at}
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
