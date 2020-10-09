@@ -13,6 +13,13 @@ return_json = members_ns.model('ReturnResult', return_dict)
 
 member_cards_parser = page_parser.copy()
 
+recharge_parser = page_parser.copy()
+recharge_parser.add_argument("wechat_nickname", help='微信昵称，支持模糊查找', location='args')
+recharge_parser.add_argument("phone_number", help='手机号，支持模糊查找', location='args')
+recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，起始于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，结束于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
+
 
 @members_ns.route("")
 @members_ns.expect(head_parser)
@@ -22,11 +29,17 @@ class MemberCardsAPI(Resource):
     @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
-        提交邀请码，升级用户类型
+        若是前端账户查询，返回该用户所有会员卡，目前仅一张，去list[0]; 若是后端用户，显示所有用户
         """
-        args = member_cards_parser.parse_args()
-        args['search'] = {"customer_id": kwargs['current_user'].id, "status": 1, "delete_at": None}
-        return success_return(get_table_data(MemberCards, args))
+        try:
+            args = member_cards_parser.parse_args()
+            if kwargs['current_user'].__class__.__name__ == 'Customers':
+                args['search'] = {"customer_id": kwargs['current_user'].id, "status": 1, "delete_at": None}
+            else:
+                args['search'] = {"status": 1, "delete_at": None}
+            return success_return(get_table_data(MemberCards, args, order_by="create_at"))
+        except Exception as e:
+            return false_return(message=str(e)), 400
 
 
 @members_ns.route("/<string:invitation_code>")
@@ -83,3 +96,33 @@ class InviteToBeMember(Resource):
 
         return submit_return(f"新增会员卡成功，卡号{card_no}, 会员级别{invitation_code.tobe_type} {invitation_code.tobe_level}",
                              "新增会员卡失败")
+
+
+@members_ns.route("/recharge")
+@members_ns.expect(head_parser)
+class MemberRecharge(Resource):
+    @members_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def post(self, **kwargs):
+        """
+        会员卡充值。 用户充值对应金额
+        """
+        pass
+
+    @members_ns.marshal_with(return_json)
+    @permission_required([Permission.USER, "app.member_cards.member_cards_api.query_recharge"])
+    def get(self, **kwargs):
+        """
+        若是后端用户获取所有用户充值记录， 可根据微信昵称，手机号，会员号，充值日期范围进行搜索
+        若是前端用户，获取该用户充值记录（不可按照昵称等查询）
+        """
+        try:
+            current_user = kwargs.get('current_user')
+        except Exception as e:
+            return false_return(message=str(e)), 400
+
+
+@members_ns.route("")
+@members_ns.expect(head_parser)
+class MemberRecharge(Resource):
+    pass
