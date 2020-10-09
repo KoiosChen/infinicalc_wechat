@@ -192,7 +192,7 @@ class CustomerExpressAddress(Resource):
         return submit_return("添加地址成功", "添加地址失败")
 
 
-@customers_ns.route('/coupons/<int:status>')
+@customers_ns.route('/coupons')
 @customers_ns.expect(head_parser)
 @customers_ns.param("status", "优惠券状态")
 class CustomerCoupons(Resource):
@@ -205,8 +205,8 @@ class CustomerCoupons(Resource):
         args = dict()
         current_user = kwargs['current_user']
         advance_search = [{"key": "consumer", "value": current_user.id, "operator": "__eq__"}]
-        if args.get('status'):
-            advance_search.append({"key":"status", "value": args.get('status'), "operator": "__eq__"})
+        # if args.get('status'):
+        #     advance_search.append({"key": "status", "value": args.get('status'), "operator": "__eq__"})
         return success_return(get_table_data(CouponReady, args, advance_search=advance_search))
 
 
