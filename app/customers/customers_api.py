@@ -1,6 +1,6 @@
 from flask import request
 from flask_restplus import Resource, reqparse
-from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders
+from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders, CouponReady
 from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger
@@ -44,7 +44,6 @@ update_express_addr_parser.replace_argument('address1')
 update_express_addr_parser.replace_argument('recipient', help='收件人')
 update_express_addr_parser.replace_argument('recipient_phone', help='收件人电话')
 update_express_addr_parser.replace_argument('is_default', type=int, choices=[0, 1], default=0, help='是否为默认地址')
-
 
 update_customer_parser = reqparse.RequestParser()
 update_customer_parser.add_argument('phone', help='用户手机号，如需更改，需要发送验证码认证，调用<string:phone>/verify_code 验证',
@@ -191,6 +190,24 @@ class CustomerExpressAddress(Resource):
                 setattr(new_express_address, k, v)
         db.session.add(new_express_address)
         return submit_return("添加地址成功", "添加地址失败")
+
+
+@customers_ns.route('/coupons/<int:status>')
+@customers_ns.expect(head_parser)
+@customers_ns.param("status", "优惠券状态")
+class CustomerCoupons(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """
+        获取当前用户所有优惠券，可根据优惠券状态搜索
+        """
+        args = dict()
+        current_user = kwargs['current_user']
+        advance_search = [{"key": "consumer", "value": current_user.id, "operator": "__eq__"}]
+        if args.get('status'):
+            advance_search.append({"key":"status", "value": args.get('status'), "operator": "__eq__"})
+        return success_return(get_table_data(CouponReady, args, advance_search=advance_search))
 
 
 @customers_ns.route('/<string:express_address_id>')

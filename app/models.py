@@ -140,6 +140,14 @@ new_customer_awards_coupons = db.Table('new_customer_awards_coupons',
                                                  primary_key=True),
                                        db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+member_policy_bounce_coupons = db.Table('member_policy_bounce_coupons',
+                                        db.Column('member_policy_id',
+                                                  db.String(64), db.ForeignKey('member_policies.id'),
+                                                  primary_key=True),
+                                        db.Column('bounce_coupon_id', db.String(64), db.ForeignKey('coupons.id'),
+                                                  primary_key=True),
+                                        db.Column('create_at', db.DateTime, default=datetime.datetime.now))
+
 
 class Permission:
     READER = 0x01
@@ -279,14 +287,88 @@ class PointRecords(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
 
+class MemberCards(db.Model):
+    """
+    用户登陆小程序后，没有会员卡，获取邀请码之后，可升级为代理商，分别为1级和2级，通过member_type来区分.
+    grade来区分登记，1表示一级， 2表示二级。
+    普通用户grade目前仅为1
+    2020-07-22说明
+    """
+    __tablename__ = 'member_cards'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
+    member_type = db.Column(db.SmallInteger, default=0, comment='会员类型， 0为普通C端会员； 1 为代理商')
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
+    grade = db.Column(db.SmallInteger, default=1,
+                      comment='会员卡等级，在OptionsDict表中查找card_grades来获取对应的文字描述.默认为1')
+    discount = db.Column(db.DECIMAL(3, 2), default=1.00, comment="会员折扣")
+    shop_id = db.Column(db.String(64), default='all', comment='预留，对于店铺发店铺会员卡，目前会员卡为商城全局')
+    open_date = db.Column(db.DateTime, default=datetime.datetime.now, comment="开卡日期")
+    validate_date = db.Column(db.DateTime, comment="卡有效期")
+    note = db.Column(db.String(100), comment='备注')
+    creator_id = db.Column(db.String(64), db.ForeignKey('users.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
+    recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
+
+    def __repr__(self):
+        return '<Member card no %r>' % self.card_no
+
+
+class MemberPolicies(db.Model):
+    """加入会员的策略，包括充值多少送多少，送多少积分，送多少优惠券"""
+    __tablename__ = 'member_policies'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(100), index=True, comment='策略名称')
+    to_type = db.Column(db.SmallInteger, default=0, comment='0, 直客；1， 代理；2， 区域总代')
+    to_level = db.Column(db.SmallInteger, default=1, comment='直客， 1级最小； 代理（总代），1级最大')
+    recharge_amount = db.Column(db.DECIMAL(11, 2), index=True, default=0.00, comment='充值金额')
+    present_amount = db.Column(db.DECIMAL(11, 2), index=True, default=0.00, comment='赠送金额')
+    bounce_scores = db.Column(db.Integer, default=0, comment='奖励积分')
+    bounce_coupons = db.relationship(
+        'Coupons',
+        secondary=member_policy_bounce_coupons,
+        backref=db.backref(
+            'member_bounce_policies'
+        )
+    )
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Member card policy name %r>' % self.name
+
+
 class MemberRechargeRecords(db.Model):
+    """会员充值记录"""
     __tablename__ = 'member_recharge_records'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    recharge_amount = db.Column(db.DECIMAL(7, 2), default=0.00, comment="充值金额")
+    recharge_amount = db.Column(db.DECIMAL(9, 2), default=0.00, comment="充值金额")
     member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
     usable = db.Column(db.SmallInteger, default=1, comment='0 不可用， 1 可用；例如开通会员卡的金额可设置为不可使用')
+    wechat_pay_result = db.relationship("WechatPay", backref='member_recharge_record', uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+    def __repr__(self):
+        return '<Member recharge record No. %r>' % self.id
+
+
+class MemberCardConsumption(db.Model):
+    """会员卡消费记录"""
+    __tablename__ = 'member_card_consumption'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    consumption_sum = db.Column(db.DECIMAL(9, 2), default=0.00, comment='消费额')
+    member_card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
+    note = db.Column(db.String(200), comment='备注')
+    order = db.relationship("ShopOrders", backref='member_card_consumption', uselist=False)
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+
+    def __repr__(self):
+        return '<Member card consumption No. %r>' % self.id
 
 
 class InvitationCode(db.Model):
@@ -332,34 +414,6 @@ class SceneInvitation(db.Model):
     start_at = db.Column(db.DateTime, comment='有效期开始时间')
     end_at = db.Column(db.DateTime, comment='有效期结束时间')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-
-
-class MemberCards(db.Model):
-    """
-    用户登陆小程序后，没有会员卡，获取邀请码之后，可升级为代理商，分别为1级和2级，通过member_type来区分.
-    grade来区分登记，1表示一级， 2表示二级。
-    普通用户grade目前仅为1
-    2020-07-22说明
-    """
-    __tablename__ = 'member_cards'
-    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
-    member_type = db.Column(db.SmallInteger, default=0, comment='会员类型， 0为普通C端会员； 1 为代理商')
-    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
-    grade = db.Column(db.SmallInteger, default=1,
-                      comment='会员卡等级，在OptionsDict表中查找card_grades来获取对应的文字描述.默认为1')
-    discount = db.Column(db.DECIMAL(3, 2), default=1.00, comment="会员折扣")
-    shop_id = db.Column(db.String(64), default='all', comment='预留，对于店铺发店铺会员卡，目前会员卡为商城全局')
-    open_date = db.Column(db.DateTime, default=datetime.datetime.now, comment="开卡日期")
-    validate_date = db.Column(db.DateTime, comment="卡有效期")
-    note = db.Column(db.String(100), comment='备注')
-    creator_id = db.Column(db.String(64), db.ForeignKey('users.id'))
-    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-    delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
-
-    recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
 
 
 class Scores(db.Model):
@@ -868,6 +922,8 @@ class ShopOrders(db.Model):
     invoice_tax_no = db.Column(db.String(20), comment='企业税号')
     inovice_email = db.Column(db.String(50), comment='发票发送邮箱')
     rebate_records = db.relationship('PersonalRebates', backref='related_order', lazy='dynamic')
+    wechat_pay_result = db.relationship("WechatPay", backref='payed_order', uselist=False)
+    member_card_consumption_id = db.Column(db.String(64), db.ForeignKey('member_card_consumption.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1187,6 +1243,7 @@ class NewCustomerAwards(db.Model):
         secondary=new_customer_awards_coupons,
         backref=db.backref('new_customers')
     )
+    share_award = db.Column(db.SmallInteger, default=0, comment='分享者可获取积分，分享者需要是直客，代理不能获取')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1199,6 +1256,7 @@ class Advertisements(db.Model):
     __tablename__ = "advertisements"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), index=True, comment='广告名称')
+    position = db.Column(db.String(50), index=True, comment='广告位置')
     image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
     jump_to = db.Column(db.String(200), comment='跳转链接')
     start_at = db.Column(db.DateTime, default=datetime.datetime.now, comment="广告开始时间")
@@ -1208,6 +1266,34 @@ class Advertisements(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
+
+
+class WechatPay(db.Model):
+    """微信支付订单"""
+    __tablename__ = "wechat_pay"
+    id = db.Column(db.Integer, primary_key=True)
+    prepay_id = db.Column(db.String(64), index=True, comment='预支付交易会话标识')
+    prepay_at = db.Column(db.DateTime, default=datetime.datetime.now, comment='预支付时间')
+    callback_err_code = db.Column(db.String(32), comment='错误代码')
+    callback_err_code_des = db.Column(db.String(128), comment='错误代码描述')
+    openid = db.Column(db.String(128), comment='用户openid')
+    is_subscribe = db.Column(db.String(1), comment='是否关注公众账号')
+    trade_type = db.Column(db.String(16), default='JSAPI', comment='交易类型')
+    bank_type = db.Column(db.String(32), comment='付款银行')
+    total_fee = db.Column(db.Integer, index=True, comment='订单总金额，单位为分')
+    settlement_total_fee = db.Column(db.Integer, comment='应结订单金额=订单金额-非充值代金券金额，应结订单金额<=订单金额')
+    fee_type = db.Column(db.String(8), default='CNY', comment='货币类型')
+    cash_fee = db.Column(db.Integer, index=True, comment='现金支付金额订单现金支付金额，详见支付金额')
+    cash_fee_type = db.Column(db.String(16), default='CNY', comment='现金支付货币类型')
+    transaction_id = db.Column(db.String(32), index=True, comment='微信支付订单号')
+    attach = db.Column(db.String(128), index=True, comment='商城购物：shop_order, 会员卡充值：member_card_recharge')
+    time_end = db.Column(db.DateTime, comment='支付完成时间')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    shop_order_id = db.Column(db.String(64), db.ForeignKey("shop_orders.id"))
+    member_recharge_record_id = db.Column(db.String(64), db.ForeignKey("member_recharge_records.id"))
 
 
 aes_key = 'koiosr2d2c3p0000'

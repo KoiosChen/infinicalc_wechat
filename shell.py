@@ -8,14 +8,14 @@ from flask_migrate import Migrate, MigrateCommand
 
 __author__ = 'Koios'
 
-app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+app = create_app(os.getenv('FLASK_CONFIG') or 'production')
 manager = Manager(app)
 migrate = Migrate(app, db)
 
 
 def make_shell_context():
     return dict(app=app, db=db, Users=Users, Customers=Customers, ShoppingCart=ShoppingCart,
-                CustomerRoles=CustomerRoles, Brands=Brands, SKU=SKU, ShopOrders=ShopOrders)
+                CustomerRoles=CustomerRoles, Brands=Brands, SKU=SKU, ShopOrders=ShopOrders, Promotions=Promotions)
 
 
 manager.add_command("shell", Shell(make_context=make_shell_context))

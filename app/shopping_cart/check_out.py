@@ -122,20 +122,14 @@ def check_out(args, kwargs):
                         if not datetime.datetime.now() - customer_coupon.take_at > datetime.timedelta(
                                 days=customer_coupon.coupon_setting.valid_days):
                             continue
-                    if cart.quantity * Decimal(the_sku['real_price']) >= coupons_setting.promotion.benefits[
-                        0].with_amount:
+                    real_total_price = cart.quantity * Decimal(the_sku['real_price'])
+                    if real_total_price >= coupons_setting.promotion.benefits[0].with_amount:
                         could_use_coupons[coupons_setting.promotion.sku[0].id].append({"name": coupons_setting.name,
                                                                                        "desc": coupons_setting.desc,
                                                                                        "coupon_id": customer_coupon.id,
-                                                                                       "for_item":
-                                                                                           coupons_setting.promotion.sku[
-                                                                                               0].id,
-                                                                                       "with_amount":
-                                                                                           coupons_setting.promotion.benefits[
-                                                                                               0].with_amount,
-                                                                                       "reduced_amount":
-                                                                                           coupons_setting.promotion.benefits[
-                                                                                               0].reduced_amount})
+                                                                                       "for_item": coupons_setting.promotion.sku[0].id,
+                                                                                       "with_amount": coupons_setting.promotion.benefits[0].with_amount,
+                                                                                       "reduced_amount": coupons_setting.promotion.benefits[0].reduced_amount})
             the_sku['quantity'] = cart.quantity
             the_sku['shopping_cart_id'] = cart_id
             sku.append(the_sku)

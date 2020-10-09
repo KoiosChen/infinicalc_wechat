@@ -107,9 +107,9 @@ add_coupon_parser.add_argument('quota', required=True, type=int, help='优惠券
 add_coupon_parser.add_argument('per_user', required=True, default=1, type=int, help='每用户允许领取数量')
 add_coupon_parser.add_argument('valid_type', required=True, default=2, type=int, choices=[1, 2],
                                help='时效:1绝对时效（领取后XXX-XXX时间段有效）  2相对时效（领取后N天有效）')
-add_coupon_parser.add_argument('valid_days', default=1, type=int, help='自领取之日起有效天数')
+add_coupon_parser.add_argument('valid_days', default=30, type=int, help='自领取之日起有效天数, 不填写为30天')
 add_coupon_parser.add_argument('absolute_date', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d %H:%M:%S'),
-                               help='优惠券的绝对结束日期，当valid_type为1时，此项不能为空')
+                               help='优惠券的绝对结束日期，当valid_type为1时，此项不能为空, %Y-%m-%d %H:%M:%S')
 
 add_coupon_reduce_parser = add_coupon_parser.copy()
 add_coupon_reduce_parser.add_argument('benefits', required=True, type=enough_reduce_type, location='json', default=[{}],

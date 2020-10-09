@@ -1,10 +1,10 @@
 import jwt
 import datetime
 import time
-from ..models import Elements, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid
+from ..models import NewCustomerAwards, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid
 from .. import db, logger, SECRET_KEY
 from ..common import success_return, false_return, session_commit
-from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id
+from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id, query_coupon
 import json
 import traceback
 
@@ -57,7 +57,18 @@ def authenticate(login_ip, **kwargs):
         new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
         customer = new_customer['obj']
 
+        # 如果数据是新建，那么表示新进入用户
         if new_customer['status']:
+            # 如果是新用户，则可获取首单优惠券
+            try:
+                award_coupons = NewCustomerAwards.query.first().could_get_coupons
+                for award_coupon in award_coupons:
+                    logger.info(str(query_coupon(current_user=customer, coupon_id=award_coupon.id)))
+            except Exception as e:
+                traceback.print_exc()
+                logger.error(str(e))
+
+            # 若是新用户，则可获取新注册积分
             new_customer['obj'].total_points = NEW_ONE_SCORES
             new_data_obj("Scores", **{"id": make_uuid(),
                                       "customer_id": new_customer['obj'].id,
