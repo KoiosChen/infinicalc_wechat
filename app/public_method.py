@@ -231,7 +231,7 @@ def __make_table(fields, table, strainer=None):
                 start_at = table.take_at
                 end_at = table.take_at + datetime.timedelta(days=coupons_setting.valid_days)
             tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount,
-                      "start_at": start_at, "end_at": end_at}
+                      "start_at": str(start_at), "end_at": str(end_at)}
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
