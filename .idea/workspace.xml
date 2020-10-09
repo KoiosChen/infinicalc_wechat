@@ -4,21 +4,6 @@
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/customers/customers_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/customers/customers_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/frontstage_auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/frontstage_auth/auths.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/member_cards/member_cards_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/member_cards/member_cards_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/promotions/coupons.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/coupons.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/promotions/promotions_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/promotions/promotions_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/shopping_cart/check_out.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/shopping_cart/check_out.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/README" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/alembic.ini" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/script.py.mako" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/454098bbb729_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/8a29d205351e_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/9a221a853870_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/versions/f62addb702d0_.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/shell.py" beforeDir="false" afterPath="$PROJECT_DIR$/shell.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -196,6 +181,7 @@
       <workItem from="1601906040503" duration="298000" />
       <workItem from="1601906675718" duration="366000" />
       <workItem from="1601907358415" duration="18724000" />
+      <workItem from="1602257321445" duration="589000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -471,10 +457,10 @@
     <state width="1638" height="421" key="GridCell.Tab.1.right/0.23.1920.1001@0.23.1920.1001" timestamp="1601446460545" />
     <state width="1038" height="769" key="GridCell.Tab.1.right/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601635172234" />
     <state width="1038" height="769" key="GridCell.Tab.1.right/1680.-1485.1080.1920/0.23.1680.971/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601630017049" />
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1601907360244">
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1602257323138">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1601907360244" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1602257323138" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
