@@ -221,10 +221,10 @@ def __make_table(fields, table, strainer=None):
         elif f == 'coupon_brief':
             coupons_setting = table.coupon_setting
             with_amount = coupons_setting.promotion.benefits[0].with_amount
-            reduce_amount = coupons_setting.promotion.benefits[0].reduce_amount
+            reduced_amount = coupons_setting.promotion.benefits[0].reduce_amount
             name = coupons_setting.name
             desc = coupons_setting.desc
-            tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduce_amount": reduce_amount}
+            tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount}
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
