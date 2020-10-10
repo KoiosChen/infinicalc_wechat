@@ -59,11 +59,10 @@ def check_promotions_base_police(customer, sku):
             c2 = pro.first_order == 1 and customer.orders.filter_by(is_pay=1).first()
             c3 = not pro.customer_level <= customer.level
             c4 = pro.gender != 0 and pro.gender != customer.gender
-            c5 = not datetime.timedelta(
-                days=pro.age_min // 4 + pro.age_min * 365
-            ) <= datetime.datetime.now().date() - customer.birthday <= datetime.timedelta(
-                days=pro.age_max // 4 + pro.age_max * 365
-            )
+            if customer.birthday:
+                c5 = not datetime.timedelta(days=pro.age_min // 4 + pro.age_min * 365) <= datetime.datetime.now().date() - customer.birthday <= datetime.timedelta(days=pro.age_max // 4 + pro.age_max * 365)
+            else:
+                c5 = True
             c6 = sku.special > 0 and pro.with_special == 0
             if c1 or c2 or c3 or c4 or c5 or c6:
                 # 剔除不满足条件的促销活动，一般用于scope=1的全局活动
