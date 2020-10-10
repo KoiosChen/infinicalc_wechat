@@ -60,9 +60,11 @@ def check_promotions_base_police(customer, sku):
             c3 = not pro.customer_level <= customer.level
             c4 = pro.gender != 0 and pro.gender != customer.gender
             if customer.birthday:
-                c5 = not datetime.timedelta(days=pro.age_min // 4 + pro.age_min * 365) <= datetime.datetime.now().date() - customer.birthday <= datetime.timedelta(days=pro.age_max // 4 + pro.age_max * 365)
+                c5 = not datetime.timedelta(
+                    days=pro.age_min // 4 + pro.age_min * 365) <= datetime.datetime.now().date() - customer.birthday <= datetime.timedelta(
+                    days=pro.age_max // 4 + pro.age_max * 365)
             else:
-                c5 = True
+                c5 = False
             c6 = sku.special > 0 and pro.with_special == 0
             if c1 or c2 or c3 or c4 or c5 or c6:
                 # 剔除不满足条件的促销活动，一般用于scope=1的全局活动
@@ -110,7 +112,7 @@ def check_out(args, kwargs):
             base_coupons, reject_score_flag, force_use_coupon = check_promotions_base_police(kwargs.get('current_user'),
                                                                                              sku_)
             if sku_.id not in could_use_coupons.keys():
-                could_use_coupons[sku_.id] = list()
+                could_use_coupons[sku_.name] = list()
 
             # 检查用户所有领取的优惠券是否在有效优惠券活动中
             for customer_coupon in customer.coupons.filter_by(status=1).all():
@@ -123,12 +125,18 @@ def check_out(args, kwargs):
                             continue
                     real_total_price = cart.quantity * Decimal(the_sku['real_price'])
                     if real_total_price >= coupons_setting.promotion.benefits[0].with_amount:
-                        could_use_coupons[coupons_setting.promotion.sku[0].id].append({"name": coupons_setting.name,
-                                                                                       "desc": coupons_setting.desc,
-                                                                                       "coupon_id": customer_coupon.id,
-                                                                                       "for_item": coupons_setting.promotion.sku[0].id,
-                                                                                       "with_amount": coupons_setting.promotion.benefits[0].with_amount,
-                                                                                       "reduced_amount": coupons_setting.promotion.benefits[0].reduced_amount})
+                        could_use_coupons[coupons_setting.promotion.sku[0].name].append({"name": coupons_setting.name,
+                                                                                         "desc": coupons_setting.desc,
+                                                                                         "coupon_id": customer_coupon.id,
+                                                                                         "for_item":
+                                                                                             coupons_setting.promotion.sku[
+                                                                                                 0].id,
+                                                                                         "with_amount":
+                                                                                             coupons_setting.promotion.benefits[
+                                                                                                 0].with_amount,
+                                                                                         "reduced_amount":
+                                                                                             coupons_setting.promotion.benefits[
+                                                                                                 0].reduced_amount})
             the_sku['quantity'] = cart.quantity
             the_sku['shopping_cart_id'] = cart_id
             sku.append(the_sku)
