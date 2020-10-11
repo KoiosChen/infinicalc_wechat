@@ -112,7 +112,7 @@ def check_out(args, kwargs):
             base_coupons, reject_score_flag, force_use_coupon = check_promotions_base_police(kwargs.get('current_user'),
                                                                                              sku_)
             if sku_.id not in could_use_coupons.keys():
-                could_use_coupons[sku_.name] = list()
+                could_use_coupons[sku_.id] = list()
 
             # 检查用户所有领取的优惠券是否在有效优惠券活动中
             for customer_coupon in customer.coupons.filter_by(status=1).all():
@@ -125,7 +125,7 @@ def check_out(args, kwargs):
                             continue
                     real_total_price = cart.quantity * Decimal(the_sku['real_price'])
                     if real_total_price >= coupons_setting.promotion.benefits[0].with_amount:
-                        could_use_coupons[coupons_setting.promotion.sku[0].name].append({"name": coupons_setting.name,
+                        could_use_coupons[coupons_setting.promotion.sku[0].id].append({"name": coupons_setting.name,
                                                                                          "desc": coupons_setting.desc,
                                                                                          "coupon_id": customer_coupon.id,
                                                                                          "for_item":
