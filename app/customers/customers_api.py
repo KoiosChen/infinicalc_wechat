@@ -209,7 +209,7 @@ class CustomerCoupons(Resource):
         #     advance_search.append({"key": "status", "value": args.get('status'), "operator": "__eq__"})
         return success_return(get_table_data(CouponReady,
                                              args,
-                                             appends=["coupon_brief"],
+                                             appends=["coupon_brief", "consumer"],
                                              advance_search=advance_search))
 
 
