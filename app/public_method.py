@@ -292,14 +292,18 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None, ord
     if isinstance(current, int) and current <= 0:
         return False
 
+    filter_args = list()
     if search:
-        filter_args = list()
         filter_args.extend(_search(table, fields, search))
         if advance_search is not None:
             filter_args.extend(_advance_search(table, fields, advance_search))
         search_sql = base_sql.filter(and_(*filter_args))
     else:
-        search_sql = base_sql
+        if advance_search is not None:
+            filter_args.extend(_advance_search(table, fields, advance_search))
+            search_sql = base_sql.filter(and_(*filter_args))
+        else:
+            search_sql = base_sql
 
     if order_by is not None:
         search_sql = search_sql.order_by(getattr(getattr(table, order_by), "desc")())
