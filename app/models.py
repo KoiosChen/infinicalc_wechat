@@ -311,7 +311,7 @@ class MemberCards(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
-    recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
+    recharge_records = db.relationship('MemberRechargeRecords', backref='card', uselist=False)
 
     def __repr__(self):
         return '<Member card no %r>' % self.card_no

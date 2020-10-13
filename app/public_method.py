@@ -271,9 +271,15 @@ def _search(table, fields, search):
 
 def _advance_search(table, fields, advance_search):
     and_fields_list = list()
+
     for search in advance_search:
         if search['key'] in fields:
-            and_fields_list.append(getattr(getattr(table, search['key']), search['operator'])(search['value']))
+            if '.' in search['key']:
+                keys = search['key'].split('.')
+                attr_key = getattr(getattr(table, keys[0]), keys[1])
+            else:
+                attr_key = getattr(table, search['key'])
+            and_fields_list.append(getattr(attr_key, search['operator'])(search['value']))
     return and_fields_list
 
 

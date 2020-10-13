@@ -1,5 +1,6 @@
 from flask_restplus import Resource
-from ..models import Permission, InvitationCode, MemberCards
+from ..models import Permission, InvitationCode, MemberCards, MemberPolicies, MemberCardConsumption, \
+    MemberRechargeRecords
 from .. import db, default_api
 from ..common import success_return, false_return, submit_return
 from ..public_method import get_table_data, new_data_obj, create_member_card_num
@@ -16,8 +17,10 @@ member_cards_parser = page_parser.copy()
 recharge_parser = page_parser.copy()
 recharge_parser.add_argument("wechat_nickname", help='微信昵称，支持模糊查找', location='args')
 recharge_parser.add_argument("phone_number", help='手机号，支持模糊查找', location='args')
-recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，起始于，格式'%Y-%m-%d", location='args')
-recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，结束于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="充值范围，起始于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="充值范围，结束于，格式'%Y-%m-%d", location='args')
 recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
 
 
@@ -107,7 +110,10 @@ class MemberRecharge(Resource):
         """
         会员卡充值。 用户充值对应金额
         """
-        pass
+        try:
+            current_user = kwargs['current_user']
+        except Exception as e:
+            return  false_return(message=str(e))
 
     @members_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.member_cards.member_cards_api.query_recharge"])
@@ -118,6 +124,17 @@ class MemberRecharge(Resource):
         """
         try:
             current_user = kwargs.get('current_user')
+            if current_user.__class__.__name__ == "Users":
+                pass
+            else:
+                member_card = current_user.member_card.first()
+                return success_return(get_table_data(MemberRechargeRecords,
+                                                     {},
+                                                     advance_search=[{"key": "member_card",
+                                                                      "operator": "__eq__",
+                                                                      "value": member_card.id}],
+                                                     order_by="create_at"))
+
         except Exception as e:
             return false_return(message=str(e)), 400
 
