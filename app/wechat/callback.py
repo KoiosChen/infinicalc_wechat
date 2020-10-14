@@ -13,7 +13,7 @@ from hashlib import md5
 from app.public_method import session_commit, new_data_obj
 import datetime
 from app.rebates import calc_rebate
-from .update_order import update_it
+from .update_order import update_shop_order
 
 
 @wechat.route('/wechat_pay/callback/', methods=['POST', 'GET'])
@@ -111,7 +111,7 @@ def weixin_rollback(request):
     try:
         # 支付异步回调验证
         data = weixinpay_call_back(request)
-        res = update_it(data)
+        res = update_shop_order(data)
     except Exception as e:
         traceback.print_exc()
         res = str(e)

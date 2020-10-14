@@ -508,6 +508,30 @@ class Customers(db.Model):
 
         return member_card.grade if member_card else 0
 
+    @property
+    def member_type(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card.member_type if member_card else 0
+
+    @property
+    def member_grade(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card.grade if member_card else None
+
+    @property
+    def card(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card
+
     def __repr__(self):
         return f"<Customers {self.openid}::{self.phone}>"
 

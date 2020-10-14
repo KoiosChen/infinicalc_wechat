@@ -213,7 +213,7 @@ def create_order(**kwargs):
             return success_return(data=order_no, message="创建订单成功")
 
 
-def weixin_pay(out_trade_no, price, openid):
+def weixin_pay(out_trade_no, price, openid, attach="ShopOrder"):
     """
     【API】: 创建订单,供商户app调用
     """

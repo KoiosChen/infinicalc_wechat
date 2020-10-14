@@ -1,12 +1,35 @@
 from app import db, logger
-from app.models import ShopOrders, make_order_id
+from app.models import ShopOrders, make_order_id, MemberPolicies
 import datetime
 from app.common import submit_return, session_commit
-from app.public_method import new_data_obj
+from app.public_method import new_data_obj, query_coupon
 from app.rebates import calc_rebate
 
 
-def update_it(data):
+def update_member_card(data):
+    # 获取会员充值对应的策略，用于确认充值后赠送金额，会员级别等
+    recharge_policy = MemberPolicies.query.filter_by(recharge_amount=recharge_amount, delete_at=None).first()
+    if not recharge_policy:
+        raise Exception(f"充值金额未定义相应的策略")
+
+    current_card = current_user.card
+    if not current_card:
+        current_card = new_data_obj("MemberCards", **{"card_no": create_member_card_num(),
+                                                      "customer_id": current_user.id})
+        if not current_user or not current_card['status']:
+            raise Exception("It's failed to create new member card.")
+
+    current_card.member_type = recharge_policy.to_type
+    current_card.grade = recharge_policy.to_level
+    current_user.total_points += recharge_policy.bounce_scores
+    if recharge_policy.bounce_coupons:
+        for coupon in recharge_policy.bounce_coupons:
+            query_coupon(current_user=current_user, coupon_id=coupon.id)
+
+    self_recharge_record = new_data_obj("")
+
+
+def update_shop_order(data):
     if data:
         res = "success"
 

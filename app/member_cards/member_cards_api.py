@@ -1,12 +1,13 @@
-from flask_restplus import Resource
+from flask_restplus import Resource, reqparse
 from ..models import Permission, InvitationCode, MemberCards, MemberPolicies, MemberCardConsumption, \
-    MemberRechargeRecords
+    MemberRechargeRecords, make_uuid
 from .. import db, default_api
 from ..common import success_return, false_return, submit_return
-from ..public_method import get_table_data, new_data_obj, create_member_card_num
+from ..public_method import get_table_data, new_data_obj, create_member_card_num, query_coupon
 import datetime
 from app.decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
+from app.wechat import pay
 
 members_ns = default_api.namespace('member_cards', path='/member_cards', description='邀请码录入升级会员，会员信息查询')
 
@@ -22,6 +23,9 @@ recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strpti
 recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                              help="充值范围，结束于，格式'%Y-%m-%d", location='args')
 recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
+
+member_recharge_parser = reqparse.RequestParser()
+member_recharge_parser.add_argument("amount", choices=[1999, 4999, 9999, 29999], required=True, help='充值金额')
 
 
 @members_ns.route("")
@@ -105,15 +109,46 @@ class InviteToBeMember(Resource):
 @members_ns.expect(head_parser)
 class MemberRecharge(Resource):
     @members_ns.marshal_with(return_json)
+    @members_ns.doc(body=member_recharge_parser)
     @permission_required(Permission.USER)
     def post(self, **kwargs):
         """
         会员卡充值。 用户充值对应金额
         """
         try:
+            args = member_recharge_parser.parse_args()
             current_user = kwargs['current_user']
+            if current_user.member_type == 1:
+                raise Exception("代理商不可充值")
+
+            present_grade = current_user.member_grade
+            recharge_amount = args.get('amount')
+            if recharge_amount not in (1, 1999, 4999, 9999, 29999):
+                raise Exception('充值金额不在规定范围内')
+
+            current_card = current_user.member_card
+
+            if not current_card:
+                current_card = new_data_obj("MemberCards",
+                                            **{"id": create_member_card_num(),
+                                               "customer_id": current_user.id,
+                                               "grade": 0})
+
+                if not current_card or not current_card['status']:
+                    raise Exception("create card fail")
+
+            new_recharge_order = new_data_obj("MemberRechargeRecords",
+                                              **{"id": make_uuid(),
+                                                 "recharge_amount": recharge_amount,
+                                                 "member_card_id": current_card['obj'].id})
+
+            if not new_recharge_order or not new_recharge_order['status']:
+                raise Exception("创建充值订单失败")
+
+            return pay.weixin_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount, openid=current_user.openid)
+
         except Exception as e:
-            return  false_return(message=str(e))
+            return false_return(message=str(e))
 
     @members_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.member_cards.member_cards_api.query_recharge"])
