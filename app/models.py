@@ -349,6 +349,7 @@ class MemberRechargeRecords(db.Model):
     recharge_amount = db.Column(db.DECIMAL(9, 2), default=0.00, comment="充值金额")
     member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
+    is_pay = db.Column(db.SmallInteger, default=0, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败, 3:支付中")
     usable = db.Column(db.SmallInteger, default=1, comment='0 不可用， 1 可用；例如开通会员卡的金额可设置为不可使用')
     wechat_pay_result = db.relationship("WechatPay", backref='member_recharge_record', uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)

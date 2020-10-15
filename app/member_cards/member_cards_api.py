@@ -25,7 +25,8 @@ recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime
 recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
 
 member_recharge_parser = reqparse.RequestParser()
-member_recharge_parser.add_argument("amount", choices=[1999, 4999, 9999, 29999], required=True, help='充值金额')
+member_recharge_parser.add_argument("amount", choices=[1, 1999, 4999, 9999, 29999], required=True, help='充值金额',
+                                    type=int)
 
 
 @members_ns.route("")
@@ -126,11 +127,11 @@ class MemberRecharge(Resource):
             if recharge_amount not in (1, 1999, 4999, 9999, 29999):
                 raise Exception('充值金额不在规定范围内')
 
-            current_card = current_user.member_card
+            current_card = current_user.card
 
             if not current_card:
                 current_card = new_data_obj("MemberCards",
-                                            **{"id": create_member_card_num(),
+                                            **{"card_no": create_member_card_num(),
                                                "customer_id": current_user.id,
                                                "grade": 0})
 
@@ -140,12 +141,13 @@ class MemberRecharge(Resource):
             new_recharge_order = new_data_obj("MemberRechargeRecords",
                                               **{"id": make_uuid(),
                                                  "recharge_amount": recharge_amount,
-                                                 "member_card_id": current_card['obj'].id})
+                                                 "member_card": current_card['obj'].id})
 
             if not new_recharge_order or not new_recharge_order['status']:
                 raise Exception("创建充值订单失败")
 
-            return pay.weixin_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount, openid=current_user.openid)
+            return pay.recharge_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount,
+                                    openid=current_user.openid, attach="MemberRecharge")
 
         except Exception as e:
             return false_return(message=str(e))
