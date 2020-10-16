@@ -1,6 +1,6 @@
 from flask_restplus import Resource, reqparse
 from ..models import Permission, InvitationCode, MemberCards, MemberPolicies, MemberCardConsumption, \
-    MemberRechargeRecords, make_uuid
+    MemberRechargeRecords, make_uuid, make_order_id
 from .. import db, default_api
 from ..common import success_return, false_return, submit_return
 from ..public_method import get_table_data, new_data_obj, create_member_card_num, query_coupon
@@ -137,17 +137,19 @@ class MemberRecharge(Resource):
 
                 if not current_card or not current_card['status']:
                     raise Exception("create card fail")
+                else:
+                    current_card = current_card['obj']
 
             new_recharge_order = new_data_obj("MemberRechargeRecords",
-                                              **{"id": make_uuid(),
+                                              **{"id": make_order_id(),
                                                  "recharge_amount": recharge_amount,
-                                                 "member_card": current_card['obj'].id})
+                                                 "member_card": current_card.id})
 
             if not new_recharge_order or not new_recharge_order['status']:
                 raise Exception("创建充值订单失败")
 
-            return pay.recharge_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount,
-                                    openid=current_user.openid, attach="MemberRecharge")
+            return pay.weixin_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount,
+                                  openid=current_user.openid, device_info="MemberRecharge")
 
         except Exception as e:
             return false_return(message=str(e))

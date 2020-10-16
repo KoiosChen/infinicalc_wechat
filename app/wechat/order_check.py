@@ -85,7 +85,7 @@ def weixin_orderquery(out_trade_no):
                 data = make_querypayment_request(params_dict, WEIXIN_QUERY_ORDER_URL)
                 if data:
                     if data['return_code'] == 'SUCCESS':
-                        res = update_order.update_shop_order(data)
+                        res = update_order.update_order(data)
                     else:
                         res['status'] = 0
                         res['msg'] = data['err_code_des']

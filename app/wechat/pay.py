@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from app import logger, db, redis_db, sku_lock
-from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords
+from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, \
+    make_uuid
 from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
     WEIXIN_KEY, \
     WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
@@ -20,7 +21,7 @@ import threading
 from sqlalchemy import and_
 
 
-def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid=None, attach=None):
+def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid=None, device_info=None):
     order_info = {'appid': app_id,
                   'mch_id': WEIXIN_MCH_ID,
                   'device_info': 'WEB',
@@ -32,12 +33,12 @@ def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid
                   'spbill_create_ip': WEIXIN_SPBILL_CREATE_IP,
                   'notify_url': notify_url,
                   'trade_type': 'JSAPI',
-                  'attach': attach,
+                  'device_info': device_info,
                   'openid': openid}
     return order_info
 
 
-def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid, attach):
+def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid, device_info):
     """
     微信统一下单，并返回客户端数据
     :param notify_url: 回调地址
@@ -113,7 +114,7 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid, attach)
                                      out_trade_no=out_trade_no,
                                      total_fee=total_fee,
                                      openid=openid,
-                                     attach=attach)
+                                     device_info=device_info)
 
     # 统一下单接口提交请求
     res, info = make_payment_request(payment_info, WEIXIN_UNIFIED_ORDER_URL)
@@ -215,53 +216,20 @@ def create_order(**kwargs):
             return success_return(data=order_no, message="创建订单成功")
 
 
-def recharge_pay(out_trade_no, price, openid, attach="MemberRecharge"):
-    """
-    会员充值支付
-    :param out_trade_no:
-    :param price:
-    :param openid:
-    :param attach:
-    :return:
-    """
-    try:
-        customer = Customers.query.filter_by(openid=openid).first()
-        order = db.session.query(MemberRechargeRecords).with_for_update().filter(
-            MemberRechargeRecords.id.__eq__(out_trade_no)).first()
-
-        if not order:
-            raise Exception(f"订单 {out_trade_no} 不存在")
-        if order.card.card_owner.id != customer.id:
-            raise Exception("用户不匹配")
-        if order.is_pay == 1:
-            raise Exception(f"订单 {out_trade_no} 已支付")
-
-        order.is_pay = 3
-        if session_commit().get("code") == "false":
-            raise Exception("订单状态修改为‘支付中’失败")
-
-        # 提交支付
-        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid, attach)
-
-        if order_info and info:
-            info['total_amount'] = int(price * 100)
-            if info['result_code'] == "SUCCESS":
-                pass
-        # 在返回小程序的package中增加订单号
-
-    except Exception as e:
-        return false_return(message=str(e))
-
-
-def weixin_pay(out_trade_no, price, openid, attach="ShopOrder"):
+def weixin_pay(out_trade_no, price, openid, device_info="ShopOrder"):
     """
     【API】: 创建订单,供商户app调用
     """
     # order = ShopOrders.query.get(out_trade_no)
     customer = Customers.query.filter_by(openid=openid).first()
-    order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
-                                                                  ShopOrders.customer_id.__eq__(customer.id),
-                                                                  ShopOrders.status.__eq__(1)).first()
+    if device_info == 'ShopOrder':
+        order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
+                                                                      ShopOrders.customer_id.__eq__(customer.id),
+                                                                      ShopOrders.status.__eq__(1)).first()
+    else:
+        order = db.session.query(MemberRechargeRecords).with_for_update().filter(
+            MemberRechargeRecords.id.__eq__(out_trade_no)).first()
+
     try:
         # 后台提交支付请求
         if not order:
@@ -277,7 +245,7 @@ def weixin_pay(out_trade_no, price, openid, attach="ShopOrder"):
             raise Exception("订单状态修改为‘支付中’失败")
 
         # 提交支付
-        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid, attach)
+        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid, device_info)
 
         if order_info and info:
             info['total_amount'] = int(price * 100)
@@ -286,6 +254,18 @@ def weixin_pay(out_trade_no, price, openid, attach="ShopOrder"):
                 order_info['out_trade_no'] = out_trade_no
                 order.is_pay = 3
                 order.pre_pay_time = datetime.datetime.now()
+                if info['device_info'] == "MemberRecharge":
+                    if not order.wechat_pay_result:
+                        new_wechat_pay = new_data_obj("WechatPay", **{"id": make_uuid(),
+                                                                      "openid": customer.openid,
+                                                                      "member_recharge_record_id": out_trade_no})
+                        if not new_wechat_pay or not new_wechat_pay['status']:
+                            raise Exception("创建支付关联记录失败")
+
+                        new_wechat_pay['obj'].prepay_id = info['prepay_id']
+                        new_wechat_pay['obj'].prepay_at = datetime.datetime.now()
+                        new_wechat_pay['obj'].device_info = info['device_info']
+
                 db.session.add(order)
                 if session_commit().get('code') == 'false':
                     raise Exception("订单数据提交失败，事务回滚")

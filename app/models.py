@@ -349,10 +349,14 @@ class MemberRechargeRecords(db.Model):
     recharge_amount = db.Column(db.DECIMAL(9, 2), default=0.00, comment="充值金额")
     member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
-    is_pay = db.Column(db.SmallInteger, default=0, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败, 3:支付中")
+    is_pay = db.Column(db.SmallInteger, default=0, index=True, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败, 3:支付中")
+    pre_pay_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='预支付时间')
     usable = db.Column(db.SmallInteger, default=1, comment='0 不可用， 1 可用；例如开通会员卡的金额可设置为不可使用')
     wechat_pay_result = db.relationship("WechatPay", backref='member_recharge_record', uselist=False)
+    status = db.Column(db.SmallInteger, default=1, comment='0, 取消，1 正常')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<Member recharge record No. %r>' % self.id
@@ -1296,7 +1300,7 @@ class Advertisements(db.Model):
 class WechatPay(db.Model):
     """微信支付订单"""
     __tablename__ = "wechat_pay"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     prepay_id = db.Column(db.String(64), index=True, comment='预支付交易会话标识')
     prepay_at = db.Column(db.DateTime, default=datetime.datetime.now, comment='预支付时间')
     callback_err_code = db.Column(db.String(32), comment='错误代码')
@@ -1311,7 +1315,8 @@ class WechatPay(db.Model):
     cash_fee = db.Column(db.Integer, index=True, comment='现金支付金额订单现金支付金额，详见支付金额')
     cash_fee_type = db.Column(db.String(16), default='CNY', comment='现金支付货币类型')
     transaction_id = db.Column(db.String(32), index=True, comment='微信支付订单号')
-    attach = db.Column(db.String(128), index=True, comment='商城购物：shop_order, 会员卡充值：member_card_recharge')
+    device_info = db.Column(db.String(32), index=True, comment='ShopOrder, MemberRecharge')
+    attach = db.Column(db.String(128), index=True, comment='not in use')
     time_end = db.Column(db.DateTime, comment='支付完成时间')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
