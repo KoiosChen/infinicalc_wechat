@@ -255,7 +255,10 @@ def weixin_pay(out_trade_no, price, openid, device_info="ShopOrder"):
                 order.is_pay = 3
                 order.pre_pay_time = datetime.datetime.now()
                 if info['device_info'] == "MemberRecharge":
+                    # 如果是购物车中直接消费，那么正常情况没有微信支付记录
+                    # 如果是订单中再付费，那么正常情况应该已经有微信支付记录
                     if not order.wechat_pay_result:
+                        # 创建微信支付记录
                         new_wechat_pay = new_data_obj("WechatPay", **{"id": make_uuid(),
                                                                       "openid": customer.openid,
                                                                       "member_recharge_record_id": out_trade_no})

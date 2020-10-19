@@ -99,6 +99,7 @@ def check_out(args, kwargs):
         reject_score_flag = 0
         force_use_coupon = 0
         could_use_coupons = defaultdict(list)
+        card_balance = kwargs.get('current_user').card_balance
         for cart_id in args['shopping_cart_id']:
             cart = ShoppingCart.query.filter_by(id=cart_id, customer_id=kwargs.get('current_user').id).first()
 
@@ -142,6 +143,7 @@ def check_out(args, kwargs):
             sku.append(the_sku)
         return success_return(
             {"total_score": total_score if force_use_coupon == 0 else 0,
+             "card_balance": card_balance,
              "reject_score_flag": reject_score_flag,
              "force_use_coupon": force_use_coupon,
              "total_price": str(total_price.quantize(Decimal("0.00"))),

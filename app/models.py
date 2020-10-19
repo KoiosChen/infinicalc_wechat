@@ -13,6 +13,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.mysql import LONGTEXT
 import random
+from decimal import Decimal
 
 
 def make_uuid():
@@ -298,6 +299,7 @@ class MemberCards(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
     member_type = db.Column(db.SmallInteger, default=0, comment='会员类型， 0为普通C端会员； 1 为代理商')
+    balance = db.Column(db.DECIMAL(11, 2), default=0.00, comment='余额')
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
     grade = db.Column(db.SmallInteger, default=1,
@@ -369,7 +371,7 @@ class MemberCardConsumption(db.Model):
     consumption_sum = db.Column(db.DECIMAL(9, 2), default=0.00, comment='消费额')
     member_card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
-    order = db.relationship("ShopOrders", backref='member_card_consumption', uselist=False)
+    shop_order_id = db.Column(db.String(64), db.ForeignKey("shop_orders.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
     def __repr__(self):
@@ -536,6 +538,13 @@ class Customers(db.Model):
                                                MemberCards.status.__eq__(1)).first()
 
         return member_card
+
+    @property
+    def card_balance(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+        return member_card.balance if member_card else Decimal("0.00")
 
     def __repr__(self):
         return f"<Customers {self.openid}::{self.phone}>"
@@ -952,7 +961,7 @@ class ShopOrders(db.Model):
     inovice_email = db.Column(db.String(50), comment='发票发送邮箱')
     rebate_records = db.relationship('PersonalRebates', backref='related_order', lazy='dynamic')
     wechat_pay_result = db.relationship("WechatPay", backref='payed_order', uselist=False)
-    member_card_consumption_id = db.Column(db.String(64), db.ForeignKey('member_card_consumption.id'))
+    card_consumption = db.relationship("MemberCardConsumption", backref='payed_by_card_order', uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
