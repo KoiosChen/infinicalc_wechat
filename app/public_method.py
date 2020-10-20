@@ -234,7 +234,7 @@ def __make_table(fields, table, strainer=None):
                       "start_at": str(start_at), "end_at": str(end_at)}
         elif f == 'real_payed_cash_fee':
             coupon_reduce, card_reduce = order_payed_couponscards(table)
-            tmp[f] = table.items_total_price - table.order.score_used - coupon_reduce - card_reduce
+            tmp[f] = table.items_total_price - table.score_used - coupon_reduce - card_reduce
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
