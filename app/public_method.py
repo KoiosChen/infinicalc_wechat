@@ -212,7 +212,8 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[
+                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         elif f == 'customer_info':
@@ -231,6 +232,9 @@ def __make_table(fields, table, strainer=None):
                 end_at = table.take_at + datetime.timedelta(days=coupons_setting.valid_days)
             tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount,
                       "start_at": str(start_at), "end_at": str(end_at)}
+        elif f == 'real_payed_cash_fee':
+            coupon_reduce, card_reduce = order_payed_couponscards(table)
+            tmp[f] = table.items_total_price - table.order.score_used - coupon_reduce - card_reduce
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
@@ -503,3 +507,19 @@ def query_coupon(**kwargs):
             return result
         else:
             return result, 400
+
+
+def order_payed_couponscards(order):
+    if not order:
+        raise Exception(f"{order.id} 不存在")
+    if order.coupon_used:
+        coupon_reduce = order.coupon_used.coupon_setting.promotion.benefits[0].reduce_amount
+    else:
+        coupon_reduce = Decimal("0.00")
+
+    if order.card_consumption:
+        card_reduce = order.card_consumption.consumption_sum
+    else:
+        card_reduce = Decimal("0.00")
+
+    return coupon_reduce, card_reduce

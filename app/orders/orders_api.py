@@ -1,15 +1,15 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund, SKU, ObjStorage
-from .. import db, redis_db, default_api, logger
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, ObjStorage
+from .. import default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, order_cancel
+from ..public_method import new_data_obj, get_table_data, order_cancel, \
+    order_payed_couponscards
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 from ..wechat.order_check import weixin_orderquery
 import datetime
-from decimal import Decimal
 import traceback
 
 orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
@@ -66,7 +66,7 @@ class ShopOrdersApi(Resource):
         """获取当前登录用户账户下所有订单，按照创建时间倒序"""
         args = order_page_parser.parse_args()
         args['search'] = {'customer_id': kwargs.get('current_user').id}
-        data = get_table_data(ShopOrders, args, ['items_orders'])
+        data = get_table_data(ShopOrders, args, ['items_orders', 'real_payed_cash_fee'])
         table = data['records']
         table.sort(key=lambda x: x['create_at'], reverse=True)
         return success_return(data=data)
@@ -165,17 +165,7 @@ class ShopOrderPayApi(Resource):
         """若在购物车提交支付失败，或者支付中取消，可在订单管理中调用此接口进行支付"""
         try:
             order = ShopOrders.query.get(kwargs['shop_order_id'])
-            if not order:
-                raise Exception(f"{kwargs['shop_order_id']} 不存在")
-            if order.coupon_used:
-                coupon_reduce = order.coupon_used.coupon_setting.promotion.benefits[0].reduce_amount
-            else:
-                coupon_reduce = Decimal("0.00")
-
-            if order.card_consumption:
-                card_reduce = order.card_consumption.consumption_sum
-            else:
-                card_reduce = Decimal("0.00")
+            coupon_reduce, card_reduce = order_payed_couponscards(order)
 
             return weixin_pay(kwargs['shop_order_id'],
                               order.items_total_price - order.score_used - coupon_reduce - card_reduce,
