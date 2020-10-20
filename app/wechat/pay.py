@@ -139,7 +139,7 @@ def create_order(**kwargs):
                 else:
                     order_info.pop('packing_order')
 
-                if not create_info.get('score_used'):
+                if not order_info.get('score_used'):
                     order_info.pop('score_used')
 
                 new_order = new_data_obj("ShopOrders", **order_info)
