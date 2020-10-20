@@ -75,7 +75,7 @@ class BannerApi(Resource):
     @permission_required("app.mall.banners.query_banner")
     def get(self, **kwargs):
         """
-        获取指定品牌数据
+        获取指定banner数据
         """
         return success_return(
             get_table_data_by_id(Banners, kwargs['banner_id'], appends=['banner_contents'], removes=['objects']))

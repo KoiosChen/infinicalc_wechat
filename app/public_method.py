@@ -212,8 +212,7 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[
-                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         elif f == 'customer_info':
@@ -271,9 +270,15 @@ def _search(table, fields, search):
 
 def _advance_search(table, fields, advance_search):
     and_fields_list = list()
+
     for search in advance_search:
         if search['key'] in fields:
-            and_fields_list.append(getattr(getattr(table, search['key']), search['operator'])(search['value']))
+            if '.' in search['key']:
+                keys = search['key'].split('.')
+                attr_key = getattr(getattr(table, keys[0]), keys[1])
+            else:
+                attr_key = getattr(table, search['key'])
+            and_fields_list.append(getattr(attr_key, search['operator'])(search['value']))
     return and_fields_list
 
 

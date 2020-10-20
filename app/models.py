@@ -13,6 +13,7 @@ from sqlalchemy import UniqueConstraint
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects.mysql import LONGTEXT
 import random
+from decimal import Decimal
 
 
 def make_uuid():
@@ -298,6 +299,7 @@ class MemberCards(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     card_no = db.Column(db.String(50), nullable=False, comment='会员卡号')
     member_type = db.Column(db.SmallInteger, default=0, comment='会员类型， 0为普通C端会员； 1 为代理商')
+    balance = db.Column(db.DECIMAL(11, 2), default=0.00, comment='余额')
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.SmallInteger, default=1, comment='会员卡状态 0: 禁用， 1：正常, 2：挂失')
     grade = db.Column(db.SmallInteger, default=1,
@@ -311,7 +313,7 @@ class MemberCards(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime, comment='如果不为空，则表示软删除')
-    recharge_records = db.relationship('MemberRechargeRecords', backref='cards', lazy='dynamic')
+    recharge_records = db.relationship('MemberRechargeRecords', backref='card', uselist=False)
 
     def __repr__(self):
         return '<Member card no %r>' % self.card_no
@@ -349,9 +351,14 @@ class MemberRechargeRecords(db.Model):
     recharge_amount = db.Column(db.DECIMAL(9, 2), default=0.00, comment="充值金额")
     member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
+    is_pay = db.Column(db.SmallInteger, default=0, index=True, comment="默认0. 0：未支付， 1：完成支付， 2：支付失败, 3:支付中")
+    pre_pay_time = db.Column(db.DateTime, default=datetime.datetime.now, comment='预支付时间')
     usable = db.Column(db.SmallInteger, default=1, comment='0 不可用， 1 可用；例如开通会员卡的金额可设置为不可使用')
     wechat_pay_result = db.relationship("WechatPay", backref='member_recharge_record', uselist=False)
+    status = db.Column(db.SmallInteger, default=1, comment='0, 取消，1 正常')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<Member recharge record No. %r>' % self.id
@@ -364,7 +371,7 @@ class MemberCardConsumption(db.Model):
     consumption_sum = db.Column(db.DECIMAL(9, 2), default=0.00, comment='消费额')
     member_card_id = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
-    order = db.relationship("ShopOrders", backref='member_card_consumption', uselist=False)
+    shop_order_id = db.Column(db.String(64), db.ForeignKey("shop_orders.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
 
     def __repr__(self):
@@ -507,6 +514,37 @@ class Customers(db.Model):
                                                MemberCards.status.__eq__(1)).first()
 
         return member_card.grade if member_card else 0
+
+    @property
+    def member_type(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card.member_type if member_card else 0
+
+    @property
+    def member_grade(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card.grade if member_card else None
+
+    @property
+    def card(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+
+        return member_card
+
+    @property
+    def card_balance(self):
+        member_card = MemberCards.query.filter(MemberCards.customer_id.__eq__(self.id),
+                                               MemberCards.delete_at.__eq__(None),
+                                               MemberCards.status.__eq__(1)).first()
+        return member_card.balance if member_card else Decimal("0.00")
 
     def __repr__(self):
         return f"<Customers {self.openid}::{self.phone}>"
@@ -923,7 +961,7 @@ class ShopOrders(db.Model):
     inovice_email = db.Column(db.String(50), comment='发票发送邮箱')
     rebate_records = db.relationship('PersonalRebates', backref='related_order', lazy='dynamic')
     wechat_pay_result = db.relationship("WechatPay", backref='payed_order', uselist=False)
-    member_card_consumption_id = db.Column(db.String(64), db.ForeignKey('member_card_consumption.id'))
+    card_consumption = db.relationship("MemberCardConsumption", backref='payed_by_card_order', uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1271,7 +1309,7 @@ class Advertisements(db.Model):
 class WechatPay(db.Model):
     """微信支付订单"""
     __tablename__ = "wechat_pay"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     prepay_id = db.Column(db.String(64), index=True, comment='预支付交易会话标识')
     prepay_at = db.Column(db.DateTime, default=datetime.datetime.now, comment='预支付时间')
     callback_err_code = db.Column(db.String(32), comment='错误代码')
@@ -1286,7 +1324,8 @@ class WechatPay(db.Model):
     cash_fee = db.Column(db.Integer, index=True, comment='现金支付金额订单现金支付金额，详见支付金额')
     cash_fee_type = db.Column(db.String(16), default='CNY', comment='现金支付货币类型')
     transaction_id = db.Column(db.String(32), index=True, comment='微信支付订单号')
-    attach = db.Column(db.String(128), index=True, comment='商城购物：shop_order, 会员卡充值：member_card_recharge')
+    device_info = db.Column(db.String(32), index=True, comment='ShopOrder, MemberRecharge')
+    attach = db.Column(db.String(128), index=True, comment='not in use')
     time_end = db.Column(db.DateTime, comment='支付完成时间')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)

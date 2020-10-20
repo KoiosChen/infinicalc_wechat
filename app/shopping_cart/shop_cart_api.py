@@ -1,10 +1,10 @@
 from flask_restplus import Resource, reqparse
 from .check_out import checkout_cart, check_out
 from ..models import SKU, ShopOrders, Promotions, Permission, ShoppingCart, Benefits, ExpressAddress, make_order_id, \
-    PackingItemOrders, CouponReady
+    PackingItemOrders, CouponReady, make_uuid
 from .. import db, default_api, logger
 from ..common import success_return, false_return, session_commit, nesteddict, submit_return
-from ..public_method import calc_sku_price
+from ..public_method import calc_sku_price, new_data_obj
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from collections import defaultdict
@@ -33,6 +33,7 @@ packing_checkout_parser.add_argument("packing_order", help='分装订单编号')
 
 pay_parser = reqparse.RequestParser()
 pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分为1元')
+pay_parser.add_argument("card_consumption", help='使用会员充值金额，单位元，例如123.45')
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("shopping_cart_id", type=list, help="传选中的shopping_cart表的id", location='json')
@@ -60,6 +61,9 @@ class Pay(Resource):
             coupon_ready_to_use = args.pop('coupon_used')
             args['customer_id'] = kwargs['current_user'].id
             args['id'] = make_order_id()
+            consumption_sum = args.pop('card_consumption')
+            consumption_sum = Decimal(consumption_sum) if consumption_sum else Decimal("0.00")
+            card_balance = kwargs['current_user'].card_balance if kwargs['current_user'].card_balance else 0
             packing_order = args.get("packing_order")
             logger.debug(f">>> args in shopping_cart::pay is {args}")
 
@@ -88,7 +92,7 @@ class Pay(Resource):
                     if si.desire_sku.special == 32:
                         the_packing_order.consumption = Decimal(str(si.quantity)) * Decimal(str(0.5)) * Decimal(
                             str(0.9255))
-                db.session.commit()
+                # db.session.commit()
 
             else:
                 select_items = args.pop('shopping_cart_id')
@@ -142,14 +146,8 @@ class Pay(Resource):
                 score_used = kwargs['current_user'].total_points
 
             kwargs['current_user'].total_points -= score_used
-            session_commit()
+            # session_commit()
 
-            create_result = pay.create_order(**create_data)
-            if create_result.get("code") == "false":
-                kwargs['current_user'].total_points += score_used
-                session_commit()
-                return create_result
-            out_trade_no = create_result.get("data")
             # 生成订单后检查时候有优惠券，检查优惠券有效性，同时把有效的优惠券关联至对应的订单
             coupon_count = list()
             coupon_reduce_price = 0
@@ -160,19 +158,56 @@ class Pay(Resource):
 
                     if sku_.id not in coupon_count:
                         coupon_count.append(sku_.id)
-                        ready_coupon.order_id = out_trade_no
+                        ready_coupon.order_id = args['id']
                         ready_coupon.use_at = datetime.datetime.now()
                         ready_coupon.status = 2
                         coupon_reduce_price += ready_coupon.coupon_setting.promotion.benefits[0].reduced_amount
                     else:
                         raise Exception("同一商品只能使用一张优惠券")
 
-            # 实际支付费用等于总价减去积分减去优惠券抵扣
+            if consumption_sum > card_balance:
+                raise Exception(f"卡消费金额{consumption_sum}大于余额{card_balance}，数值错误")
+
+            # 实际支付费用中减去积分和优惠券抵扣金额
             pay_price = total_price - score_used - coupon_reduce_price
+            # 判断卡消费金额是否正确
+            if consumption_sum > pay_price:
+                raise Exception(f"卡消费金额{consumption_sum}大于剩余需支付金额{pay_price}")
+
+            new_consumption_record = new_data_obj("MemberCardConsumption",
+                                                  **{"id": make_uuid(),
+                                                     "consumption_sum": consumption_sum,
+                                                     "member_card_id": kwargs['current_user'].card.id})
+
+            if not new_consumption_record or not new_consumption_record['status']:
+                raise Exception("创建消费记录失败")
+
+            card_balance -= consumption_sum
+
+            pay_price -= consumption_sum
+            create_result = pay.create_order(**create_data)
+            if create_result.get("code") == "false":
+                kwargs['current_user'].total_points += score_used
+                # session_commit()
+                return create_result
+            out_trade_no = create_result.get("data")
+            new_consumption_record['obj'].shop_order_id = out_trade_no
 
             session_commit()
 
-            return pay.weixin_pay(out_trade_no=out_trade_no, price=pay_price, openid=kwargs['current_user'].openid)
+            # 如果最终支付金额小于0.01元，那么直接return支付成功，不进入微信支付流程
+            if pay_price < Decimal('0.01'):
+                shopping_order = ShopOrders.query.get(out_trade_no)
+                shopping_order.is_pay = 1
+                shopping_order.score_used = score_used
+                shopping_order.pay_time = datetime.datetime.now()
+                shopping_order.cash_fee = Decimal("0.00")
+                return success_return(data="all_pay_by_card")
+
+            return pay.weixin_pay(out_trade_no=out_trade_no,
+                                  price=pay_price,
+                                  openid=kwargs['current_user'].openid,
+                                  device_info="ShopOrder")
 
         except Exception as e:
             traceback.print_exc()

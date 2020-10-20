@@ -92,7 +92,8 @@ class AllShopOrdersApi(Resource):
             args['search']['is_receipt'] = args['is_receipt']
         if args.get('status'):
             args['search']['status'] = args['status']
-        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'], order_by='create_at')
+        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'],
+                              order_by='create_at')
         return success_return(data=data)
 
 
@@ -170,7 +171,14 @@ class ShopOrderPayApi(Resource):
                 coupon_reduce = order.coupon_used.coupon_setting.promotion.benefits[0].reduce_amount
             else:
                 coupon_reduce = Decimal("0.00")
-            return weixin_pay(kwargs['shop_order_id'], order.items_total_price - order.score_used - coupon_reduce,
+
+            if order.card_consumption:
+                card_reduce = order.card_consumption.consumption_sum
+            else:
+                card_reduce = Decimal("0.00")
+
+            return weixin_pay(kwargs['shop_order_id'],
+                              order.items_total_price - order.score_used - coupon_reduce - card_reduce,
                               kwargs['current_user'].openid)
         except Exception as e:
             return false_return(message=f"weixin pay failed: {str(e)}")

@@ -1,11 +1,13 @@
-from flask_restplus import Resource
-from ..models import Permission, InvitationCode, MemberCards
+from flask_restplus import Resource, reqparse
+from ..models import Permission, InvitationCode, MemberCards, MemberPolicies, MemberCardConsumption, \
+    MemberRechargeRecords, make_uuid, make_order_id
 from .. import db, default_api
 from ..common import success_return, false_return, submit_return
-from ..public_method import get_table_data, new_data_obj, create_member_card_num
+from ..public_method import get_table_data, new_data_obj, create_member_card_num, query_coupon
 import datetime
 from app.decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
+from app.wechat import pay
 
 members_ns = default_api.namespace('member_cards', path='/member_cards', description='邀请码录入升级会员，会员信息查询')
 
@@ -16,9 +18,15 @@ member_cards_parser = page_parser.copy()
 recharge_parser = page_parser.copy()
 recharge_parser.add_argument("wechat_nickname", help='微信昵称，支持模糊查找', location='args')
 recharge_parser.add_argument("phone_number", help='手机号，支持模糊查找', location='args')
-recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，起始于，格式'%Y-%m-%d", location='args')
-recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), help="充值范围，结束于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("start_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="充值范围，起始于，格式'%Y-%m-%d", location='args')
+recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="充值范围，结束于，格式'%Y-%m-%d", location='args')
 recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
+
+member_recharge_parser = reqparse.RequestParser()
+member_recharge_parser.add_argument("amount", choices=[1, 1999, 4999, 9999, 29999], required=True, help='充值金额',
+                                    type=int)
 
 
 @members_ns.route("")
@@ -102,12 +110,49 @@ class InviteToBeMember(Resource):
 @members_ns.expect(head_parser)
 class MemberRecharge(Resource):
     @members_ns.marshal_with(return_json)
+    @members_ns.doc(body=member_recharge_parser)
     @permission_required(Permission.USER)
     def post(self, **kwargs):
         """
         会员卡充值。 用户充值对应金额
         """
-        pass
+        try:
+            args = member_recharge_parser.parse_args()
+            current_user = kwargs['current_user']
+            if current_user.member_type == 1:
+                raise Exception("代理商不可充值")
+
+            present_grade = current_user.member_grade
+            recharge_amount = args.get('amount')
+            if recharge_amount not in (1, 1999, 4999, 9999, 29999):
+                raise Exception('充值金额不在规定范围内')
+
+            current_card = current_user.card
+
+            if not current_card:
+                current_card = new_data_obj("MemberCards",
+                                            **{"card_no": create_member_card_num(),
+                                               "customer_id": current_user.id,
+                                               "grade": 0})
+
+                if not current_card or not current_card['status']:
+                    raise Exception("create card fail")
+                else:
+                    current_card = current_card['obj']
+
+            new_recharge_order = new_data_obj("MemberRechargeRecords",
+                                              **{"id": make_order_id(),
+                                                 "recharge_amount": recharge_amount,
+                                                 "member_card": current_card.id})
+
+            if not new_recharge_order or not new_recharge_order['status']:
+                raise Exception("创建充值订单失败")
+
+            return pay.weixin_pay(out_trade_no=new_recharge_order['obj'].id, price=recharge_amount,
+                                  openid=current_user.openid, device_info="MemberRecharge")
+
+        except Exception as e:
+            return false_return(message=str(e))
 
     @members_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.member_cards.member_cards_api.query_recharge"])
@@ -118,6 +163,17 @@ class MemberRecharge(Resource):
         """
         try:
             current_user = kwargs.get('current_user')
+            if current_user.__class__.__name__ == "Users":
+                pass
+            else:
+                member_card = current_user.member_card.first()
+                return success_return(get_table_data(MemberRechargeRecords,
+                                                     {},
+                                                     advance_search=[{"key": "member_card",
+                                                                      "operator": "__eq__",
+                                                                      "value": member_card.id}],
+                                                     order_by="create_at"))
+
         except Exception as e:
             return false_return(message=str(e)), 400
 
