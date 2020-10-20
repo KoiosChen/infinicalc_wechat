@@ -138,13 +138,12 @@ class Pay(Resource):
                             f"当前购买的sku<{sku_.id}>, 总价<{sku_statistic[sku_.id].get('total_price')}>, 未满选择的优惠券<{used_coupon_obj.id}>满减价格")
 
             args['items_total_price'] = total_price
-            args['score_used'] = score_used
-            create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
+
             # 先扣除用户积分
             if score_used > kwargs['current_user'].total_points:
                 # 如果用户填写的积分在某种情况下大于用户自己总积分，则score_used置为用户总积分
                 score_used = kwargs['current_user'].total_points
-
+            args['score_used'] = score_used
             kwargs['current_user'].total_points -= score_used
             # session_commit()
 
@@ -189,6 +188,7 @@ class Pay(Resource):
 
             pay_price -= consumption_sum
             session_commit()
+            create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
             create_result = pay.create_order(**create_data)
             if create_result.get("code") == "false":
                 kwargs['current_user'].total_points += score_used
