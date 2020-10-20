@@ -174,26 +174,29 @@ class Pay(Resource):
             if consumption_sum > pay_price:
                 raise Exception(f"卡消费金额{consumption_sum}大于剩余需支付金额{pay_price}")
 
-            new_consumption_record = new_data_obj("MemberCardConsumption",
-                                                  **{"id": make_uuid(),
-                                                     "consumption_sum": consumption_sum,
-                                                     "member_card_id": kwargs['current_user'].card.id})
+            if consumption_sum > 0:
+                new_consumption_record = new_data_obj("MemberCardConsumption",
+                                                      **{"id": make_uuid(),
+                                                         "consumption_sum": consumption_sum,
+                                                         "member_card_id": kwargs['current_user'].card.id})
 
-            if not new_consumption_record or not new_consumption_record['status']:
-                raise Exception("创建消费记录失败")
+                if not new_consumption_record or not new_consumption_record['status']:
+                    raise Exception("创建消费记录失败")
+            else:
+                new_consumption_record = None
 
             card_balance -= consumption_sum
 
             pay_price -= consumption_sum
+            session_commit()
             create_result = pay.create_order(**create_data)
             if create_result.get("code") == "false":
                 kwargs['current_user'].total_points += score_used
                 # session_commit()
                 return create_result
             out_trade_no = create_result.get("data")
-            new_consumption_record['obj'].shop_order_id = out_trade_no
-
-            session_commit()
+            if consumption_sum > 0 and new_consumption_record:
+                new_consumption_record['obj'].shop_order_id = out_trade_no
 
             # 如果最终支付金额小于0.01元，那么直接return支付成功，不进入微信支付流程
             if pay_price < Decimal('0.01'):
