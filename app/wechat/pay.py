@@ -245,7 +245,8 @@ def weixin_pay(out_trade_no, price, openid, device_info="ShopOrder"):
             raise Exception("订单状态修改为‘支付中’失败")
 
         # 提交支付
-        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid, device_info)
+        order_info, info = make_payment_request_wx(WEIXIN_CALLBACK_API, out_trade_no, int(price * 100), openid,
+                                                   device_info)
 
         if order_info and info:
             info['total_amount'] = int(price * 100)
