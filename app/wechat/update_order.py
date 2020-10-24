@@ -61,7 +61,7 @@ def update_order(data):
                 wechat_pay_result.total_amount = total_fee
                 wechat_pay_result.trade_type = trade_type
                 wechat_pay_result.time_end = pay_time
-
+                session_commit()
             else:
                 items = order.items_orders_id.all()
                 if items:
