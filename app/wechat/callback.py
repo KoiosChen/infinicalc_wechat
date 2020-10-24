@@ -68,8 +68,10 @@ def weixinpay_call_back(request):
         return
 
     args = request.data
+    logger.debug(f"The respond data is {args}")
     # 验证平台签名
     resp_dict = handle_wx_response_xml()
+    logger.debug(f"The respond dict of the callback is {resp_dict}")
     # resp_dict = request.json
     if resp_dict is None:
         return None
