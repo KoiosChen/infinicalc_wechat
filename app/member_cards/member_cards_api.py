@@ -26,7 +26,7 @@ recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查
 
 member_recharge_parser = reqparse.RequestParser()
 member_recharge_parser.add_argument("amount", choices=[0.01, 1999, 4999, 9999, 29999], required=True, help='充值金额',
-                                    type=int)
+                                    type=float)
 
 
 @members_ns.route("")
