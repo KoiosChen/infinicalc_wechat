@@ -25,7 +25,7 @@ recharge_parser.add_argument("end_at", type=lambda x: datetime.datetime.strptime
 recharge_parser.add_argument("member_card_id", help='会员号，支持模糊查找', location='args')
 
 member_recharge_parser = reqparse.RequestParser()
-member_recharge_parser.add_argument("amount", choices=[1, 1999, 4999, 9999, 29999], required=True, help='充值金额',
+member_recharge_parser.add_argument("amount", choices=[0.01, 1999, 4999, 9999, 29999], required=True, help='充值金额',
                                     type=int)
 
 
@@ -124,7 +124,7 @@ class MemberRecharge(Resource):
 
             present_grade = current_user.member_grade
             recharge_amount = args.get('amount')
-            if recharge_amount not in (1, 1999, 4999, 9999, 29999):
+            if recharge_amount not in (0.01, 1999, 4999, 9999, 29999):
                 raise Exception('充值金额不在规定范围内')
 
             current_card = current_user.card
