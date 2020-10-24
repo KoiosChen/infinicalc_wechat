@@ -7,9 +7,9 @@ from app.rebates import calc_rebate
 
 
 def update_order(data):
+    logger.debug(f"{data} is ready to update order")
     if data:
         res = "success"
-
         trade_status = data['result_code']  # 业务结果  SUCCESS/FAIL
         out_trade_no = data['out_trade_no']  #
         new_wechat_pay = None
