@@ -184,7 +184,7 @@ class Pay(Resource):
             else:
                 new_consumption_record = None
 
-            card_balance -= consumption_sum
+            kwargs['current_user'].card.balance -= consumption_sum
 
             pay_price -= consumption_sum
             session_commit()
