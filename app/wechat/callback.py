@@ -115,6 +115,7 @@ def weixin_rollback(request):
         data = weixinpay_call_back(request)
         res = update_order(data)
     except Exception as e:
+        logger.error(str(e))
         traceback.print_exc()
         res = str(e)
     finally:
