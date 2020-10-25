@@ -177,8 +177,3 @@ class MemberRecharge(Resource):
         except Exception as e:
             return false_return(message=str(e)), 400
 
-
-@members_ns.route("")
-@members_ns.expect(head_parser)
-class MemberRecharge(Resource):
-    pass
