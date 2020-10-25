@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,7 +23,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="MichaelWine" />
+        <entry key="$PROJECT_DIR$" value="shengzhuan_product_beta" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -421,7 +421,14 @@
       <option name="project" value="LOCAL" />
       <updated>1603551534218</updated>
     </task>
-    <option name="localTasksCounter" value="33" />
+    <task id="LOCAL-00033" summary="默认更改列表">
+      <created>1603637392970</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1603637392970</updated>
+    </task>
+    <option name="localTasksCounter" value="34" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -535,10 +542,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="341" y="164" key="SettingsEditor/0.0.1680.1050@0.0.1680.1050" timestamp="1602840334139" />
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1603636975103">
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1603637408742">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1603636975103" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1603637408742" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
