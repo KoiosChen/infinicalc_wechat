@@ -448,6 +448,7 @@ def order_cancel(cancel_reason, shop_order_id):
             order.status = 0
             order.cancel_reason = cancel_reason
             order.consumer.total_points += order.score_used
+            order.consumer.card.balance += order.card_consumption
         return submit_return("取消成功", "数据提交失败，取消失败")
     except Exception as e:
         return false_return(message=f"订单取消失败: {str(e)}"), 400
