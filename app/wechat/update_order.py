@@ -2,7 +2,7 @@ from app import db, logger
 from app.models import ShopOrders, make_order_id, MemberPolicies, MemberRechargeRecords, make_uuid
 import datetime
 from app.common import submit_return, session_commit
-from app.public_method import new_data_obj, query_coupon
+from app.public_method import new_data_obj, query_coupon, create_member_card_num
 from app.rebates import calc_rebate
 
 
@@ -61,6 +61,42 @@ def update_order(data):
                 wechat_pay_result.total_amount = total_fee
                 wechat_pay_result.trade_type = trade_type
                 wechat_pay_result.time_end = pay_time
+
+                # 获取会员充值策略
+                member_policies = MemberPolicies.query.filter_by(to_type=0, recharge_amount=total_fee).first()
+                if not member_policies:
+                    raise Exception(f"金额{total_fee}对应的充值策略未定义")
+
+                # 获取订单对应用户会员卡数据
+                now_card = order.consumer.card
+
+                # 如果没有会员卡，则创建一张， 默认grade是1
+                if not now_card:
+                    card_no = create_member_card_num()
+                    now_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": order.consumer.id,
+                                                              "open_date": datetime.datetime.now()})
+                else:
+                    # 如果有会员卡，但是类型是代理商则抛异常
+                    if now_card.member_type == 1:
+                        raise Exception("代理商不可充值，切不可降级会直客，如有特殊需求请联系客服")
+
+                # 变更会员卡类型
+                now_card.member_type = member_policies.to_type
+
+                # 如果会员充值策略对应的级别大于当前级别，则升级会员级别，若小于等于则不变
+                if now_card.grade < member_policies.to_level:
+                    now_card.grade = member_policies.to_level
+
+                # 会员余额变更，切增加赠送部分
+                order.consumer.card.balance = total_fee + member_policies.present_amount
+
+                # 赠送部分也增加会员充值记录
+                new_charge_record_present = new_data_obj("MemberRechargeRecords", **{"recharge_amount": total_fee,
+                                                                                     "member_card": order.consumer.card.id,
+                                                                                     "note": f"充值{total_fee}，依据策略{member_policies.id}, 赠送{member_policies.present_amount}",
+                                                                                     "is_pay": 1})
+                if not new_charge_record_present:
+                    raise Exception(f"{order.id} 对应赠送金额记录生成失败")
                 session_commit()
             else:
                 items = order.items_orders_id.all()
