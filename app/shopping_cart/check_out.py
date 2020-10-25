@@ -143,7 +143,7 @@ def check_out(args, kwargs):
             sku.append(the_sku)
         return success_return(
             {"total_score": total_score if force_use_coupon == 0 else 0,
-             "card_balance": card_balance,
+             "card_balance": str(card_balance),
              "reject_score_flag": reject_score_flag,
              "force_use_coupon": force_use_coupon,
              "total_price": str(total_price.quantize(Decimal("0.00"))),
