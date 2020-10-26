@@ -347,7 +347,7 @@ class MemberPolicies(db.Model):
 class MemberRechargeRecords(db.Model):
     """会员充值记录"""
     __tablename__ = 'member_recharge_records'
-    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    id = db.Column(db.String(64), primary_key=True, default=make_order_id)
     recharge_amount = db.Column(db.DECIMAL(9, 2), default=0.00, comment="充值金额")
     member_card = db.Column(db.String(64), db.ForeignKey('member_cards.id'))
     note = db.Column(db.String(200), comment='备注')
