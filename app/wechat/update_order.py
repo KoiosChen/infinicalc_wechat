@@ -4,6 +4,7 @@ import datetime
 from app.common import submit_return, session_commit
 from app.public_method import new_data_obj, query_coupon, create_member_card_num
 from app.rebates import calc_rebate
+from decimal import Decimal
 
 
 def update_order(data):
@@ -68,12 +69,12 @@ def update_order(data):
                     raise Exception(f"金额{total_fee}对应的充值策略未定义")
 
                 # 获取订单对应用户会员卡数据
-                now_card = order.card.card_owner
+                now_card = order.card
 
                 # 如果没有会员卡，则创建一张， 默认grade是1
                 if not now_card:
                     card_no = create_member_card_num()
-                    now_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": order.card.card_owner.id,
+                    now_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": now_card.card_owner.id,
                                                               "open_date": datetime.datetime.now()})
                 else:
                     # 如果有会员卡，但是类型是代理商则抛异常
@@ -88,7 +89,7 @@ def update_order(data):
                     now_card.grade = member_policies.to_level
 
                 # 会员余额变更，切增加赠送部分
-                now_card.balance = total_fee + member_policies.present_amount
+                now_card.balance = Decimal(str(total_fee)) + member_policies.present_amount
 
                 # 赠送部分也增加会员充值记录
                 new_charge_record_present = new_data_obj("MemberRechargeRecords", **{"recharge_amount": total_fee,
