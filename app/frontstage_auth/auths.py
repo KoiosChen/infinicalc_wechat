@@ -55,6 +55,10 @@ def authenticate(login_ip, **kwargs):
         open_id = kwargs['openid']
         session_key = kwargs['session_key']
         new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
+        if new_customer:
+            session_commit()
+        else:
+            raise Exception(f"创建用户{open_id}失败")
         customer = new_customer['obj']
 
         # 如果数据是新建，那么表示新进入用户
