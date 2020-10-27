@@ -101,7 +101,7 @@ def authenticate(login_ip, **kwargs):
                     shared_customer_.total_points += SHARE_AWARD
                     new_data_obj("Scores", **{"id": make_uuid(),
                                               "customer_id": shared_customer_.id,
-                                              "reason": f"share to {customer['obj'].id}",
+                                              "reason": f"share to {customer.id}",
                                               "quantity": SHARE_AWARD})
 
                 if not customer.parent_id and new_customer['status']:
