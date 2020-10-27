@@ -63,7 +63,8 @@ def authenticate(login_ip, **kwargs):
             try:
                 award_coupons = NewCustomerAwards.query.first().could_get_coupons
                 for award_coupon in award_coupons:
-                    logger.info(str(query_coupon(current_user=customer, coupon_id=award_coupon.id)))
+                    query_result = query_coupon(current_user=customer, coupon_id=award_coupon.id)
+                    logger.info(query_result)
             except Exception as e:
                 traceback.print_exc()
                 logger.error(str(e))
