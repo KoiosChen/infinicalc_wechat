@@ -796,6 +796,8 @@ class SKU(db.Model):
     __tablename__ = 'sku'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(100), nullable=False, index=True)
+    subtitle = db.Column(db.String(100), index=True, comment="显示在sku主标题下的描述文字")
+    desc = db.Column(db.String(200), comment="商品标题下的描述，预留，目前无用")
     show_price = db.Column(db.String(13), default='0.00', comment='显示价格， 当special不为0时，显示此价格，并且用删除线')
     price = db.Column(db.DECIMAL(10, 2), default=0.00)
     seckill_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='当SKU参加秒杀活动时，设置秒杀价格写在这个字段，如果不为0， 则表示参加秒杀，查找秒杀活动')
