@@ -849,6 +849,7 @@ class PersonalRebates(db.Model):
     __tablename__ = 'personal_rebates'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     shop_order_id = db.Column(db.String(64), db.ForeignKey('shop_orders.id'))
+    wechat_pay_id = db.Column(db.String(64), db.ForeignKey('wechat_pay.id'))
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     rebate = db.Column(db.DECIMAL(5, 2), comment='支付成功时该账户应得的返佣比例')
     rebate_value = db.Column(db.DECIMAL(9, 2), comment='返佣金额')
@@ -1335,9 +1336,12 @@ class WechatPay(db.Model):
 
     shop_order_id = db.Column(db.String(64), db.ForeignKey("shop_orders.id"))
     member_recharge_record_id = db.Column(db.String(64), db.ForeignKey("member_recharge_records.id"))
+    personal_rebates = db.relationship('PersonalRebates', backref='wechat_pay_order', uselist=False)
 
 
 aes_key = 'koiosr2d2c3p0000'
+
+RECHARGE_REBATE_POLICY = 3
 
 PermissionIP = redis_db.lrange('permission_ip', 0, -1)
 

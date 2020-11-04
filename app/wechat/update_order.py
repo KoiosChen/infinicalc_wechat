@@ -72,6 +72,8 @@ def update_order(data):
                 now_card = order.card
 
                 # 如果没有会员卡，则创建一张， 默认grade是1
+
+
                 if not now_card:
                     card_no = create_member_card_num()
                     now_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": now_card.card_owner.id,

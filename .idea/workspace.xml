@@ -3,7 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/rebates/calc_rebate.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/rebates/calc_rebate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/wechat/update_order.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/wechat/update_order.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -200,6 +202,7 @@
       <workItem from="1603724205014" duration="537000" />
       <workItem from="1603725252900" duration="471000" />
       <workItem from="1603726055542" duration="142000" />
+      <workItem from="1604449017856" duration="5298000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -467,7 +470,14 @@
       <option name="project" value="LOCAL" />
       <updated>1604156035182</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="默认更改列表">
+      <created>1604448959024</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1604448959024</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -485,6 +495,10 @@
     <option name="LAST_COMMIT_MESSAGE" value="默认更改列表" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="720" y="368" key="#Notifications" timestamp="1604449195217">
+      <screen x="0" y="0" width="1680" height="1050" />
+    </state>
+    <state x="720" y="368" key="#Notifications/0.0.1680.1050@0.0.1680.1050" timestamp="1604449195217" />
     <state x="304" y="170" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1601137088780">
       <screen x="0" y="23" width="1680" height="971" />
     </state>
@@ -585,10 +599,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="500" height="445" key="SwitcherDM/0.0.1680.1050@0.0.1680.1050" timestamp="1603809629112" />
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604448942430">
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604449375385">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604448942430" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604449375385" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
@@ -662,11 +676,6 @@
           <url>file://$PROJECT_DIR$/app/wechat/pay.py</url>
           <line>262</line>
           <option name="timeStamp" value="56" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/wechat/update_order.py</url>
-          <line>74</line>
-          <option name="timeStamp" value="57" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
