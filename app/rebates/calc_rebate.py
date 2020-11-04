@@ -16,7 +16,7 @@ def customer_member_card(customer, member_type):
 
 def find_relationships(customer, member_type=1):
     """
-    查找账号的邀请人，此事customer必须是代理商，因为只有代理商才会有邀请人。如果本人为二级，则查找一级，若是一级则不查找，返回本身的id
+    查找账号的邀请人，此customer必须是代理商，因为只有代理商才会有邀请人。如果本人为二级，则查找一级，若是一级则不查找，返回本身的id
     :param customer: 可以是customers表的id，也可以是customer的对象实例
     :param action
     :param member_type
@@ -204,4 +204,7 @@ def self_rebate(customer):
     return {"frozen_rebate": format_decimal(frozen_rebate, zero_format="0.00", to_str=True),
             "frozen_count": frozen_count,
             "current_rebate": format_decimal(current_rebate, zero_format="0.00", to_str=True),
-            "current_count": current_count}
+            "current_count": current_count,
+            "total_rebate": format_decimal(frozen_rebate + current_rebate, zero_format="0.00", to_str=True),
+            "agents": len(customer.be_invited),
+            "clients": len(set(customer.children) - set(customer.be_invited))}
