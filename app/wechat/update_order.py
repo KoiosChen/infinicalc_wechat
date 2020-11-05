@@ -103,6 +103,13 @@ def update_order(data):
                                                                                      "is_pay": 1})
                 if not new_charge_record_present:
                     raise Exception(f"{order.id} 对应赠送金额记录生成失败")
+
+                # 返佣计算
+                calc_result = calc_rebate.calc(order.id, order.consumer)
+                if calc_result.get('code') != 'success':
+                    res = calc_result.get('message')
+                    logger.error(f"订单<{order.id}>返佣结果{res}")
+
                 session_commit()
             else:
                 items = order.items_orders_id.all()

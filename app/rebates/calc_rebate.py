@@ -1,4 +1,5 @@
-from app.models import Customers, MemberCards, ShopOrders, ItemsOrders, PersonalRebates, RETURN_IN_DAYS, make_uuid
+from app.models import Customers, MemberCards, ShopOrders, ItemsOrders, PersonalRebates, RETURN_IN_DAYS, make_uuid, \
+    Rebates, RECHARGE_REBATE_POLICY
 from app.common import success_return, false_return
 from collections import defaultdict
 from decimal import Decimal
@@ -154,59 +155,13 @@ def checkout_rebates_ratio(customer, shop_order_id, pay_type=None):
             item_orders = shop_order.items_orders_id.filter_by(status=1, delete_at=None).all()
             if not item_orders:
                 raise Exception(f"{shop_order_id} does not have item orders!")
+            for item_order in item_orders:
+                item_rebate_policy = item_order.bought_sku.rebate
+                fill_relationship_rebate(relationships, item_rebate_policy)
         else:
+            item_rebate_policy = Rebates.query.get(RECHARGE_REBATE_POLICY)
+            fill_relationship_rebate(relationships, item_rebate_policy)
 
-        for item_order in item_orders:
-            item_rebate_policy = item_order.bought_sku.rebate
-            if relationships['self']['grade'] == 0:
-                # 购买者是直客
-                if 'interest' in relationships.keys():
-                    # 直客有上级利益关系 - 有上级代理商
-                    second_agent_rebate = Decimal('0.00')
-                    invitor_rebate = Decimal('0.00')
-                    if relationships['interest']['grade'] == 2:
-                        second_agent_rebate = item_rebate_policy.agent_second_rebate
-                        relationships['interest']['rebate'] = format_decimal(second_agent_rebate, to_str=True)
-                        if 'invitor' in relationships['interest'].keys():
-                            invitor_rebate = item_rebate_policy.agent_second_invitor_rebate
-                            relationships['interest']['invitor']['rebate'] = format_decimal(invitor_rebate, to_str=True)
-                        if 'interest' in relationships['interest'].keys():
-                            if relationships['interest']['interest']['grade'] == 1:
-                                relationships['interest']['interest'][
-                                    'rebate'] = format_decimal(
-                                    item_rebate_policy.agent_first_rebate - second_agent_rebate - invitor_rebate,
-                                    to_str=True)
-                            else:
-                                raise Exception("级别错误，不进行计算返佣")
-                    elif relationships['interest']['grade'] == 1:
-                        relationships['interest']['rebate'] = format_decimal(item_rebate_policy.agent_first_rebate,
-                                                                             to_str=True)
-                if 'parent' in relationships.keys():
-                    # 赠送积分给parent，如果rebate表里有数值
-                    pass
-
-            else:
-                # 购买者是代理
-                second_agent_rebate = Decimal('0.00')
-                invitor_rebate = Decimal('0.00')
-                if relationships['self']['grade'] == 2:
-                    # 如果自己是二级代理，则先拿二级代理的佣金
-                    second_agent_rebate = item_rebate_policy.agent_second_rebate
-                    relationships['self']['rebate'] = format_decimal(second_agent_rebate, to_str=True)
-                    if 'invitor' in relationships.keys():
-                        invitor_rebate = item_rebate_policy.agent_second_invitor_rebate
-                        relationships['invitor']['rebate'] = format_decimal(invitor_rebate, to_str=True)
-
-                    if 'interest' in relationships.keys():
-                        if relationships['interest']['grade'] == 1:
-                            relationships['interest'][
-                                'rebate'] = format_decimal(
-                                item_rebate_policy.agent_first_rebate - second_agent_rebate - invitor_rebate,
-                                to_str=True)
-                        else:
-                            raise Exception("级别错误，不进行计算返佣")
-                elif relationships['self']['grade'] == 1:
-                    relationships['self']['rebate'] = format_decimal(item_rebate_policy.agent_first_rebate, to_str=True)
         return success_return(data=relationships)
     except Exception as e:
         traceback.print_exc()
@@ -234,10 +189,10 @@ def calc(order_id, customer, pay_type=None):
         if rebate_ratio.get('code') != 'success':
             raise Exception('获取返佣比例失败')
         for relation, detail in rebate_ratio['data'].items():
-            newPersonalRebates(detail.get('id'), relation, pay_type=pay_type)
+            newPersonalRebates(detail.get('id'), relation)
             for key in ('interest', 'invitor', 'parent'):
                 if key in detail.keys():
-                    newPersonalRebates(detail.get('id'), relation + ":" + key, pay_type=pay_type)
+                    newPersonalRebates(detail.get('id'), relation + ":" + key)
         return submit_return('记录订单返佣成功', '记录订单返佣失败')
     except Exception as e:
         traceback.print_exc()
