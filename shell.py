@@ -6,6 +6,7 @@ from app.models import Users, Roles, user_role, roles_elements, Elements, SKU, L
     NewCustomerAwards, CouponReady, make_uuid
 from app.public_method import query_coupon
 from flask_script import Manager, Shell
+from app.rebates.calc_rebate import calc
 from flask_migrate import Migrate, MigrateCommand
 
 __author__ = 'Koios'

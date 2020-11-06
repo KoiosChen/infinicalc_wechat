@@ -43,4 +43,4 @@ class RebateTestApi(Resource):
     def get(self, **kwargs):
         """获取当前登录用户的返佣"""
         args = rebate_parser.parse_args()
-        return success_return(calc(args.get("order_id"), kwargs['current_user']))
+        return success_return(calc(args.get("order_id"), kwargs['current_user'], pay_type="MessageRecharge"))
