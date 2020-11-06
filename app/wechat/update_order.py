@@ -72,29 +72,27 @@ def update_order(data):
                 now_card = order.card
 
                 # 如果没有会员卡，则创建一张， 默认grade是1
-
-
                 if not now_card:
                     card_no = create_member_card_num()
                     now_card = new_data_obj("MemberCards", **{"card_no": card_no, "customer_id": now_card.card_owner.id,
                                                               "open_date": datetime.datetime.now()})
+
+                if now_card.member_type == 1:
+                    # raise Exception("代理商不可充值，切不可降级会直客，如有特殊需求请联系客服")
+                    logger.info("当前用户是代理商，目前允许充值")
                 else:
-                    # 如果有会员卡，但是类型是代理商则抛异常
-                    if now_card.member_type == 1:
-                        raise Exception("代理商不可充值，切不可降级会直客，如有特殊需求请联系客服")
+                    # 如果是直客类型会员卡， 变更会员卡类型
+                    now_card.member_type = member_policies.to_type
 
-                # 变更会员卡类型
-                now_card.member_type = member_policies.to_type
+                    # 如果会员充值策略对应的级别大于当前级别，则升级会员级别，若小于等于则不变
+                    if now_card.grade < member_policies.to_level:
+                        now_card.grade = member_policies.to_level
 
-                # 如果会员充值策略对应的级别大于当前级别，则升级会员级别，若小于等于则不变
-                if now_card.grade < member_policies.to_level:
-                    now_card.grade = member_policies.to_level
+                    # 会员余额变更，切增加赠送部分
+                    if not now_card.balance:
+                        now_card.balance = Decimal("0.00")
 
-                # 会员余额变更，切增加赠送部分
-                if not now_card.balance:
-                    now_card.balance = Decimal("0.00")
-
-                now_card.balance += Decimal(str(total_fee)) + member_policies.present_amount
+                    now_card.balance += Decimal(str(total_fee)) + member_policies.present_amount
 
                 # 赠送部分也增加会员充值记录
                 new_charge_record_present = new_data_obj("MemberRechargeRecords", **{"recharge_amount": total_fee,
@@ -105,7 +103,7 @@ def update_order(data):
                     raise Exception(f"{order.id} 对应赠送金额记录生成失败")
 
                 # 返佣计算
-                calc_result = calc_rebate.calc(order.id, order.consumer)
+                calc_result = calc_rebate.calc(order.id, order.consumer, pay_type="MemberRecharge")
                 if calc_result.get('code') != 'success':
                     res = calc_result.get('message')
                     logger.error(f"订单<{order.id}>返佣结果{res}")

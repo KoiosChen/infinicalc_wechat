@@ -1336,7 +1336,7 @@ class WechatPay(db.Model):
 
     shop_order_id = db.Column(db.String(64), db.ForeignKey("shop_orders.id"))
     member_recharge_record_id = db.Column(db.String(64), db.ForeignKey("member_recharge_records.id"))
-    personal_rebates = db.relationship('PersonalRebates', backref='wechat_pay_order', uselist=False)
+    rebates = db.relationship('PersonalRebates', backref='wechat_pay_order', uselist=False)
 
 
 aes_key = 'koiosr2d2c3p0000'

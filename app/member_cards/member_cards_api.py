@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse
 from ..models import Permission, InvitationCode, MemberCards, MemberPolicies, MemberCardConsumption, \
     MemberRechargeRecords, make_uuid, make_order_id
-from .. import db, default_api
+from .. import db, default_api, logger
 from ..common import success_return, false_return, submit_return
 from ..public_method import get_table_data, new_data_obj, create_member_card_num, query_coupon
 import datetime
@@ -120,7 +120,8 @@ class MemberRecharge(Resource):
             args = member_recharge_parser.parse_args()
             current_user = kwargs['current_user']
             if current_user.member_type == 1:
-                raise Exception("代理商不可充值")
+                # raise Exception("代理商不可充值")
+                logger.error("当前充值用户为代理商")
 
             present_grade = current_user.member_grade
             recharge_amount = args.get('amount')

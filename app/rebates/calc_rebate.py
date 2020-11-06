@@ -90,6 +90,7 @@ def find_relationships(customer, member_type=1):
 
         return success_return(data=relationship_dict)
     except Exception as e:
+        traceback.print_exc()
         return false_return(message=str(e))
 
 
