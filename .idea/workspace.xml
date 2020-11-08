@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/frontstage_auth/auths.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/frontstage_auth/auths.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -206,13 +205,6 @@
       <workItem from="1604813030427" duration="136000" />
       <workItem from="1604817264724" duration="745000" />
       <workItem from="1604836822340" duration="329000" />
-    </task>
-    <task id="LOCAL-00001" summary="ignore">
-      <created>1585498309901</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1585498309901</updated>
     </task>
     <task id="LOCAL-00002" summary="delete migrations">
       <created>1585498355849</created>
@@ -543,7 +535,21 @@
       <option name="project" value="LOCAL" />
       <updated>1604815730631</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="默认更改列表">
+      <created>1604839439838</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1604839439838</updated>
+    </task>
+    <task id="LOCAL-00050" summary="默认更改列表">
+      <created>1604839558541</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1604839558544</updated>
+    </task>
+    <option name="localTasksCounter" value="51" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -574,10 +580,10 @@
     </state>
     <state x="643" y="113" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1601640756203" />
     <state x="735" y="131" key="#com.jetbrains.python.refactoring.move.PyMoveModuleMembersDialog/0.23.1920.1001@0.23.1920.1001" timestamp="1601257227388" />
-    <state x="365" y="29" width="1193" height="1021" key="CommitChangelistDialog2" timestamp="1604815721968">
+    <state x="365" y="29" width="1193" height="1021" key="CommitChangelistDialog2" timestamp="1604839558388">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="365" y="29" width="1193" height="1021" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1604815721968" />
+    <state x="365" y="29" width="1193" height="1021" key="CommitChangelistDialog2/0.0.1680.1050@0.0.1680.1050" timestamp="1604839558388" />
     <state x="567" y="23" width="785" height="1001" key="CommitChangelistDialog2/0.23.1920.1001@0.23.1920.1001" timestamp="1601193079941" />
     <state x="1985" y="-1485" width="775" height="1920" key="CommitChangelistDialog2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601560650449" />
     <state x="1985" y="-1485" width="775" height="1920" key="CommitChangelistDialog2/1680.-1485.1080.1920/0.23.1680.971/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601604345240" />
@@ -669,10 +675,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="500" height="445" key="SwitcherDM/0.0.1680.1050@0.0.1680.1050" timestamp="1603809629112" />
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604839095119">
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604839578863">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604839095119" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604839578863" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
@@ -706,10 +712,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state x="605" y="163" key="git4idea.branch.GitSmartOperationDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1604800817748" />
-    <state x="588" y="311" key="git4idea.merge.GitMergeDialog" timestamp="1604815707780">
+    <state x="588" y="311" key="git4idea.merge.GitMergeDialog" timestamp="1604839574077">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="588" y="311" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1604815707780" />
+    <state x="588" y="311" key="git4idea.merge.GitMergeDialog/0.0.1680.1050@0.0.1680.1050" timestamp="1604839574077" />
     <state x="513" y="305" key="git4idea.merge.GitPullDialog" timestamp="1602680428100">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
