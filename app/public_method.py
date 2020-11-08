@@ -236,7 +236,8 @@ def __make_table(fields, table, strainer=None):
             coupon_reduce, card_reduce = order_payed_couponscards(table)
             tmp[f] = str(table.items_total_price - table.score_used - coupon_reduce - card_reduce)
         elif f == 'first_page_popup':
-            if not table.orders.all():
+            if not table.orders.all() and not redis_db.exists(table.id + ":" + f):
+                redis_db.set(table.id + ":" + f, FIRST_PAGE_POPUP_URL)
                 tmp[f] = FIRST_PAGE_POPUP_URL
             else:
                 tmp[f] = ""
