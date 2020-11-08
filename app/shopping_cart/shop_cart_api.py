@@ -163,7 +163,8 @@ class Pay(Resource):
                         coupon_reduce_price += ready_coupon.coupon_setting.promotion.benefits[0].reduced_amount
                     else:
                         raise Exception("同一商品只能使用一张优惠券")
-
+            logger.debug(str(consumption_sum) + " " + type(consumption_sum))
+            logger.debug(str(card_balance) + " " + type(card_balance))
             if consumption_sum > Decimal(str(card_balance)):
                 raise Exception(f"卡消费金额{consumption_sum}大于余额{card_balance}，数值错误")
 
