@@ -447,6 +447,7 @@ def order_cancel(cancel_reason, shop_order_id):
             order.delete_at = datetime.datetime.now()
             order.status = 0
             order.cancel_reason = cancel_reason
+
             if order.score_used:
                 order.consumer.total_points += order.score_used
             if order.card_consumption:
