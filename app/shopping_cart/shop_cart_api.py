@@ -166,7 +166,7 @@ class Pay(Resource):
 
             logger.debug(type(consumption_sum))
             logger.debug(type(card_balance))
-            if consumption_sum > Decimal(str(card_balance)):
+            if consumption_sum - card_balance > 0.00:
                 raise Exception(f"卡消费金额{consumption_sum}大于余额{card_balance}，数值错误")
 
             # 实际支付费用中减去积分和优惠券抵扣金额
