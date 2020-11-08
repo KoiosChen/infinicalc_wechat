@@ -235,6 +235,11 @@ def __make_table(fields, table, strainer=None):
         elif f == 'real_payed_cash_fee':
             coupon_reduce, card_reduce = order_payed_couponscards(table)
             tmp[f] = str(table.items_total_price - table.score_used - coupon_reduce - card_reduce)
+        elif f == 'first_page_popup':
+            if not table.orders.all():
+                tmp[f] = FIRST_PAGE_POPUP_URL
+            else:
+                tmp[f] = ""
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):

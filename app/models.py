@@ -1343,6 +1343,8 @@ aes_key = 'koiosr2d2c3p0000'
 
 RECHARGE_REBATE_POLICY = 3
 
+FIRST_PAGE_POPUP_URL = "IMAGE"
+
 PermissionIP = redis_db.lrange('permission_ip', 0, -1)
 
 PATH_PREFIX = os.path.abspath(os.path.dirname(__file__))
