@@ -144,7 +144,7 @@ def authenticate(login_ip, **kwargs):
         if commit_result.get("code") == "false":
             raise Exception(json.dumps(commit_result))
 
-        ru = get_table_data_by_id(Customers, customer.id, ["role", "member_info"], ["role_id"])
+        ru = get_table_data_by_id(Customers, customer.id, ["role", "member_info", "first_page_popup"], ["role_id"])
 
         return success_return(data={'customer_info': ru, 'session_key': session_key}, message='登录成功')
     except Exception as e:
