@@ -486,6 +486,7 @@ def take_coupon(coupon_id, take_coupon_id, user):
                          json.dumps(false_return(message=f"未找到优惠券设置<{coupon_id}>")), ex=6000)
     except Exception as e:
         logger.error(f"领取优惠券失败，因为{e}")
+        db.session.commit()
         redis_db.set(f"new_coupon::{take_coupon_id}", json.dumps(false_return(message=f"{e}")), ex=6000)
 
 
