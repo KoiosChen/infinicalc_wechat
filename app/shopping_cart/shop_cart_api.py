@@ -64,6 +64,8 @@ class Pay(Resource):
             consumption_sum = args.pop('card_consumption')
             consumption_sum = Decimal(consumption_sum) if consumption_sum else Decimal("0.00")
             card_balance = kwargs['current_user'].card_balance if kwargs['current_user'].card_balance else 0
+            logger.info(consumption_sum)
+            logger.info(card_balance)
             packing_order = args.get("packing_order")
             logger.debug(f">>> args in shopping_cart::pay is {args}")
 
