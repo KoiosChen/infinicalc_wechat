@@ -208,7 +208,7 @@ def self_rebate(customer):
     percent = Decimal('0.01')
     all_rebates = PersonalRebates.query.filter(PersonalRebates.customer_id.__eq__(customer.id)).all()
     for r in all_rebates:
-        if r.related_order.is_pay == 1 and r.related_order.status == 1 and not r.related_order.delete_at:
+        if r.related_order and r.related_order.is_pay == 1 and r.related_order.status == 1 and not r.related_order.delete_at:
             if r.rebate:
                 if datetime.datetime.now() - r.create_at >= datetime.timedelta(days=7):
                     current_rebate += r.related_order.cash_fee * r.rebate * percent
@@ -216,6 +216,14 @@ def self_rebate(customer):
                 else:
                     frozen_count += 1
                     frozen_rebate += r.related_order.cash_fee * r.rebate * percent
+        elif r.wechat_pay_order and r.wechat_pay_order.time_end:
+            if r.rebate:
+                if datetime.datetime.now() - r.wechat_pay_order.time_end >= datetime.timedelta(days=7):
+                    current_rebate += r.wechat_pay_order.cash_fee * r.rebate * percent
+                    current_rebate += 1
+                else:
+                    frozen_count += 1
+                    frozen_rebate += r.wechat_pay_order.cash_fee * r.rebate * percent
 
     return {"frozen_rebate": format_decimal(frozen_rebate, zero_format="0.00", to_str=True),
             "frozen_count": frozen_count,
