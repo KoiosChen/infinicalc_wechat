@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/shopping_cart/shop_cart_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/shopping_cart/shop_cart_api.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -203,6 +202,7 @@
       <workItem from="1604449017856" duration="7207000" />
       <workItem from="1604661934948" duration="1552000" />
       <workItem from="1604663524442" duration="4530000" />
+      <workItem from="1604813030427" duration="136000" />
     </task>
     <task id="LOCAL-00001" summary="ignore">
       <created>1585498309901</created>
@@ -638,10 +638,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="500" height="445" key="SwitcherDM/0.0.1680.1050@0.0.1680.1050" timestamp="1603809629112" />
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604810484149">
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1604813031386">
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604810484149" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1604813031386" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.23.1680.1027/-240.-1057.1920.1057@1680.-1485.1080.1920" timestamp="1601603990033" />
@@ -702,11 +702,6 @@
           <option name="timeStamp" value="23" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/shopping_cart/shop_cart_api.py</url>
-          <line>59</line>
-          <option name="timeStamp" value="37" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/app/wechat/pay.py</url>
           <line>141</line>
           <option name="timeStamp" value="55" />
@@ -728,8 +723,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/app/shopping_cart/shop_cart_api.py</url>
-          <line>168</line>
-          <option name="timeStamp" value="62" />
+          <line>154</line>
+          <option name="timeStamp" value="64" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
