@@ -166,14 +166,14 @@ class Pay(Resource):
 
             logger.debug(type(consumption_sum))
             logger.debug(type(card_balance))
-            # if consumption_sum - card_balance > 0.00:
-            #     raise Exception(f"卡消费金额{consumption_sum}大于余额{card_balance}，数值错误")
+            if consumption_sum - card_balance > 0.00:
+                raise Exception(f"卡消费金额{consumption_sum}大于余额{card_balance}，数值错误")
 
             # 实际支付费用中减去积分和优惠券抵扣金额
             pay_price = total_price - score_used - coupon_reduce_price
             # 判断卡消费金额是否正确
-            # if consumption_sum > pay_price:
-            #     raise Exception(f"卡消费金额{consumption_sum}大于剩余需支付金额{pay_price}")
+            if consumption_sum > pay_price:
+                raise Exception(f"卡消费金额{consumption_sum}大于剩余需支付金额{pay_price}")
 
             if consumption_sum > 0:
                 new_consumption_record = new_data_obj("MemberCardConsumption",
