@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund, ObjStorage
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, ObjStorage, Customers
 from .. import default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, get_table_data, order_cancel, \
@@ -42,6 +42,7 @@ order_page_parser.add_argument("id", help='订单ID', location='args')
 order_page_parser.add_argument("is_ship", help="0：未发货，1：已发货", location='args')
 order_page_parser.add_argument("is_receipt", help='0：未发货 1：已发货未签收 2：已发货已签收', location='args')
 order_page_parser.add_argument("status", help="1：正常 2：禁用 0：订单取消(delete_at 写入时间)", location='args')
+order_page_parser.add_argument("interest_id", location='args')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
@@ -82,6 +83,7 @@ class AllShopOrdersApi(Resource):
         """后台管理员获取所有订单，按照创建时间倒序， 返回值中customer_info是下订单用户的用户信息"""
         args = order_page_parser.parse_args()
         args['search'] = dict()
+        advance_search = list()
         if args.get("is_pay"):
             args['search']['is_pay'] = args['is_pay']
         if args.get("id"):
@@ -92,8 +94,14 @@ class AllShopOrdersApi(Resource):
             args['search']['is_receipt'] = args['is_receipt']
         if args.get('status'):
             args['search']['status'] = args['status']
-        data = get_table_data(ShopOrders, args, ['customer_info', 'items_orders'], removes=['customers_id'],
-                              order_by='create_at')
+        if args.get('interest_id'):
+            customer_id_set = [c.id for c in Customers.query.get(args['interest_id']).children_market]
+            advance_search.append({"key": "customer_id", "operator": "in_", "value": customer_id_set})
+        data = get_table_data(ShopOrders, args,
+                              appends=['customer_info', 'real_payed_cash_fee', 'items_orders'],
+                              removes=['customers_id'],
+                              order_by='create_at',
+                              advance_search=advance_search)
         return success_return(data=data)
 
 

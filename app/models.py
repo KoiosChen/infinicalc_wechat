@@ -486,6 +486,7 @@ class Customers(db.Model):
     total_cargoes = db.relationship("TotalCargoes", backref='owner', lazy='dynamic')
     refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
     score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
+    personal_rebates = db.relationship("PersonalRebates", backref='rebates_owner', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -968,6 +969,22 @@ class ShopOrders(db.Model):
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
+
+    @property
+    def real_price(self):
+        """扣除积分、优惠券、卡消费之后的真是价格"""
+        if self.coupon_used:
+            coupon_reduce = self.coupon_used.coupon_setting.promotion.benefits[0].reduced_amount
+        else:
+            coupon_reduce = Decimal("0.00")
+
+        if self.card_consumption:
+            card_reduce = self.card_consumption.consumption_sum
+        else:
+            card_reduce = Decimal("0.00")
+
+        return self.items_total_price - self.score_used - coupon_reduce - card_reduce
+
 
 
 class ItemsOrders(db.Model):
