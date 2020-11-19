@@ -212,8 +212,7 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[
-                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         elif f == 'customer_info':
@@ -232,6 +231,10 @@ def __make_table(fields, table, strainer=None):
                 end_at = table.take_at + datetime.timedelta(days=coupons_setting.valid_days)
             tmp[f] = {"name": name, "desc": desc, "with_amount": with_amount, "reduced_amount": reduced_amount,
                       "start_at": str(start_at), "end_at": str(end_at)}
+        elif f == 'shop_order_verbose':
+            if table.shop_order_id:
+                table_name = table.related_order.__class__.__name__
+                tmp[f] = get_table_data_by_id(eval(table_name), table.shop_order_id, appends=['real_payed_cash_fee'])
         elif f == 'real_payed_cash_fee':
             coupon_reduce, card_reduce = order_payed_couponscards(table)
             tmp[f] = str(table.items_total_price - table.score_used - coupon_reduce - card_reduce)
@@ -282,13 +285,15 @@ def _advance_search(table, fields, advance_search):
     and_fields_list = list()
 
     for search in advance_search:
-        if search['key'] in fields:
-            if '.' in search['key']:
-                keys = search['key'].split('.')
-                attr_key = getattr(getattr(table, keys[0]), keys[1])
+        keys = search['key'].split('.')
+        tmp_table = table
+        for k in keys:
+            if hasattr(tmp_table, k):
+                tmp_table = getattr(tmp_table, k)
             else:
-                attr_key = getattr(table, search['key'])
-            and_fields_list.append(getattr(attr_key, search['operator'])(search['value']))
+                logger.error(f"{tmp_table} has no attribute {k}")
+        attr_key = tmp_table
+        and_fields_list.append(getattr(attr_key, search['operator'])(search['value']))
     return and_fields_list
 
 

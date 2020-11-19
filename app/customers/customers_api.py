@@ -286,7 +286,7 @@ class CustomerInterestsVerbose(Resource):
             # 确认用户角色
             child_member_card = related_object.member_card.filter_by(status=1, member_type=1).first()
             if child_member_card:
-                # 如果child是代理，那一定是2级代理，这时候找这个二级下下游，就是直客，将这个代理的利益下级的消费都归属到此代理统计下
+                # 如果child是代理，那一定是2级代理，这时候找这个二级下游，就是直客，将这个代理的利益下级的消费都归属到此代理统计下
                 grade = child_member_card.grade
                 grand_children_market = related_object.children_market
                 for grandchild in grand_children_market:
