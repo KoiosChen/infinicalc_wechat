@@ -11,6 +11,7 @@ from ..wechat.pay import weixin_pay
 from ..wechat.order_check import weixin_orderquery
 import datetime
 import traceback
+from sqlalchemy import and_
 
 orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
 
@@ -39,10 +40,11 @@ cancel_parser.add_argument('cancel_reason', help='取消原因，让客户选择
 order_page_parser = page_parser.copy()
 order_page_parser.add_argument("is_pay", type=int, help='查询支付状态', location='args')
 order_page_parser.add_argument("id", help='订单ID', location='args')
+order_page_parser.add_argument("agent_nickname", help='代理商微信昵称， customers.username', location='args')
 order_page_parser.add_argument("is_ship", help="0：未发货，1：已发货", location='args')
 order_page_parser.add_argument("is_receipt", help='0：未发货 1：已发货未签收 2：已发货已签收', location='args')
 order_page_parser.add_argument("status", help="1：正常 2：禁用 0：订单取消(delete_at 写入时间)", location='args')
-order_page_parser.add_argument("interest_id", location='args')
+order_page_parser.add_argument("interest_id", location='args', help="代理商ID")
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("refund_quantity", required=True, help="退货数量")
@@ -83,6 +85,7 @@ class AllShopOrdersApi(Resource):
         """后台管理员获取所有订单，按照创建时间倒序， 返回值中customer_info是下订单用户的用户信息"""
         args = order_page_parser.parse_args()
         args['search'] = dict()
+        agent_search = list()
         advance_search = list()
         if args.get("is_pay"):
             args['search']['is_pay'] = args['is_pay']
@@ -95,8 +98,14 @@ class AllShopOrdersApi(Resource):
         if args.get('status'):
             args['search']['status'] = args['status']
         if args.get('interest_id'):
-            customer_id_set = [c.id for c in Customers.query.get(args['interest_id']).children_market]
-            advance_search.append({"key": "customer_id", "operator": "in_", "value": customer_id_set})
+            agent_search.append(Customers.id.__eq__(args['interest_id']))
+        if args.get('agent_nickname'):
+            agent_search.append(Customers.username.contains(args['agent_nickname']))
+
+        if agent_search:
+            advance_search.append({"key": "customer_id",
+                                   "operator": "in_",
+                                   "value": [c.id for c in Customers.query.filter(and_(*agent_search)).all()]})
         data = get_table_data(ShopOrders, args,
                               appends=['customer_info', 'real_payed_cash_fee', 'items_orders'],
                               removes=['customers_id'],
