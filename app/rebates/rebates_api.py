@@ -99,7 +99,7 @@ class RebateStatistic(Resource):
                                        advance_search=advance_search)
 
         for line in rebate_detail['records']:
-            if line['shop_order_verbose']:
+            if line.get('shop_order_verbose'):
                 line['rebate_value'] = format_decimal(
                     Decimal(line['rebate']) / Decimal("100") * Decimal(
                         line['shop_order_verbose']['real_payed_cash_fee']),
