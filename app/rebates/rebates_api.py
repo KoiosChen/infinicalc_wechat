@@ -2,7 +2,7 @@ from flask_restplus import Resource, reqparse
 from ..models import ShopOrders, Permission, ItemsOrders, Refund, PersonalRebates, Customers
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
+from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, format_decimal
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from .calc_rebate import self_rebate, calc
@@ -99,8 +99,9 @@ class RebateStatistic(Resource):
                                        advance_search=advance_search)
 
         for line in rebate_detail['records']:
-            line['rebate_value'] = str(
-                Decimal(line['rebate']) * Decimal(line['shop_order_verbose']['real_payed_cash_fee']))
+            line['rebate_value'] = format_decimal(
+                Decimal(line['rebate']) / Decimal("100") * Decimal(line['shop_order_verbose']['real_payed_cash_fee']),
+                to_str=True)
 
         return success_return(rebate_detail)
 
