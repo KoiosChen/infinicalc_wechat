@@ -102,7 +102,8 @@ class AllShopOrdersApi(Resource):
             agent_search.extend(customer_id_set)
 
         if args.get('agent_nickname'):
-            agent_search.extend([c.id for c in Customers.username.contains(args['agent_nickname'])])
+            agent_search.extend(
+                [c.id for c in Customers.query.filter(Customers.username.contains(args['agent_nickname']))])
 
         if agent_search:
             advance_search.append({"key": "customer_id",
