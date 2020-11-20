@@ -10,6 +10,7 @@ from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
 from sqlalchemy import and_
 import datetime
+from decimal import Decimal
 
 rebates_ns = default_api.namespace('rebates', path='/rebates', description='返佣API')
 
@@ -92,10 +93,16 @@ class RebateStatistic(Resource):
         elif not args.get('rebate_start_time') and args.get('rebate_end_time'):
             return false_return(message="若选择了结束时间，开始时间必选")
 
-        return success_return(get_table_data(PersonalRebates,
-                                             args,
-                                             appends=['customer_info', 'shop_order_verbose'],
-                                             advance_search=advance_search))
+        rebate_detail = get_table_data(PersonalRebates,
+                                       args,
+                                       appends=['customer_info', 'shop_order_verbose'],
+                                       advance_search=advance_search)
+
+        for line in rebate_detail['records']:
+            line['rebate_value'] = str(Decimal(line['rebate']) * Decimal(line['shop_order_verbose']['real_payed_cash_fee']))
+
+
+        return success_return()
 
 
 @rebates_ns.route('/test')
