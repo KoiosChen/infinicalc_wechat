@@ -98,14 +98,16 @@ class AllShopOrdersApi(Resource):
         if args.get('status'):
             args['search']['status'] = args['status']
         if args.get('interest_id'):
-            agent_search.append(Customers.id.__eq__(args['interest_id']))
+            customer_id_set = [c.id for c in Customers.query.get(args['interest_id']).children_market]
+            agent_search.extend(customer_id_set)
+
         if args.get('agent_nickname'):
-            agent_search.append(Customers.username.contains(args['agent_nickname']))
+            agent_search.extend([c.id for c in Customers.username.contains(args['agent_nickname'])])
 
         if agent_search:
             advance_search.append({"key": "customer_id",
                                    "operator": "in_",
-                                   "value": [c.id for c in Customers.query.filter(and_(*agent_search)).all()]})
+                                   "value": [c.id for c in agent_search]})
         data = get_table_data(ShopOrders, args,
                               appends=['customer_info', 'real_payed_cash_fee', 'items_orders'],
                               removes=['customers_id'],
