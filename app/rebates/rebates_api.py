@@ -99,10 +99,10 @@ class RebateStatistic(Resource):
                                        advance_search=advance_search)
 
         for line in rebate_detail['records']:
-            line['rebate_value'] = str(Decimal(line['rebate']) * Decimal(line['shop_order_verbose']['real_payed_cash_fee']))
+            line['rebate_value'] = str(
+                Decimal(line['rebate']) * Decimal(line['shop_order_verbose']['real_payed_cash_fee']))
 
-
-        return success_return()
+        return success_return(rebate_detail)
 
 
 @rebates_ns.route('/test')
