@@ -102,12 +102,16 @@ class AllShopOrdersApi(Resource):
             agent_search.extend(customer_id_set)
 
         if args.get('agent_nickname'):
-            agent_search.extend([c.id for c in Customers.username.contains(args['agent_nickname'])])
+            x_man = Customers.query.filter(Customers.username.contains(args['agent_nickname'])).first()
+            if x_man:
+                agent_search.extend([c.id for c in x_man.children_market])
+            else:
+                return success_return(data={"records": []})
 
         if agent_search:
             advance_search.append({"key": "customer_id",
                                    "operator": "in_",
-                                   "value": [c.id for c in agent_search]})
+                                   "value": agent_search})
         data = get_table_data(ShopOrders, args,
                               appends=['customer_info', 'real_payed_cash_fee', 'items_orders'],
                               removes=['customers_id'],
