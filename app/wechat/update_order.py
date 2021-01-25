@@ -14,7 +14,9 @@ def update_order(data):
         trade_status = data['result_code']  # 业务结果  SUCCESS/FAIL
         out_trade_no = data['out_trade_no']  #
         new_wechat_pay = None
+        # device_info 可以在支付的时候提交，在call_back的是否返回，此处用于辨识支付类型
         if data['device_info'] == "ShopOrder":
+            """在线商城购买"""
             order = db.session.query(ShopOrders).with_for_update().filter(ShopOrders.id.__eq__(out_trade_no),
                                                                           ShopOrders.is_pay.__eq__(3),
                                                                           ShopOrders.status.__eq__(1),
@@ -22,6 +24,7 @@ def update_order(data):
             customer = order.consumer
             order_customer = customer.openid
         else:
+            """会员充值"""
             order = db.session.query(MemberRechargeRecords).with_for_update().filter(
                 MemberRechargeRecords.id.__eq__(out_trade_no),
                 MemberRechargeRecords.is_pay.__eq__(3), MemberRechargeRecords.status.__eq__(1),

@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/orders/orders_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/orders/orders_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/wechat/update_order.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/wechat/update_order.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -215,6 +215,11 @@
       <workItem from="1605886190100" duration="1274000" />
       <workItem from="1605887498218" duration="367000" />
       <workItem from="1605888141955" duration="418000" />
+      <workItem from="1605888664287" duration="599000" />
+      <workItem from="1605956322431" duration="674000" />
+      <workItem from="1606135723429" duration="474000" />
+      <workItem from="1606188621192" duration="2000" />
+      <workItem from="1611590878573" duration="1278000" />
     </task>
     <task id="LOCAL-00005" summary="delete migrations">
       <created>1585614636747</created>
@@ -727,10 +732,10 @@
       <screen x="0" y="0" width="1680" height="1050" />
     </state>
     <state width="500" height="445" key="SwitcherDM/0.0.1680.1050@0.0.1680.1050" timestamp="1603809629112" />
-    <state x="436" y="244" key="Vcs.Push.Dialog.v2" timestamp="1605888143878">
-      <screen x="0" y="25" width="1680" height="962" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2" timestamp="1605888665579">
+      <screen x="0" y="0" width="1680" height="1050" />
     </state>
-    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1605887537099" />
+    <state x="436" y="239" key="Vcs.Push.Dialog.v2/0.0.1680.1050@0.0.1680.1050" timestamp="1605888665579" />
     <state x="440" y="244" key="Vcs.Push.Dialog.v2/0.23.1680.971@0.23.1680.971" timestamp="1601131355334" />
     <state x="436" y="244" key="Vcs.Push.Dialog.v2/0.25.1680.962@0.25.1680.962" timestamp="1605888143878" />
     <state x="1960" y="-1048" key="Vcs.Push.Dialog.v2/1680.-1485.1080.1920/0.0.1680.1050/-240.-1080.1920.1080@1680.-1485.1080.1920" timestamp="1601561162942" />
@@ -789,11 +794,6 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/app/wechat/pay.py</url>
-          <line>141</line>
-          <option name="timeStamp" value="55" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/wechat/pay.py</url>
           <line>262</line>
           <option name="timeStamp" value="56" />
         </line-breakpoint>
@@ -811,16 +811,6 @@
           <url>file://$PROJECT_DIR$/app/shopping_cart/shop_cart_api.py</url>
           <line>156</line>
           <option name="timeStamp" value="64" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/rebates/calc_rebate.py</url>
-          <line>209</line>
-          <option name="timeStamp" value="65" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/app/rebates/rebates_api.py</url>
-          <line>76</line>
-          <option name="timeStamp" value="71" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
