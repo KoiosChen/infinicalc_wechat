@@ -1,22 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表">
-      <change afterPath="$PROJECT_DIR$/app/business_units/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/business_units/business_untis_api.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/franchisee/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/franchisee/franchisee_api.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/decorators.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/decorators.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/image_operate.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/image_operate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/sku.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/sku.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/mall/spu.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/mall/spu.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/public_method.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/public_method.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/sms/verify_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/sms/verify_code.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-    </list>
+    <list default="true" id="43720869-6696-4405-8243-086acaff61ea" name="默认更改列表" comment="默认更改列表" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -36,7 +21,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="shengzhuan_v2" />
+        <entry key="$PROJECT_DIR$" value="on_server_v2" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
