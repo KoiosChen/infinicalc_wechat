@@ -76,8 +76,6 @@ def permission_required(permission):
                 else:
                     return exp_return(message=current_user.get("message"))
 
-
-
             check_result = dict()
             if 'Bearer' not in request.headers.get('Authorization'):
                 # 说明是前端用户

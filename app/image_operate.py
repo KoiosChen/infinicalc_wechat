@@ -1,5 +1,5 @@
-from ..models import ObjStorage
-from ..common import success_return, false_return, submit_return
+from app.models import ObjStorage
+from app.common import success_return, false_return, submit_return
 
 
 def operate(obj, imgs, action):
@@ -14,5 +14,6 @@ def operate(obj, imgs, action):
         return submit_return(f"<{obj.id}>增加图片成功", f"<{obj.id}>增加图片失败")
     elif obj and not imgs:
         obj.objects = []
+        return submit_return(f"<{obj.id}>清空图片成功", f"<{obj.id}>清空图片失败")
     else:
         return false_return(message=f"<{obj.id}>不存在"), 400

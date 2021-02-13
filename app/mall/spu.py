@@ -1,9 +1,8 @@
-from flask_restplus import Resource, fields, reqparse
+from flask_restplus import Resource, reqparse
 from ..models import SPU, Standards, spu_standards
-from . import mall, image_operate
-from .. import db, redis_db, default_api, logger
+from .. import db, image_operate
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
+from ..public_method import new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json

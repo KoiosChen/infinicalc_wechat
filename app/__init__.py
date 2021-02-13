@@ -180,4 +180,7 @@ def create_app(config_name):
     from .advertisements import advertisements as advertisements_blueprint
     app.register_blueprint(advertisements_blueprint)
 
+    from .business_units import business_units as business_unit_blueprint
+    app.register_blueprint(business_unit_blueprint)
+
     return app

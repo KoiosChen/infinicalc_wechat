@@ -1,16 +1,14 @@
-from flask_restplus import Resource, fields, reqparse
-from ..models import Brands, SKU, sku_standardvalue, PurchaseInfo, Permission, PackingItemOrders
-from . import mall, image_operate
-from .. import db, redis_db, default_api, logger, sku_lock
+from flask_restplus import Resource, reqparse
+from ..models import SKU, Permission, PackingItemOrders
+from .. import db, redis_db, logger, sku_lock, image_operate
 from ..common import success_return, false_return, session_commit, submit_return
-from ..public_method import table_fields, new_data_obj, get_table_data, get_table_data_by_id
+from ..public_method import new_data_obj, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import head_parser, page_parser
 from .mall_api import mall_ns, return_json
 import uuid
 import threading
 import json
-from flask import session
 
 add_sku_parser = reqparse.RequestParser()
 add_sku_parser.add_argument('spu_id', required=True, help="", location='json')

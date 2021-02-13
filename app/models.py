@@ -60,6 +60,20 @@ sku_standardvalue = db.Table('sku_standardvalue',
                                        primary_key=True),
                              db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
+bu_decorate_images = db.Table('bu_decorate_images',
+                              db.Column('bu_id', db.String(64), db.ForeignKey('business_units.id'),
+                                        primary_key=True),
+                              db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
+                              db.Column('create_at', db.DateTime, default=datetime.datetime.now)
+                              )
+
+bu_products_images = db.Table('bu_products_images',
+                              db.Column('bu_products_id', db.String(64), db.ForeignKey('business_unit_products.id'),
+                                        primary_key=True),
+                              db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
+                              db.Column('create_at', db.DateTime, default=datetime.datetime.now)
+                              )
+
 sku_obj = db.Table('sku_obj',
                    db.Column('sku_id', db.String(64), db.ForeignKey('sku.id'), primary_key=True),
                    db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
@@ -154,11 +168,13 @@ class Permission:
     READER = 0x01
     USER = 0x02
     MEMBER = 0x04
-    REGIONAL_AGENT = 0x08
-    NATIONAL_AGENT = 0x10
-    CUSTOMER_SERVICE = 0x20
-    OPERATOR = 0x40
-    ADMINISTER = 0x80
+    VIP_MEMBER = 0x08
+    BU_WAITER = 0x10
+    BU_OPERATOR = 0x20
+    BU_MANAGER = 0x40
+    FRANCHISEE_OPERATOR = 0x80
+    FRANCHISEE_MANAGER = 0x100
+    ADMINISTRATOR = 0x200
 
 
 class OptionsDict(db.Model):
@@ -242,6 +258,158 @@ class CustomerRoles(db.Model):
 
     def __repr__(self):
         return '<Role %r>' % self.name
+
+
+class FranchiseeScopes(db.Model):
+    __tablename__ = "franchisee_scopes"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    province = db.Column(db.String(64))
+    city = db.Column(db.String(64))
+    district = db.Column(db.String(64))
+    street = db.Column(db.String(64))
+    franchisee_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<FranchiseeScopes: %r>' % self.name
+
+
+class Franchisees(db.Model):
+    __tablename__ = "franchisees"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(50), comment="加盟商名称")
+    desc = db.Column(db.String(200), comment="描述")
+    phone1 = db.Column(db.String(15), comment="加盟商联系电话1")
+    phone2 = db.Column(db.String(15), comment="加盟商联系电话2")
+    address = db.Column(db.String(100), comment="加盟商营业地址")
+    scopes = db.relationship("FranchiseeScopes", backref='franchisee', uselist=False)
+    operators = db.relationship("FranchiseeOperators", backref='franchisee', uselist=False)
+    down_streams = db.relationship("BusinessUnits", backref='franchisee', uselist=False)
+    inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
+    status = db.Column(db.SmallInteger, default=0, comment='0 待审核，1 审核通过 2 审核失败')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Franchisee: %r>' % self.name
+
+
+class FranchiseeOperators(db.Model):
+    __tablename__ = "franchisee_operators"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(20), comment="员工姓名")
+    age = db.Column(db.SmallInteger, comment="年龄")
+    phone = db.Column(db.String(15))
+    phone_validated = db.Column(db.Boolean, default=False)
+    job_desc = db.Column(db.SmallInteger, comment="1: boss, 2: leader, 3: waiter")
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<FranchiseeOperator name: %r>' % self.name
+
+
+class FranchiseePurchaseOrders(db.Model):
+    __tablename__ = "franchisee_purchase_orders"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    amount = db.Column(db.SmallInteger, comment="进货或者出货量")
+    purchase_from = db.Column(db.String(64), default="ShengZhuanJiuYe", comment="购入方，默认为盛馔酒业，代表总部")
+    sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    operate_at = db.Column(db.DateTime, comment='进货日期')
+    operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class BusinessPurchaseOrders(db.Model):
+    __tablename__ = "business_purchase_orders"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    amount = db.Column(db.SmallInteger, comment="进货或者出货量")
+    purchase_from = db.relationship("Franchisees", backref="sell_to_orders", lazy="dynamic")
+    sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class BusinessUnits(db.Model):
+    __tablename__ = 'business_units'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50))
+    desc = db.Column(db.String(200), comment="店铺介绍")
+    chain_store_code = db.Column(db.String(20), comment="如果不为空，则以此code作为连锁店关键字")
+    address = db.Column(db.String(100), comment="店铺地址")
+    phone1 = db.Column(db.String(20), comment="店铺电话1")
+    phone2 = db.Column(db.String(20), comment="店铺电话2")
+    unit_type = db.Column(db.SmallInteger, default=1, comment="店铺类型，默认为1，餐饮店")
+    level = db.Column(db.SmallInteger, default=0, comment="评级，默认为0")
+    mark = db.Column(db.Float, default=0.0, comment="评分")
+    decorated_images = db.relationship(
+        'ObjStorage',
+        secondary=bu_decorate_images,
+        backref=db.backref('bu')
+    )
+    products_id = db.Column(db.String(64), db.ForeignKey('BusinessUnitsProducts.id'))
+    longitude = db.Column(db.String(20), comment='经度')
+    latitude = db.Column(db.String(20), comment='纬度')
+    inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
+    deposit = db.Column(db.SmallInteger, default=0, comment='寄存量')
+    employees = db.relationship("BusinessUnitEmployees", backref='business_unit', uselist=False)
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Unit name: %r>' % self.name
+
+
+class BusinessUnitProducts(db.Model):
+    __tablename__ = 'business_unit_products'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(10), comment="商品名称")
+    desc = db.Column(db.String(50), comment="商品介绍")
+    price = db.Column(db.DECIMAL(11, 2), default=0.00, comment='商品价格')
+    products_images_id = objects = db.relationship(
+        'ObjStorage',
+        secondary=bu_products_images,
+        backref=db.backref('bup')
+    )
+    order = db.Column(db.SmallInteger, default=0, comment='商品显示排序，默认0不排序')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Product name: %r>' % self.name
+
+
+class BusinessUnitEmployees(db.Model):
+    __tablename__ = "business_unit_employees"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(20), comment="员工姓名")
+    age = db.Column(db.SmallInteger, comment="年龄")
+    phone = db.Column(db.String(15))
+    phone_validated = db.Column(db.Boolean, default=False)
+    job_desc = db.Column(db.SmallInteger, comment="1: boss, 2: leader, 3: waiter")
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    business_unit_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return '<Employee name: %r>' % self.name
 
 
 class Elements(db.Model):
@@ -487,6 +655,8 @@ class Customers(db.Model):
     refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
     score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
     personal_rebates = db.relationship("PersonalRebates", backref='rebates_owner', lazy='dynamic')
+    business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False)
+    franchisee_operator = db.relationship('FranchiseeOperators', backref='operator_wechat', uselist=False)
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -724,10 +894,12 @@ class PurchaseInfo(db.Model):
     __tablename__ = 'purchase_info'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
-    amount = db.Column(db.Integer)
+    amount = db.Column(db.Integer, comment='进货，出货数量')
     operator = db.Column(db.String(64))
+    operator_at = db.Column(db.DateTime, comment="进货或者出货时间")
+    express_to_id = db.Column(db.String(64), db.ForeignKey("Franchisees.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废")
+    status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废 2 仓库出货")
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
@@ -986,7 +1158,6 @@ class ShopOrders(db.Model):
         return self.items_total_price - self.score_used - coupon_reduce - card_reduce
 
 
-
 class ItemsOrders(db.Model):
     __tablename__ = 'items_orders'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
@@ -1209,6 +1380,8 @@ class ObjStorage(db.Model):
     # customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
     news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
     advertisement = db.relationship('Advertisements', backref='ad_image', uselist=False)
+    business_unit_decoration = db.relationship('BusinessUnits', backref='decorated_images', lazy='dynamic')
+    business_unit_products = db.relationship('BusinessUnitProducts', backref='product_images', lazy='dynamic')
 
 
 class ShoppingCart(db.Model):

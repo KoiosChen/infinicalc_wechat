@@ -13,7 +13,7 @@ from ..public_method import new_data_obj, get_table_data
 
 verify_code_parser = reqparse.RequestParser()
 verify_code_parser.add_argument('code', required=True, help='短信验证码', location='json')
-verify_code_parser.add_argument('stage', required=True, help='前端、后端， 可传递front | back', location='json')
+verify_code_parser.add_argument('stage', required=True, help='前端、后端， 可传递front | back | bu_employee', location='json')
 
 return_json = sms_ns.model('ReturnRegister', return_dict)
 

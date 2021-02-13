@@ -11,6 +11,7 @@ import traceback
 from flask import session
 from decimal import Decimal
 from .models import Coupons, CouponReady
+from geopy.distance import geodesic
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -212,7 +213,8 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[
+                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         elif f == 'customer_info':
@@ -535,3 +537,30 @@ def order_payed_couponscards(order):
         card_reduce = Decimal("0.00")
 
     return coupon_reduce, card_reduce
+
+
+def get_nearby(lat, lng, distance=0.5):
+    """
+    获取纬度经度范围
+    """
+    import math
+    EARTH_RADIUS = 6378137
+
+    def deg2rad(deg):  # 角度转弧度
+        return math.radians(deg)
+
+    d_lng = 2 * math.asin(math.sin(distance / (2 * EARTH_RADIUS)) / math.cos(deg2rad(lat)))
+    d_lng = deg2rad(d_lng)
+    d_lat = distance / EARTH_RADIUS
+    d_lat = deg2rad(d_lat)
+    result = {
+        'left_top': {'lat': lat + d_lat, 'lng': lng - d_lng},
+        'right_top': {'lat': lat + d_lat, 'lng': lng + d_lng},
+        'left_bottom': {'lat': lat - d_lat, 'lng': lng - d_lng},
+        'right_bottom': {'lat': lat - d_lat, 'lng': lng + d_lng},
+    }
+    return result
+
+
+def geo_distance(addr_src, addr_to):
+    return geodesic(addr_src, addr_to).m
