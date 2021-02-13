@@ -61,8 +61,7 @@ sku_standardvalue = db.Table('sku_standardvalue',
                              db.Column('create_at', db.DateTime, default=datetime.datetime.now))
 
 bu_decorate_images = db.Table('bu_decorate_images',
-                              db.Column('bu_id', db.String(64), db.ForeignKey('business_units.id'),
-                                        primary_key=True),
+                              db.Column('bu_id', db.String(64), db.ForeignKey('business_units.id'), primary_key=True),
                               db.Column('obj_id', db.String(64), db.ForeignKey('obj_storage.id'), primary_key=True),
                               db.Column('create_at', db.DateTime, default=datetime.datetime.now)
                               )
@@ -343,7 +342,7 @@ class BusinessPurchaseOrders(db.Model):
 
 class BusinessUnits(db.Model):
     __tablename__ = 'business_units'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50))
     desc = db.Column(db.String(200), comment="店铺介绍")
     chain_store_code = db.Column(db.String(20), comment="如果不为空，则以此code作为连锁店关键字")
@@ -380,7 +379,7 @@ class BusinessUnitProducts(db.Model):
     name = db.Column(db.String(10), comment="商品名称")
     desc = db.Column(db.String(50), comment="商品介绍")
     price = db.Column(db.DECIMAL(11, 2), default=0.00, comment='商品价格')
-    products_images_id = objects = db.relationship(
+    products_images_id = db.relationship(
         'ObjStorage',
         secondary=bu_products_images,
         backref=db.backref('bup')
