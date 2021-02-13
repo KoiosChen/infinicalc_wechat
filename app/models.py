@@ -897,7 +897,7 @@ class PurchaseInfo(db.Model):
     amount = db.Column(db.Integer, comment='进货，出货数量')
     operator = db.Column(db.String(64))
     operator_at = db.Column(db.DateTime, comment="进货或者出货时间")
-    express_to_id = db.Column(db.String(64), db.ForeignKey("Franchisees.id"))
+    express_to_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废 2 仓库出货")
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
