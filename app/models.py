@@ -358,7 +358,7 @@ class BusinessUnits(db.Model):
         secondary=bu_decorate_images,
         backref=db.backref('bu')
     )
-    products_id = db.Column(db.String(64), db.ForeignKey('BusinessUnitsProducts.id'))
+    products_id = db.Column(db.String(64), db.ForeignKey('BusinessUnitProducts.id'))
     longitude = db.Column(db.String(20), comment='经度')
     latitude = db.Column(db.String(20), comment='纬度')
     inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
