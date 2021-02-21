@@ -695,7 +695,7 @@ class Customers(db.Model):
     parent = db.relationship('Customers', backref="children", foreign_keys='Customers.parent_id', remote_side=[id])
     invitor_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="代理商邀请")
     invitor = db.relationship('Customers', backref="be_invited", foreign_keys='Customers.invitor_id', remote_side=[id])
-    bu_id = db.Column(db.String(64), db.ForeignKey("business_unit.id"), comment='所归属的店铺')
+    bu_id = db.Column(db.String(64), db.ForeignKey("business_units.id"), comment='所归属的店铺')
     bu_employee_id = db.Column(db.String(64), db.ForeignKey("business_unit_employees.id"), comment='邀请使用小程序的员工ID')
     interest_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="利益关系")
     interest = db.relationship('Customers', backref="children_market", foreign_keys='Customers.interest_id',
