@@ -16,4 +16,5 @@ WEIXIN_QUERY_ORDER_URL = 'https://api.mch.weixin.qq.com/pay/orderquery'
 WEIXIN_CALLBACK_API = 'https://wechat.shengzhuan.store/wechat_pay/callback/'
 WEIXIN_REFUND_API = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
 WEIXIN_REFUND_CALLBACK_API = 'https://wechat.shengzhuan.store/wechat_refund/callback/'
+WEIXIN_PURSE_API = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers'
 LBS_KEY = "M45BZ-SVZ3G-VWCQM-IADYO-UUQAS-WDBOD"

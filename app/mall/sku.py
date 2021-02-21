@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import SKU, Permission, PackingItemOrders
+from ..models import SKU, Permission, PackingItemOrders, Franchisees
 from .. import db, redis_db, logger, sku_lock, image_operate
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, get_table_data, get_table_data_by_id
@@ -9,6 +9,7 @@ from .mall_api import mall_ns, return_json
 import uuid
 import threading
 import json
+import datetime
 
 add_sku_parser = reqparse.RequestParser()
 add_sku_parser.add_argument('spu_id', required=True, help="", location='json')
@@ -43,6 +44,7 @@ sku_img_parser.add_argument('objects', type=list, required=True, help='sku对应
 
 add_purchase_parser = reqparse.RequestParser()
 add_purchase_parser.add_argument("amount", required=True, help='进货数量')
+add_purchase_parser.add_argument("express_to_id", type=str, help='加盟商ID')
 
 refund_parser = reqparse.RequestParser()
 refund_parser.add_argument("amount", required=True, help='退货数量')
@@ -54,6 +56,10 @@ temporary_cart_parser = reqparse.RequestParser()
 temporary_cart_parser.add_argument('quantity', type=int, required=True, help='购买数量')
 temporary_cart_parser.add_argument('combo', help='如果此SKU有关联的套餐，则让用户选择套餐种类，价格按照套餐价格计算并显示。传benefits id')
 temporary_cart_parser.add_argument('packing_order_id', help='如果在分装流程中，此参数必传，通过接口获取预分配的分装ID')
+
+sku_dispatch_parser = reqparse.RequestParser()
+sku_dispatch_parser.add_argument("franchisee_id", required=True, type=str, help='加盟商ID')
+sku_dispatch_parser.add_argument("amount", required=True, type=int, help="正整数")
 
 
 def compute_quantity(sku_id, quantity_change):
@@ -320,7 +326,9 @@ class SKUPurchase(Resource):
         if sku and not sku.status:
             purchase_data = {"sku_id": sku_id,
                              "amount": eval(args['amount']),
-                             "operator": operator}
+                             "operator": operator,
+                             "operator_at": datetime.datetime.now(),
+                             "express_to_id": args['franchisee_id']}
             operate_key = str(uuid.uuid4())
             key = f"change_sku_quantity::{sku_id}::{operate_key}"
             change_thread = threading.Thread(target=change_sku_quantity, args=(key, purchase_data, sku_lock))
@@ -331,8 +339,11 @@ class SKUPurchase(Resource):
                 redis_db.delete(key)
                 return result
             else:
-                db.session.commit()
-                return submit_return(f"进（退）货操作成功", "数据提交失败，进（退）货操作失败")
+                if not args['franchisee_id']:
+                    return submit_return(f"进（退）货操作成功", "数据提交失败，进（退）货操作失败")
+                else:
+                    # 修改加盟商订单
+                    pass
 
         elif sku and sku.status:
             return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进（退）货单，请先下架"), 400

@@ -22,10 +22,11 @@ def lbs_get_by_coordinate(lat, lng):
             raise Exception(content['message'])
         address = content['result']['address_component']
         if address['province'] != address['city']:
-            addr_join = address['nation'] + address['province'] + address['city'] + address['district']
+            # addr_join = address['nation'] + address['province'] + address['city'] + address['district']
+            addr = [address['nation'], address['province'], address['city'], address['district']]
         else:
-            addr_join = address['nation'] + address['province'] + address['district']
-        return success_return(data=addr_join)
+            addr = [address['nation'], address['province'], address['district']]
+        return success_return(data=addr)
     except Exception as e:
         return false_return(message=str(e))
 
