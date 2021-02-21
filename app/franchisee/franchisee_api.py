@@ -15,11 +15,11 @@ franchisee_ns = default_api.namespace('franchisee', path='/franchisee', descript
 return_json = franchisee_ns.model('ReturnRegister', return_dict)
 
 franchisee_page_parser = page_parser.copy()
-franchisee_page_parser.add_argument('name', request=False, location="args")
+franchisee_page_parser.add_argument('name', required=False, location="args")
 franchisee_page_parser.add_argument('Authorization', required=True, location='headers')
 
 franchisee_scopes_page_parser = page_parser.copy()
-franchisee_scopes_page_parser.add_argument('franchisee_id', request=False, location="args")
+franchisee_scopes_page_parser.add_argument('franchisee_id', required=False, location="args")
 franchisee_scopes_page_parser.add_argument('Authorization', required=True, location='headers')
 
 create_franchisee_parser = reqparse.RequestParser()
