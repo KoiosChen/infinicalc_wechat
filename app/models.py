@@ -1631,7 +1631,7 @@ class CloudWineRebates(db.Model):
     __tablename__ = "cloud_wine_rebates"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), index=True, comment="返佣名称")
-    role_id = db.Column(db.String(64), db.ForeignKey('customer_roles.id'))
+    role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
     scene = db.Column(db.String(50), comment='业务场景，目前有PAYMENT; PICKUP')
     rebate = db.Column(db.DECIMAL(11, 2), index=True, comment='返佣金额')
     score = db.Column(db.Integer, index=True, comment='积分奖励')
