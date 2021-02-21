@@ -1,13 +1,15 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
-from ..models import Permission, BusinessUnits, BusinessPurchaseOrders, BusinessUnitEmployees, BusinessUnitProducts
+from ..models import Permission, BusinessUnits, BusinessPurchaseOrders, BusinessUnitEmployees, BusinessUnitProducts, \
+    Roles, BusinessUnitInventory
 from . import business_units
 from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance
+from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance, get_nearby
 from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 import datetime
+from collections import defaultdict
 
 bu_ns = default_api.namespace('Business Units', path='/business_units', description='店铺接口')
 
@@ -55,12 +57,20 @@ employee_bind_appid = reqparse.RequestParser()
 employee_bind_appid.add_argument('age', required=False, help='年龄')
 employee_bind_appid.add_argument('phone', required=True, help='用户扫描绑定入口，填写手机号验证')
 
+bu_nearby = reqparse.RequestParser()
+bu_nearby.add_argument('distance', required=True, default=500, choices=[100, 500, 1000], help='离当前坐标的距离')
+bu_nearby.add_argument('longitude', required=True, type=str, help='经度')
+bu_nearby.add_argument('latitude', required=True, type=str, help='纬度')
+
+bu_detail_page_parser = page_parser.copy()
+bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
+
 
 @bu_ns.route('')
 class BusinessUnitsAPI(Resource):
     @bu_ns.marshal_with(return_json)
     @bu_ns.expect(bu_page_parser)
-    @permission_required([Permission.FRANCHISEE_MANAGER, "app.business_unit.BusinessUnitsAPI.get"])
+    @permission_required([Permission.BU_MANAGER, "app.business_unit.BusinessUnitsAPI.get"])
     def get(self, **kwargs):
         """
         获取所有店铺
@@ -69,14 +79,14 @@ class BusinessUnitsAPI(Resource):
         if 'search' not in args.keys():
             args['search'] = {}
         args['search'] = {"name": args['name']}
-        return success_return(get_table_data(BusinessUnits, args, appends=["decorate_images", "products"]), "请求成功")
+        return success_return(get_table_data(BusinessUnits, args), "请求成功")
 
     @bu_ns.doc(body=create_bu_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
     def post(self, **kwargs):
         """
-        新增店铺
+        新增店铺,返回新增的店铺ID
         """
         args = create_bu_parser.parse_args()
         check_name = BusinessUnits.query.filter(BusinessUnits.name.__eq__(args['name']),
@@ -102,10 +112,37 @@ class BusinessUnitsAPI(Resource):
         else:
             append_image = image_operate.operate(new_bu['obj'], args['objects'], "append")
             if append_image.get("code") == 'success':
-                return submit_return(f"店铺 {args['name']} 添加到成功，id：{new_bu['obj'].id}",
-                                     f"店铺 {args['name']} 添加失败，因为图片追加失败")
+                submit_result = submit_return(f"店铺 {args['name']} 添加到成功，id：{new_bu['obj'].id}",
+                                              f"店铺 {args['name']} 添加失败，因为图片追加失败")
+                if submit_result['code'] == 'success':
+                    submit_result['data'] = new_bu['obj'].id
+                return submit_result
             else:
                 return false_return("图片添加失败")
+
+
+@bu_ns.route('/<string:bu_id>/products')
+@bu_ns.param('business unit', 'BUSINESS UNIT ID')
+class BUProductsApi(Resource):
+    @bu_ns.doc(body=bu_detail_page_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.BU_OPERATOR, "app.business_units.BUProductsApi.get"])
+    def get(self, **kwargs):
+        """获取指定BU的商品列表"""
+        args = bu_detail_page_parser.parse_args()
+        return success_return(data=get_table_data(BusinessUnitProducts, args))
+
+
+@bu_ns.route('/<string:bu_id>/inventory')
+@bu_ns.param('business unit', 'BUSINESS UNIT ID')
+class BUInventoryApi(Resource):
+    @bu_ns.doc(body=bu_detail_page_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.BU_OPERATOR, "app.business_units.BUInventoryApi.get"])
+    def get(self, **kwargs):
+        """获取指定BU的库存量"""
+        args = bu_detail_page_parser.parse_args()
+        return success_return(data=get_table_data(BusinessUnitInventory, args, appends=['sku']))
 
 
 @bu_ns.route('/<string:bu_id>')
@@ -115,11 +152,8 @@ class PerBUApi(Resource):
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
     def get(self, **kwargs):
-        """
-        获取指定BU数据
-        """
-        return success_return(
-            get_table_data_by_id(BusinessUnits, kwargs['bu_id'], ['bu_products']))
+        """获取指定BU详情"""
+        return success_return(get_table_data_by_id(BusinessUnits, kwargs['bu_id']))
 
     @bu_ns.doc(body=update_bu_parser)
     @bu_ns.marshal_with(return_json)
@@ -178,36 +212,34 @@ class BUEmployeesApi(Resource):
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.put"])
     def post(self, **kwargs):
+        """新增员工"""
         args = new_bu_employee.parse_args()
-        for k, v in args.items():
-            # 目前不允许店铺内重名
-            new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
-                                                                    "job_desc": args['job_desc'],
-                                                                    "business_unit_id": args['bu_id']})
-            if not new_bu_employee or (new_bu_employee and not new_employee['status']):
-                return false_return(message=f"create user {v} fail")
-            return submit_return("create employee success", "create employee fail")
+
+        new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
+                                                                "job_desc": args['job_desc'],
+                                                                "business_unit_id": kwargs['bu_id']})
+        if not new_employee or (new_employee and not new_employee['status']):
+            return false_return(message=f"create user {args['name']} fail")
+        return submit_return("create employee success", "create employee fail")
 
 
 @bu_ns.route('/<string:bu_id>/employee/<string:employee_id>/bind')
 @bu_ns.expect(head_parser)
-class BUEmployeeBindAppID(Resource):
+class BUEmployeeBindOpenID(Resource):
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.put"])
     def get(self, **kwargs):
-        """绑定入口进入时，获取员工信息"""
+        """提交后用此接口连接产生二维码作为绑定入口，入口页面将以填写数据的内容显示出来，名字、职位不可修改，其它字段按照post方法表单补全"""
         return success_return(get_table_data_by_id(BusinessUnitEmployees,
                                                    kwargs['employee_id'],
                                                    appends=['bu_name', 'job_name'],
-                                                   removes=['age', 'phone', 'phone_validated', 'customer_id']))
+                                                   removes=['age', 'phone', 'phone_validated']))
 
     @bu_ns.doc(body=employee_bind_appid)
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.put"])
     def put(self, **kwargs):
-        """
-        绑定员工账号和微信APPID，前端页面先验证手机号，stage传bu_employee
-        """
+        """绑定员工账号和微信OPENID，前端页面先验证手机号，stage传bu_employee"""
         args = employee_bind_appid.parse_args()
         current_user = kwargs.get('current_user')
         bu_employee = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.id.__eq__(kwargs['employee_id']),
@@ -223,3 +255,44 @@ class BUEmployeeBindAppID(Resource):
     @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.delete"])
     def delete(self, **kwargs):
         pass
+
+
+@bu_ns.route('/qrcode/<string:f_id>')
+@bu_ns.param('f_id', 'Franchisee ID')
+@bu_ns.expect(head_parser)
+class BUQrcode(Resource):
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.USER, "app.business_units.BUQrcode.post"])
+    def post(self, **kwargs):
+        """公司运营录入完毕产生的二维码入口，用户扫此入口绑定自己微信成为此加盟商的管理员"""
+        pass
+
+
+@bu_ns.route('/nearby')
+@bu_ns.expect(head_parser)
+class BUNearby(Resource):
+    @bu_ns.doc(body=bu_nearby)
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.USER, "app.business_units.BUNearby.post"])
+    def get(self, **kwargs):
+        """附近的店铺"""
+        args = bu_nearby.parse_args()
+        distance = args['distance']
+        longitude = args['longitude']
+        latitude = args['latitude']
+
+        # 获取距离是distance内的坐标范围，用左上，左下，右上，右下四个坐标来圈定范围
+        nearby_range = get_nearby(latitude, longitude, distance * 0.001)
+
+        # 查表，获取符合范围内的店铺
+        nearby_objs = [{"obj": {"name": obj.name, "desc": obj.desc, "image": obj.decorated_images[0]},
+                        "distance": geo_distance((latitude, longitude), (obj.latitude, obj.longitude))} for
+                       obj in BusinessUnits.query.filter(
+                BusinessUnits.latitude.between(nearby_range['left_bottom']['lat'], nearby_range['left_top']['lat']),
+                BusinessUnits.longitude.between(nearby_range['left_top']['lng'], nearby_range['right_top']['lng'])
+            ).all()]
+
+        # 按照距离排序
+        nearby_objs.sort(key=lambda x: x['distance'])
+
+        return success_return(data=nearby_objs)

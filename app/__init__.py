@@ -183,4 +183,7 @@ def create_app(config_name):
     from .business_units import business_units as business_unit_blueprint
     app.register_blueprint(business_unit_blueprint)
 
+    from .franchisee import franchisee as franchisee_blueprint
+    app.register_blueprint(franchisee_blueprint)
+
     return app

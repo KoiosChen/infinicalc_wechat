@@ -1,24 +1,17 @@
 # -*- coding: utf-8 -*-
-from app import logger, db, redis_db, sku_lock
-from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, \
-    make_uuid
-from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, \
-    WEIXIN_KEY, \
-    WEIXIN_UNIFIED_ORDER_URL, WEIXIN_QUERY_ORDER_URL, WEIXIN_CALLBACK_API
+from app import db, redis_db, sku_lock
+from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, make_uuid
+from app.wechat.wechat_config import WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
-import uuid
 import requests
 import json
-import xmltodict
 import time
 import datetime
-import random
-from hashlib import md5
 from app.public_method import new_data_obj, calc_sku_price
-from app.common import submit_return, success_return, false_return, session_commit
+from app.common import success_return, false_return, session_commit
 from app.mall.sku import compute_quantity
 import threading
-from sqlalchemy import and_
+from .public_method import *
 
 
 def make_payment_info(notify_url=None, out_trade_no=None, total_fee=None, openid=None, device_info=None):
@@ -60,30 +53,6 @@ def make_payment_request_wx(notify_url, out_trade_no, total_fee, openid, device_
         }
         request_order_info['sign'] = generate_sign(request_order_info)
         return request_order_info
-
-    def generate_sign(params):
-        """
-        生成md5签名的参数
-        """
-        if 'sign' in params:
-            params.pop('sign')
-        src = '&'.join(['%s=%s' % (k, v) for k, v in sorted(params.items())]) + '&key=%s' % WEIXIN_KEY
-        logger.debug(src.encode('utf-8'))
-        return md5(src.encode('utf-8')).hexdigest().upper()
-
-    def generate_nonce_str():
-        """
-        生成随机字符串
-        """
-        return str(uuid.uuid4()).replace('-', '')
-
-    def generate_request_data(params_dict):
-        """
-        生成统一下单请求所需要提交的数据
-        """
-        params_dict['nonce_str'] = generate_nonce_str()
-        params_dict['sign'] = generate_sign(params_dict)
-        return xmltodict.unparse({'xml': params_dict}, pretty=True, full_document=False).encode('utf-8')
 
     def make_payment_request(params_dict, unified_order_url):
         """

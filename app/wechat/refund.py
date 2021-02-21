@@ -1,17 +1,11 @@
 # -*- coding: utf-8 -*-
-from app import logger, db
-from app.models import Customers, Refund, CERT_PATH, KEY_PATH
-from app.wechat.wechat_config import app_id, WEIXIN_MCH_ID, WEIXIN_SIGN_TYPE, WEIXIN_KEY, WEIXIN_REFUND_API, \
-    WEIXIN_REFUND_CALLBACK_API
+from app import db
+from app.models import Refund, CERT_PATH, KEY_PATH
 import traceback
-import uuid
 import requests
 import json
-import xmltodict
-import time
-import datetime
-from hashlib import md5
 from app.common import success_return, false_return, session_commit
+from .public_method import *
 
 
 def make_payment_info(notify_url=None, transaction_id=None, out_trade_no=None, out_refund_no=None, total_fee=None,
@@ -41,30 +35,6 @@ def make_refund_request_wx(notify_url, transaction_id, out_trade_no, out_refund_
     :param refund_fee: 退款金额
     :return: app所需结果数据
     """
-
-    def generate_sign(params):
-        """
-        生成md5签名的参数
-        """
-        if 'sign' in params:
-            params.pop('sign')
-        src = '&'.join(['%s=%s' % (k, v) for k, v in sorted(params.items())]) + '&key=%s' % WEIXIN_KEY
-        logger.debug(src.encode('utf-8'))
-        return md5(src.encode('utf-8')).hexdigest().upper()
-
-    def generate_nonce_str():
-        """
-        生成随机字符串
-        """
-        return str(uuid.uuid4()).replace('-', '')
-
-    def generate_request_data(params_dict):
-        """
-        生成统一下单请求所需要提交的数据
-        """
-        params_dict['nonce_str'] = generate_nonce_str()
-        params_dict['sign'] = generate_sign(params_dict)
-        return xmltodict.unparse({'xml': params_dict}, pretty=True, full_document=False).encode('utf-8')
 
     def make_payment_request(params_dict, unified_order_url):
         """
