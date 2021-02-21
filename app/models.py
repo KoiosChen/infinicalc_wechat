@@ -1457,8 +1457,6 @@ class ObjStorage(db.Model):
     # customers = db.relationship('Customers', backref='photo_objects', lazy='dynamic')
     news_center = db.relationship('NewsCenter', backref='news_cover_image', lazy='dynamic')
     advertisement = db.relationship('Advertisements', backref='ad_image', uselist=False)
-    business_unit_decoration = db.relationship('BusinessUnits', backref='decorated_images', lazy='dynamic')
-    business_unit_products = db.relationship('BusinessUnitProducts', backref='product_images', lazy='dynamic')
 
 
 class ShoppingCart(db.Model):
@@ -1557,23 +1555,23 @@ class NewCustomerAwards(db.Model):
     delete_at = db.Column(db.DateTime)
 
 
-# class Advertisements(db.Model):
-#     """
-#     页面广告
-#     """
-#     __tablename__ = "advertisements"
-#     id = db.Column(db.Integer, primary_key=True)
-#     name = db.Column(db.String(100), index=True, comment='广告名称')
-#     position = db.Column(db.String(50), index=True, comment='广告位置')
-#     image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
-#     jump_to = db.Column(db.String(200), comment='跳转链接')
-#     start_at = db.Column(db.DateTime, default=datetime.datetime.now, comment="广告开始时间")
-#     end_at = db.Column(db.DateTime, comment="广告结束时间, 如果为空，则表示永久有效")
-#     wide = db.Column(db.Integer, comment='广告宽度')
-#     height = db.Column(db.Integer, comment='广告高度')
-#     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-#     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
-#     delete_at = db.Column(db.DateTime)
+class Advertisements(db.Model):
+    """
+    页面广告
+    """
+    __tablename__ = "advertisements"
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), index=True, comment='广告名称')
+    position = db.Column(db.String(50), index=True, comment='广告位置')
+    image = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
+    jump_to = db.Column(db.String(200), comment='跳转链接')
+    start_at = db.Column(db.DateTime, default=datetime.datetime.now, comment="广告开始时间")
+    end_at = db.Column(db.DateTime, comment="广告结束时间, 如果为空，则表示永久有效")
+    wide = db.Column(db.Integer, comment='广告宽度')
+    height = db.Column(db.Integer, comment='广告高度')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class WechatPay(db.Model):
