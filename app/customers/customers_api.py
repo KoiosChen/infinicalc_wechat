@@ -22,6 +22,13 @@ customers_ns = default_api.namespace('customers', path='/customers',
 login_parser = reqparse.RequestParser()
 login_parser.add_argument('js_code', required=True, help='前端获取的临时code')
 login_parser.add_argument('shared_id', help="分享链接中分享者的customer id")
+login_parser.add_argument('scene',
+                          help='业务场景'
+                               'new_franchisee: 新增加盟商'
+                               'new_bu：新增店铺'
+                               'new_franchisee_operator: 加盟商新员工'
+                               'new_bu_employee: 店铺新员工'
+                               'new_user: 商店服务员邀请客户使用小程序')
 login_parser.add_argument('scene_invitation', help='邀请码')
 
 bind_role_parser = reqparse.RequestParser()

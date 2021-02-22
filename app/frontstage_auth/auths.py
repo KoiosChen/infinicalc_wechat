@@ -2,7 +2,7 @@ import jwt
 import datetime
 import time
 from ..models import NewCustomerAwards, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid
-from .. import db, logger, SECRET_KEY
+from .. import db, logger, SECRET_KEY, redis_db
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id, query_coupon
 import json
@@ -83,7 +83,8 @@ def authenticate(login_ip, **kwargs):
         # 如果父级id为空，那么将此次父级id作为自己的父级
         logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
         logger.debug(f">>> scene invitation is {kwargs.get('scene_invitation')}")
-        if kwargs.get('scene_invitation'):
+
+        if kwargs.get('scene_invitation') and not kwargs.get('scene'):
             # 如果有邀请码，调用邀请码模块
             si_obj = db.session.query(SceneInvitation).with_for_update().filter(
                 SceneInvitation.code.__eq__(kwargs.get('scene_invitation'))).first()
@@ -91,6 +92,30 @@ def authenticate(login_ip, **kwargs):
                 now_invitees = len(si_obj.invitees)
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
                     create_member_card_by_invitation(new_customer['obj'], si_obj)
+        elif kwargs.get('scene_invitation') and kwargs.get('scene'):
+            scene = kwargs.get('scene')
+            scene_invitation = kwargs.get('scene_invitation')
+            if scene in ('new_franchisee', 'new_bu', 'new_franchisee_employee', 'new_bu_employee'):
+                if redis_db.exists(scene_invitation):
+                    obj_id = redis_db.get(scene)
+                    redis_db.delete(scene)
+                    if scene == 'new_franchisee':
+                        # bind to the franchisee
+                        pass
+                    elif scene == 'new_bu':
+                        # bind to the bu
+                        pass
+                    elif scene == 'new_franchisee_employee':
+                        # bind to the franchisee employee role
+                        pass
+                    elif scene == 'new_bu_employee':
+                        # bind to the bu employee role
+                        pass
+                else:
+                    logger.error('invitation code error')
+            else:
+                pass
+
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
