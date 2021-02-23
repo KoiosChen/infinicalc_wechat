@@ -1,7 +1,8 @@
 import jwt
 import datetime
 import time
-from ..models import NewCustomerAwards, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid
+from ..models import NewCustomerAwards, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid, \
+    Franchisees, CustomerRoles, FranchiseeOperators, BusinessUnitEmployees
 from .. import db, logger, SECRET_KEY, redis_db
 from ..common import success_return, false_return, session_commit
 from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id, query_coupon
@@ -97,25 +98,45 @@ def authenticate(login_ip, **kwargs):
             scene_invitation = kwargs.get('scene_invitation')
             if scene in ('new_franchisee', 'new_bu', 'new_franchisee_employee', 'new_bu_employee'):
                 if redis_db.exists(scene_invitation):
-                    obj_id = redis_db.get(scene)
-                    redis_db.delete(scene)
+                    obj_id = redis_db.get(scene_invitation)
+                    redis_db.delete(scene_invitation)
                     if scene == 'new_franchisee':
                         # bind to the franchisee
-                        pass
+                        # 创建manager
+
+                        job_role = CustomerRoles.query.filter_by(name="FRANCHISEE_MANAGER").first()
+                        new_employee = new_data_obj("FranchiseeOperators", **{"customer_id": customer.id,
+                                                                              "job_desc": job_role.id,
+                                                                              "franchisee_id": obj_id})
+                        if not new_employee or (new_employee and not new_employee['status']):
+                            logger.error("绑定加盟商失败")
                     elif scene == 'new_bu':
                         # bind to the bu
-                        pass
+                        job_role = CustomerRoles.query.filter_by(name="BU_MANAGER").first()
+                        new_employee = new_data_obj("BusinessUnitEmployees", **{"customer_id": customer.id,
+                                                                                "job_desc": job_role.id,
+                                                                                "business_unit_id": obj_id})
+                        if not new_employee or (new_employee and not new_employee['status']):
+                            logger.error("绑定店铺失败")
                     elif scene == 'new_franchisee_employee':
                         # bind to the franchisee employee role
-                        pass
+                        bind_f_e = FranchiseeOperators.query.get(obj_id)
+                        bind_f_e.customer_id = customer.id
+                        db.session.add(bind_f_e)
                     elif scene == 'new_bu_employee':
                         # bind to the bu employee role
-                        pass
+                        bind_u_e = BusinessUnitEmployees.query.get(obj_id)
+                        bind_u_e.customer_id = customer.id
+                        db.session.add(bind_u_e)
                 else:
                     logger.error('invitation code error')
-            else:
-                pass
-
+            elif scene in ("new_customer", "new_member"):
+                if redis_db.exists(scene_invitation):
+                    obj_id = redis_db.get(scene_invitation)
+                    redis_db.delete(scene_invitation)
+                    if scene == 'new_customer':
+                        customer.bu_employee_id = obj_id
+                        customer.bu_id = BusinessUnitEmployees.query.get(obj_id).business_unit_id
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在

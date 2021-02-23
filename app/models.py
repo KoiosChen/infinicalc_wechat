@@ -1427,6 +1427,7 @@ class Banners(db.Model):
     __tablename__ = 'banners'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(64), index=True, nullable=False, comment="banner的名称")
+    scene = db.Column(db.String(64), index=True, comment="banner所在页，空值为商城")
     order = db.Column(db.SmallInteger, default=0, comment="排序，若相同则无序")
     objects = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
     url = db.Column(db.String(200), comment="用于存放点击后跳转的链接")

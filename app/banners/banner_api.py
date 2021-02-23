@@ -14,6 +14,7 @@ return_json = banner_ns.model('ReturnRegister', return_dict)
 
 add_banner_parser = reqparse.RequestParser()
 add_banner_parser.add_argument('name', required=True, help='Banner名称')
+add_banner_parser.add_argument('scene', required=False, choices=['', "home_page"])
 add_banner_parser.add_argument('object', required=True, type=str, help='上传对象')
 add_banner_parser.add_argument('order', type=int, help='banner顺序，大于等于0的整数')
 add_banner_parser.add_argument('url', help='点击跳转的URL，空值表示不可点击')
@@ -53,7 +54,8 @@ class BannersApi(Resource):
         """新增Banner"""
         args = add_banner_parser.parse_args()
         new_banner = new_data_obj("Banners",
-                                  **{"name": args['name'], "order": args['order'], "objects": args['object']})
+                                  **{"name": args['name'], "scene": args.get('scene'), "order": args['order'],
+                                     "objects": args['object']})
         if new_banner:
             if new_banner.get('status'):
                 return submit_return("新增banner成功", "新增banner失败")

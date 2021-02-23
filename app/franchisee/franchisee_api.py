@@ -36,8 +36,7 @@ create_franchisee_parser.add_argument('scopes', type=list, required=True,
 create_franchisee_scope = reqparse.RequestParser()
 create_franchisee_scope.add_argument('province', required=True)
 create_franchisee_scope.add_argument('city', required=True)
-create_franchisee_scope.add_argument('district')
-create_franchisee_scope.add_argument('street', help='街道')
+create_franchisee_scope.add_argument('district', required=True)
 
 put_scope = reqparse.RequestParser()
 put_scope.add_argument('franchisee_id', required=True)
@@ -99,25 +98,21 @@ class FranchiseesAPI(Resource):
                 raise Exception("新增加盟商失败")
             else:
                 for scope in args['scopes']:
-                    if not scope['province']:
-                        return false_return(message='省必填'), 400
                     scope_obj = db.session.query(FranchiseeScopes).with_for_update().filter(
                         FranchiseeScopes.province.__eq__(scope['province']),
                         FranchiseeScopes.city.__eq__(scope.get('city')),
                         FranchiseeScopes.district.__eq__(scope.get('district')),
-                        FranchiseeScopes.street.__eq__(scope.get('street')),
                         FranchiseeScopes.franchisee_id.__eq__(None)
                     ).first()
 
                     if not scope_obj:
                         occupied_scopes.append = "区域" + "".join(
-                            [scope["province"], scope["city"], scope['district'], scope['street']]) + "已有加盟商运营"
+                            [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营"
                     else:
                         new_scope = new_data_obj('FranchiseeScopes',
                                                  **{"province": scope["province"],
                                                     "city": scope['city'],
                                                     "district": scope['district'],
-                                                    "street": scope['street'],
                                                     "franchisee_id": new_one['obj'].id})
                         if not new_scope or not new_scope['status']:
                             raise Exception('创建运营范围失败')
@@ -129,6 +124,8 @@ class FranchiseesAPI(Resource):
                     return success_return(data={'scene': 'new_franchisee', 'scene_invitation': scene_invitation})
                 else:
                     raise Exception('添加加盟商失败')
+            else:
+                return false_return(data=occupied_scopes, message='部分运营范围不可用'), 400
         except Exception as e:
             return false_return(message=str(e)), 400
 
