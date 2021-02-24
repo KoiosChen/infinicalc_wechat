@@ -694,13 +694,17 @@ class Customers(db.Model):
     wechat_purse_transfer = db.relationship('WechatPurseTransfer', backref='purse_owner', uselist=False)
     parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在parent中")
     parent = db.relationship('Customers', backref="children", foreign_keys='Customers.parent_id', remote_side=[id])
+
     invitor_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="代理商邀请")
     invitor = db.relationship('Customers', backref="be_invited", foreign_keys='Customers.invitor_id', remote_side=[id])
+
     bu_id = db.Column(db.String(64), db.ForeignKey("business_units.id"), comment='所归属的店铺')
     bu_employee_id = db.Column(db.String(64), db.ForeignKey("business_unit_employees.id"), comment='邀请使用小程序的员工ID')
+
     interest_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="利益关系")
     interest = db.relationship('Customers', backref="children_market", foreign_keys='Customers.interest_id',
                                remote_side=[id])
+
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -720,7 +724,8 @@ class Customers(db.Model):
     refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
     score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
     personal_rebates = db.relationship("PersonalRebates", backref='rebates_owner', lazy='dynamic')
-    business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False)
+    business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
+                                             foreign_keys='BusinessUnitEmployees.customer_id')
     franchisee_operator = db.relationship('FranchiseeOperators', backref='operator_wechat', uselist=False)
 
     def __init__(self, **kwargs):
