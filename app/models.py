@@ -431,6 +431,7 @@ class BusinessUnitEmployees(db.Model):
     job_desc = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     business_unit_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -466,7 +467,6 @@ class Deposit(db.Model):
     deposit_bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'), comment='存酒店铺')
     deposit_confirm_at = db.Column(db.DateTime, comment="服务员确认时间")
     pickup_waiter = db.Column(db.String(64), db.ForeignKey('business_unit_employees.id'))
-    pickup_bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'), comment='取酒店铺, 仅当整瓶酒寄存时才可跨店存酒')
     pickup_at = db.Column(db.DateTime, comment="取酒时间")
     create_at = db.Column(db.DateTime, default=datetime.datetime.now, comment='创建时间即为客户寄存时间')
     delete_at = db.Column(db.DateTime, comment='取消寄存时间')
