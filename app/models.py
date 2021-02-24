@@ -274,6 +274,7 @@ class FranchiseeScopes(db.Model):
     district = db.Column(db.String(64))
     street = db.Column(db.String(64))
     franchisee_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
+    bu_purchase_order_id = db.Column(db.String(64), db.ForeignKey("business_purchase_orders.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
