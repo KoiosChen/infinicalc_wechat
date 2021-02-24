@@ -274,7 +274,6 @@ class FranchiseeScopes(db.Model):
     district = db.Column(db.String(64))
     street = db.Column(db.String(64))
     franchisee_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
-    bu_purchase_order_id = db.Column(db.String(64), db.ForeignKey("business_purchase_orders.id"))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -291,6 +290,7 @@ class Franchisees(db.Model):
     phone1 = db.Column(db.String(15), comment="加盟商联系电话1")
     phone2 = db.Column(db.String(15), comment="加盟商联系电话2")
     address = db.Column(db.String(100), comment="加盟商营业地址")
+    bu_purchase_order_id = db.Column(db.String(64), db.ForeignKey("business_purchase_orders.id"))
     scopes = db.relationship("FranchiseeScopes", backref='franchisee', uselist=False)
     operators = db.relationship("FranchiseeOperators", backref='franchisee', uselist=False)
     down_streams = db.relationship("BusinessUnits", backref='franchisee', uselist=False)
@@ -352,7 +352,7 @@ class FranchiseePurchaseOrders(db.Model):
 class BusinessPurchaseOrders(db.Model):
     __tablename__ = "business_purchase_orders"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
-    franchisee_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     amount = db.Column(db.SmallInteger, comment="进货或者出货量")
     purchase_from = db.relationship("Franchisees", backref="sell_to_orders", lazy="dynamic")
     sell_to = db.Column(db.String(64), db.ForeignKey('customers.id'))
