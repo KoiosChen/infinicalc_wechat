@@ -60,6 +60,7 @@ bu_nearby = reqparse.RequestParser()
 bu_nearby.add_argument('distance', required=True, default=500, choices=[100, 500, 1000], help='离当前坐标的距离')
 bu_nearby.add_argument('longitude', required=True, type=str, help='经度')
 bu_nearby.add_argument('latitude', required=True, type=str, help='纬度')
+bu_nearby.add_argument('closest', required=True, default=0, choices=[0, 1], help='0:全部，1:最近')
 
 bu_detail_page_parser = page_parser.copy()
 bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
@@ -278,7 +279,7 @@ class BUNearby(Resource):
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.business_units.BUNearby.post"])
     def get(self, **kwargs):
-        """附近的店铺"""
+        """附近的店铺。若需要查找距离最近的店铺， distance传1000， closest传1"""
         args = bu_nearby.parse_args()
         distance = args['distance']
         longitude = args['longitude']
@@ -288,7 +289,7 @@ class BUNearby(Resource):
         nearby_range = get_nearby(latitude, longitude, distance * 0.001)
 
         # 查表，获取符合范围内的店铺
-        nearby_objs = [{"obj": {"name": obj.name, "desc": obj.desc, "image": obj.decorated_images[0]},
+        nearby_objs = [{"obj": {"id": obj.id, "name": obj.name, "desc": obj.desc, "image": obj.decorated_images[0]},
                         "distance": geo_distance((latitude, longitude), (obj.latitude, obj.longitude))} for
                        obj in BusinessUnits.query.filter(
                 BusinessUnits.latitude.between(nearby_range['left_bottom']['lat'], nearby_range['left_top']['lat']),
@@ -297,5 +298,7 @@ class BUNearby(Resource):
 
         # 按照距离排序
         nearby_objs.sort(key=lambda x: x['distance'])
-
-        return success_return(data=nearby_objs)
+        if args['closest'] == 0:
+            return success_return(data=nearby_objs)
+        else:
+            return success_return(data=nearby_objs[0])
