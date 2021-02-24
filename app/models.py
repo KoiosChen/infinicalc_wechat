@@ -1180,6 +1180,7 @@ class ShopOrders(db.Model):
     ship_time = db.Column(db.DateTime, comment="发货时间")
     receive_time = db.Column(db.DateTime, comment="收货时间")
     is_receipt = db.Column(db.SmallInteger, default=0, comment="0：未发货 1：已发货未签收 2：已发货已签收")
+    need_express = db.Column(db.SmallInteger, default=0, comment="0, 不要快递，店铺取货；1， 快递发货")
     express_company = db.Column(db.String(50), comment='快递公司')
     express_number = db.Column(db.String(50), comment='快递号')
     express_fee = db.Column(db.DECIMAL(7, 2), default=0.00)
@@ -1427,6 +1428,7 @@ class Banners(db.Model):
     __tablename__ = 'banners'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(64), index=True, nullable=False, comment="banner的名称")
+    scene = db.Column(db.String(64), index=True, comment="banner所在页，空值为商城")
     order = db.Column(db.SmallInteger, default=0, comment="排序，若相同则无序")
     objects = db.Column(db.String(64), db.ForeignKey('obj_storage.id'))
     url = db.Column(db.String(200), comment="用于存放点击后跳转的链接")

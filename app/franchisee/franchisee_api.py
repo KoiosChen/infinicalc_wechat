@@ -9,6 +9,7 @@ from ..public_method import new_data_obj, table_fields, get_table_data, get_tabl
 from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 from collections import defaultdict
+from app.scene_invitation.scene_invitation_api import generate_code
 
 franchisee_ns = default_api.namespace('franchisee', path='/franchisee', description='加盟商')
 
@@ -28,13 +29,14 @@ create_franchisee_parser.add_argument('desc', required=True, type=str, help='加
 create_franchisee_parser.add_argument('phone1', required=True, type=str, help='电话1')
 create_franchisee_parser.add_argument('phone2', required=False, type=str, help='电话2')
 create_franchisee_parser.add_argument('address', required=True, type=str, help='地址，手工输入')
-create_franchisee_parser.add_argument('scopes', type=list, required=False, help='运营范围', location='json')
+create_franchisee_parser.add_argument('scopes', type=list, required=True,
+                                      help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区", "street": "xxx"}]',
+                                      location='json')
 
 create_franchisee_scope = reqparse.RequestParser()
 create_franchisee_scope.add_argument('province', required=True)
 create_franchisee_scope.add_argument('city', required=True)
-create_franchisee_scope.add_argument('district')
-create_franchisee_scope.add_argument('street', help='街道')
+create_franchisee_scope.add_argument('district', required=True)
 
 put_scope = reqparse.RequestParser()
 put_scope.add_argument('franchisee_id', required=True)
@@ -49,7 +51,7 @@ new_operator.add_argument('job_desc', required=True, type=int, default=1, choice
 
 employee_bind_appid = reqparse.RequestParser()
 employee_bind_appid.add_argument('age', required=False, help='年龄')
-employee_bind_appid.add_argument('phone', required=True, help='用户扫描绑定入口，填写手机号验证')
+employee_bind_appid.add_argument('phone', required=False, help='填写手机号验证')
 
 
 @franchisee_ns.route('')
@@ -76,34 +78,56 @@ class FranchiseesAPI(Resource):
         :param kwargs:
         :return:
         """
-        args = create_franchisee_parser.parse_args()
-        if Franchisees.query.filter_by(name=args['name']).first():
-            return false_return(message="加盟商重名")
+        try:
+            args = create_franchisee_parser.parse_args()
+            if Franchisees.query.filter_by(name=args['name']).first():
+                raise Exception("加盟商重名")
 
-        new_one = new_data_obj("Franchisees",
-                               **{"name": args['name'],
-                                  "desc": args['desc'],
-                                  "phone1": args['phone1'],
-                                  "phone2": args['phone2'],
-                                  "address": args['address']})
+            new_one = new_data_obj("Franchisees",
+                                   **{"name": args['name'],
+                                      "desc": args['desc'],
+                                      "phone1": args['phone1'],
+                                      "phone2": args['phone2'],
+                                      "address": args['address']})
 
-        if not new_one or (new_one and not new_one['status']):
-            return false_return(message="create franchisee failed")
-        else:
-            for sid in args['scopes']:
-                scope_obj = db.session.query(FranchiseeScopes).with_for_update().filter(
-                    FranchiseeScopes.id.__eq__(sid)).first()
-                if not scope_obj:
-                    return false_return(message=f"{sid}不存在")
+            occupied_scopes = list()
 
-                if not scope_obj.franchisee_id:
-                    scope_obj.franchisee_id = new_one['obj'].id
-                    submit_result = submit_return("bind successful", "bind fail")
-                    if submit_result['code'] == 'success':
-                        submit_result['data'] = new_one['obj'].id
-                    return submit_result
+            db.session.flush()
+
+            if not new_one or (new_one and not new_one['status']):
+                raise Exception("新增加盟商失败")
+            else:
+                for scope in args['scopes']:
+                    scope_obj = db.session.query(FranchiseeScopes).with_for_update().filter(
+                        FranchiseeScopes.province.__eq__(scope['province']),
+                        FranchiseeScopes.city.__eq__(scope.get('city')),
+                        FranchiseeScopes.district.__eq__(scope.get('district')),
+                        FranchiseeScopes.franchisee_id.__eq__(None)
+                    ).first()
+
+                    if not scope_obj:
+                        occupied_scopes.append = "区域" + "".join(
+                            [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营"
+                    else:
+                        new_scope = new_data_obj('FranchiseeScopes',
+                                                 **{"province": scope["province"],
+                                                    "city": scope['city'],
+                                                    "district": scope['district'],
+                                                    "franchisee_id": new_one['obj'].id})
+                        if not new_scope or not new_scope['status']:
+                            raise Exception('创建运营范围失败')
+            if not occupied_scopes:
+                if session_commit().get('code') == 'success':
+                    scene_invitation = generate_code(12)
+                    redis_db.set(scene_invitation, new_one['obj'].id)
+                    redis_db.expire(scene_invitation, 600)
+                    return success_return(data={'scene': 'new_franchisee', 'scene_invitation': scene_invitation})
                 else:
-                    return false_return(message=f"{sid}'s franchisee id is not null")
+                    raise Exception('添加加盟商失败')
+            else:
+                return false_return(data=occupied_scopes, message='部分运营范围不可用'), 400
+        except Exception as e:
+            return false_return(message=str(e)), 400
 
 
 @franchisee_ns.route('/scopes')
@@ -120,56 +144,9 @@ class FranchiseeScopesAPI(Resource):
             args["search"]["franchisee_id"] = args['franchisee_id']
         return success_return(get_table_data(FranchiseeScopes, args, removes=['franchisee_id']))
 
-    @franchisee_ns.doc(body=create_franchisee_parser)
-    @franchisee_ns.marshal_with(return_json)
-    @permission_required("app.franchisee.FranchiseeScopesAPI.post")
-    def post(self, **kwargs):
-        """新增加盟商运营范围"""
-        args = create_franchisee_parser.parse_args()
-        new_scope = new_data_obj("FranchiseeScopes",
-                                 **{"province": args['province'],
-                                    "city": args['city'],
-                                    "district": args['district'],
-                                    "street": args['street']})
-        if new_scope:
-            if new_scope.get('status'):
-                if submit_return("", "")['code'] == "success":
-                    return success_return(data={"id": new_scope['obj'].id})
-                else:
-                    return false_return(message="运营范围添加失败"), 400
-            else:
-                if not new_scope['obj']['franchisee_id']:
-                    if submit_return("", "")['code'] == "success":
-                        return success_return(data={"id": new_scope['obj'].id}, message="运营范围已存在，未绑定加盟商")
-                    else:
-                        return false_return(message="运营范围添加失败"), 400
-                else:
-                    return false_return(message="新增范围失败"), 400
-        else:
-            return false_return(message="新增范围失败"), 400
-
 
 @franchisee_ns.route('/scopes/<string:scope_id>/franchisee')
 class FranchiseeScopeBindAPI(Resource):
-    @franchisee_ns.doc(body=put_scope)
-    @franchisee_ns.marshal_with(return_json)
-    @permission_required(Permission.ADMINISTRATOR)
-    def put(self, **kwargs):
-        """
-        绑定加盟商和运营范围
-        """
-        args = put_scope.parse_args()
-        scope_obj = db.session.query(FranchiseeScopes).with_for_update().filter(
-            FranchiseeScopes.id.__eq__(kwargs.get('scope_id'))).first()
-        if not scope_obj:
-            return false_return(message=f"{kwargs.get('scope_id')} is not exist")
-
-        if not scope_obj.franchisee_id:
-            scope_obj.franchisee_id = args['franchisee_id']
-            return submit_return("bind successful", "bind fail")
-        else:
-            return false_return(message=f"{kwargs['scope_id']}'s franchisee id is not null")
-
     @franchisee_ns.doc(body=put_scope)
     @franchisee_ns.marshal_with(return_json)
     @permission_required(Permission.ADMINISTRATOR)
@@ -185,17 +162,6 @@ class FranchiseeScopeBindAPI(Resource):
             return submit_return("unbind successful", "unbind fail")
         else:
             return false_return(message=f"{kwargs['scope_id']}'s franchisee id is not null")
-
-
-@franchisee_ns.route('/qrcode/<string:f_id>')
-@franchisee_ns.param('f_id', 'Franchisee ID')
-@franchisee_ns.expect(head_parser)
-class FranchiseeQrcode(Resource):
-    @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.franchisee.FranchiseeQrcode.post"])
-    def post(self, **kwargs):
-        """公司运营录入完毕产生的二维码入口，用户扫此入口绑定自己微信成为此加盟商的管理员"""
-        pass
 
 
 @franchisee_ns.route('/<string:f_id>/operator')
@@ -221,40 +187,48 @@ class FranchiseeOperatorsApi(Resource):
                                                               "franchisee_id": kwargs['f_id']})
         if not new_employee or (new_employee and not new_employee['status']):
             return false_return(message=f"create user {args['name']} fail")
-        return submit_return("create employee success", "create employee fail")
+        else:
+            if session_commit().get('code') == 'success':
+                scene_invitation = generate_code(12)
+                redis_db.set(scene_invitation, new_employee['obj'].id)
+                redis_db.expire(scene_invitation, 600)
+                return success_return(data={'scene': 'new_franchisee_employee',
+                                            'scene_invitation': scene_invitation})
+            else:
+                return false_return("create employee fail")
 
 
-@franchisee_ns.route('/<string:f_id>/operator/<string:operator_id>/bind')
+@franchisee_ns.route('/operator/<string:operator_id>')
 @franchisee_ns.expect(head_parser)
-class FranchiseeOperatorBind(Resource):
+class FranchiseeOperator(Resource):
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.franchisee.FranchiseeOperatorBind.get"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeOperatorBind.get"])
     def get(self, **kwargs):
-        """作为员工二维码入口，姓名和职位不能修改"""
+        """查询店铺下指定员工的详情"""
         return success_return(get_table_data_by_id(FranchiseeOperators,
                                                    kwargs['operator_id'],
-                                                   appends=['f_name', 'job_name'],
-                                                   removes=['age', 'phone', 'phone_validated']))
+                                                   appends=['f_name', 'job_name']))
 
     @franchisee_ns.doc(body=employee_bind_appid)
     @franchisee_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.franchisee.FranchiseeOperatorBind.put"])
     def put(self, **kwargs):
         """
-        绑定员工账号和微信APPID，前端页面先验证手机号，stage传bu_employee
+        修改店铺员工信息
         """
         args = employee_bind_appid.parse_args()
         current_user = kwargs.get('current_user')
         f_operator = FranchiseeOperators.query.filter(FranchiseeOperators.id.__eq__(kwargs['employee_id']),
                                                       FranchiseeOperators.franchisee_id.__eq__(kwargs['f_id'])).first()
         f_operator.customer_id = current_user.id
-        f_operator.phone = args['phone']
-        f_operator.phone_validated = True
-        f_operator.age = args['age']
-        return submit_return("绑定成功", "绑定失败")
+        if args.get('phone'):
+            f_operator.phone = args['phone']
+            f_operator.phone_validated = True
+        f_operator.age = args.get('age')
+        return submit_return("修改成功", "修改失败")
 
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.franchisee.FranchiseeOperatorBind.delete"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeOperatorBind.delete"])
     def delete(self, **kwargs):
         pass
 

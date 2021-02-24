@@ -34,6 +34,8 @@ packing_checkout_parser.add_argument("packing_order", help='分装订单编号')
 pay_parser = reqparse.RequestParser()
 pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分为1元')
 pay_parser.add_argument("card_consumption", help='使用会员充值金额，单位元，例如123.45')
+pay_parser.add_argument("need_express", required=True, type=int, default=0, choices=[0, 1],
+                        help='0, 店铺取酒； 1， 快递. 默认为0， 为店铺取酒。如果用户选择额快递，则页面上出现选择快递地址的选项，并传递express_addr_id')
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
 pay_parser.add_argument("shopping_cart_id", type=list, help="传选中的shopping_cart表的id", location='json')
@@ -64,21 +66,27 @@ class Pay(Resource):
             consumption_sum = args.pop('card_consumption')
             logger.info(consumption_sum)
             logger.info(kwargs['current_user'].card_balance)
-            consumption_sum = Decimal(consumption_sum) if consumption_sum != 'NaN' and consumption_sum else Decimal("0.00")
-            card_balance = kwargs['current_user'].card_balance if kwargs['current_user'].card_balance else Decimal("0.00")
+            consumption_sum = Decimal(consumption_sum) if consumption_sum != 'NaN' and consumption_sum else Decimal(
+                "0.00")
+            card_balance = kwargs['current_user'].card_balance if kwargs['current_user'].card_balance else Decimal(
+                "0.00")
             logger.info(consumption_sum)
             logger.info(card_balance)
             packing_order = args.get("packing_order")
             logger.debug(f">>> args in shopping_cart::pay is {args}")
 
             # 判断地址是否有效
-            addr = ExpressAddress.query.get(args.pop("express_addr_id"))
-            if addr:
-                args['express_address'] = str(addr.address1) + str(addr.address2)
-                args['express_postcode'] = addr.postcode
-                args['express_recipient'] = addr.recipient
-                args['express_recipient_phone'] = addr.recipient_phone
+            if args.get('need_express'):
+                addr = ExpressAddress.query.get(args.pop("express_addr_id"))
+                if addr:
+                    args['express_address'] = str(addr.address1) + str(addr.address2)
+                    args['express_postcode'] = addr.postcode
+                    args['express_recipient'] = addr.recipient
+                    args['express_recipient_phone'] = addr.recipient_phone
+                else:
+                    raise Exception(f"快递地址错误，请修正")
             else:
+                addr = ""
                 args['express_address'] = ""
                 args['express_postcode'] = ""
                 args['express_recipient'] = ""
@@ -106,7 +114,7 @@ class Pay(Resource):
                 if i.delete_at:
                     raise Exception(f"购物车订单{i.id}已删除")
 
-            total_price, total_score, express_addr, sku_statistic = checkout_cart(
+            total_price, total_score, cloud_express, sku_statistic = checkout_cart(
                 **{"shopping_cart_id": select_items, 'customer': kwargs['current_user']})
 
             score_used = args.get('score_used') if args.get('score_used') else 0
@@ -114,7 +122,7 @@ class Pay(Resource):
             if score_used and total_score < score_used:
                 raise Exception(f"欲使用积分{args['score_used']}, 此订单最大可消费积分为{total_score}")
 
-            if not express_addr and addr:
+            if not cloud_express and addr:
                 raise Exception("此订单货物都不可快递")
 
             # 再次检查优惠券是否有效，满足使用规则
