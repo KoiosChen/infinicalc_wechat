@@ -58,7 +58,7 @@ employee_bind_appid.add_argument('phone', required=False, help='填写手机号�
 class FranchiseesAPI(Resource):
     @franchisee_ns.marshal_with(return_json)
     @franchisee_ns.expect(franchisee_page_parser)
-    @permission_required(Permission.USER)
+    @permission_required(Permission.ADMINISTRATOR)
     def get(self, **kwargs):
         """
         获取所有加盟商清单
@@ -71,7 +71,7 @@ class FranchiseesAPI(Resource):
 
     @franchisee_ns.doc(body=create_franchisee_parser)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required("app.franchisee.FranchiseeAPI.post")
+    @permission_required(Permission.ADMINISTRATOR)
     def post(self, **kwargs):
         """
         新增加盟商
@@ -169,7 +169,7 @@ class FranchiseeScopeBindAPI(Resource):
 @franchisee_ns.expect(head_parser)
 class FranchiseeOperatorsApi(Resource):
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeOperatorsApi.get"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeOperatorsApi.get"])
     def get(self, **kwargs):
         """获取加盟商运营人员"""
         args = franchisee_operator_page_parser.parse_args()
@@ -178,7 +178,7 @@ class FranchiseeOperatorsApi(Resource):
 
     @franchisee_ns.doc(body=new_operator)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.put"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.business_units.PerBUApi.put"])
     def post(self, **kwargs):
         args = new_operator.parse_args()
         new_employee = new_data_obj("FranchiseeOperators", **{"name": args['name'],
@@ -237,7 +237,7 @@ class FranchiseeOperator(Resource):
 @franchisee_ns.expect(head_parser)
 class FranchiseeDispatch(Resource):
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeDispatch.post"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeDispatch.post"])
     def post(self, **kwargs):
         # franchisee 发货给business unit。 根据填写提交人员账号来找对应的franchisee id
         current_user = kwargs.get('current_user')
