@@ -55,6 +55,7 @@ employee_bind_appid.add_argument('phone', required=False, help='填写手机号�
 
 
 @franchisee_ns.route('')
+@franchisee_ns.expect(head_parser)
 class FranchiseesAPI(Resource):
     @franchisee_ns.marshal_with(return_json)
     @franchisee_ns.expect(franchisee_page_parser)
@@ -66,7 +67,8 @@ class FranchiseesAPI(Resource):
         args = franchisee_page_parser.parse_args()
         if 'search' not in args.keys():
             args['search'] = {}
-        args['search'] = {"name": args['name']}
+        if args.get('name'):
+            args['search'] = {"name": args['name']}
         return success_return(get_table_data(Franchisees, args), "请求成功")
 
     @franchisee_ns.doc(body=create_franchisee_parser)
@@ -101,11 +103,10 @@ class FranchiseesAPI(Resource):
                     scope_obj = db.session.query(FranchiseeScopes).with_for_update().filter(
                         FranchiseeScopes.province.__eq__(scope['province']),
                         FranchiseeScopes.city.__eq__(scope.get('city')),
-                        FranchiseeScopes.district.__eq__(scope.get('district')),
-                        FranchiseeScopes.franchisee_id.__eq__(None)
+                        FranchiseeScopes.district.__eq__(scope.get('district'))
                     ).first()
 
-                    if not scope_obj:
+                    if scope_obj and scope_obj.franchisee_id is not None:
                         occupied_scopes.append = "区域" + "".join(
                             [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营"
                     else:
@@ -249,7 +250,7 @@ class FranchiseeDispatch(Resource):
 class FranchiseeBU(Resource):
     @franchisee_ns.marshal_with(return_json)
     @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeBU.get"])
-    def post(self, **kwargs):
+    def get(self, **kwargs):
         """加盟商下店铺列表(查看通过自己注册的店铺的列表)"""
         current_user = kwargs.get('current_user')
         if not current_user.franchisee_operator:
