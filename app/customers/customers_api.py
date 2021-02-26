@@ -125,6 +125,7 @@ class Login(Resource):
             wx_login = WxLogin(args['js_code'])
             response = wx_login.response
             response['shared_id'] = args.get('shared_id')
+            response['scene'] = args.get('scene')
             response['scene_invitation'] = args.get('scene_invitation')
             logger.debug(response)
             if 'errcode' in response.keys():
