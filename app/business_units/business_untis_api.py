@@ -27,8 +27,8 @@ create_bu_parser.add_argument('phone1', required=True, type=str, help='电话1')
 create_bu_parser.add_argument('phone2', required=False, type=str, help='电话2')
 create_bu_parser.add_argument('address', required=True, type=str, help='地址，手工输入')
 create_bu_parser.add_argument('unit_type', required=True, type=int, choices=[1], default=1, help='1: 餐饮')
-create_bu_parser.add_argument('longitude', required=True, type=str, help='经度')
-create_bu_parser.add_argument('latitude', required=True, type=str, help='纬度')
+create_bu_parser.add_argument('longitude', required=True, type=float, help='经度')
+create_bu_parser.add_argument('latitude', required=True, type=float, help='纬度')
 create_bu_parser.add_argument('franchisee_id', required=True, type=str, help='加盟商ID， 由注册页面参数带入，餐饮店注册提交时一并提交')
 create_bu_parser.add_argument('status', required=True, type=int, default=0, choices=[0, 1],
                               help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
@@ -57,16 +57,17 @@ update_employee_parser.add_argument('age', required=False, help='年龄')
 update_employee_parser.add_argument('phone', required=False, help='用户扫描绑定入口，填写手机号验证')
 
 bu_nearby = reqparse.RequestParser()
-bu_nearby.add_argument('distance', required=True, default=500, choices=[100, 500, 1000], help='离当前坐标的距离')
+bu_nearby.add_argument('distance', required=True, type=int, default=500, help='离当前坐标的距离')
 bu_nearby.add_argument('longitude', required=True, type=str, help='经度')
 bu_nearby.add_argument('latitude', required=True, type=str, help='纬度')
-bu_nearby.add_argument('closest', required=True, default=0, choices=[0, 1], help='0:全部，1:最近')
+bu_nearby.add_argument('closest', required=True, default=0, type=int, help='0:全部，1:最近')
 
 bu_detail_page_parser = page_parser.copy()
 bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
 
 
 @bu_ns.route('')
+@bu_ns.expect(head_parser)
 class BusinessUnitsAPI(Resource):
     @bu_ns.marshal_with(return_json)
     @bu_ns.expect(bu_page_parser)
@@ -113,7 +114,7 @@ class BusinessUnitsAPI(Resource):
                 if args.get('objects'):
                     append_image = image_operate.operate(new_bu['obj'], args['objects'], "append")
                 else:
-                    append_image = {'code': 'false'}
+                    append_image = {'code': 'success'}
 
                 if append_image.get("code") == 'success' and session_commit().get('code') == 'success':
                     invitation_code = generate_code(12)
@@ -130,6 +131,7 @@ class BusinessUnitsAPI(Resource):
 
 @bu_ns.route('/<string:bu_id>/products')
 @bu_ns.param('business unit', 'BUSINESS UNIT ID')
+@bu_ns.expect(head_parser)
 class BUProductsApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
@@ -142,6 +144,7 @@ class BUProductsApi(Resource):
 
 @bu_ns.route('/<string:bu_id>/inventory')
 @bu_ns.param('business unit', 'BUSINESS UNIT ID')
+@bu_ns.expect(head_parser)
 class BUInventoryApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
@@ -282,8 +285,8 @@ class BUNearby(Resource):
         """附近的店铺。若需要查找距离最近的店铺， distance传1000， closest传1"""
         args = bu_nearby.parse_args()
         distance = args['distance']
-        longitude = args['longitude']
-        latitude = args['latitude']
+        longitude = eval(args['longitude'])
+        latitude = eval(args['latitude'])
 
         # 获取距离是distance内的坐标范围，用左上，左下，右上，右下四个坐标来圈定范围
         nearby_range = get_nearby(latitude, longitude, distance * 0.001)

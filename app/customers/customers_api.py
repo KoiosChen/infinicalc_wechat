@@ -122,8 +122,9 @@ class Login(Resource):
         try:
             args = login_parser.parse_args()
             user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-            wx_login = WxLogin(args['js_code'])
-            response = wx_login.response
+            # wx_login = WxLogin(args['js_code'])
+            # response = wx_login.response
+            response = {"openid": "o-9Hk5ACoNnHkLBwzz67ZggNeLNc", "session_key": "xxx111"}
             response['shared_id'] = args.get('shared_id')
             response['scene'] = args.get('scene')
             response['scene_invitation'] = args.get('scene_invitation')
