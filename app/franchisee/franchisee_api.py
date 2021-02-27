@@ -34,6 +34,15 @@ create_franchisee_parser.add_argument('scopes', type=list, required=True,
                                       help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区"}]',
                                       location='json')
 
+update_franchisee_parser = create_franchisee_parser.copy()
+update_franchisee_parser.replace_argument('name', required=False, help='加盟商名称（64）')
+update_franchisee_parser.replace_argument('desc', required=False, help='加盟商公司描述（200）')
+update_franchisee_parser.replace_argument('phone1', required=False, help='电话1')
+update_franchisee_parser.replace_argument('address', required=False, help='地址，手工输入')
+update_franchisee_parser.replace_argument('scopes', type=list, required=False,
+                                          help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区"}]',
+                                          location='json')
+
 create_franchisee_scope = reqparse.RequestParser()
 create_franchisee_scope.add_argument('province', required=True)
 create_franchisee_scope.add_argument('city', required=True)
@@ -125,6 +134,7 @@ class FranchiseesAPI(Resource):
                                                     "franchisee_id": new_one['obj'].id})
                         if not new_scope or not new_scope['status']:
                             raise Exception('创建运营范围失败')
+
             if not occupied_scopes:
                 if session_commit().get('code') == 'success':
                     scene_invitation = generate_code(12)
@@ -137,6 +147,62 @@ class FranchiseesAPI(Resource):
                 return false_return(data=occupied_scopes, message='部分运营范围不可用'), 400
         except Exception as e:
             return false_return(message=str(e)), 400
+
+
+@franchisee_ns.route('/<string:franchisee_id>')
+@franchisee_ns.expect(head_parser)
+class PerFranchisee(Resource):
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required(Permission.ADMINISTRATOR)
+    def get(self, **kwargs):
+        """获取指定加盟商"""
+        return success_return(data=get_table_data_by_id(Franchisees, kwargs['franchisee_id'], appends=['scopes']))
+
+    @franchisee_ns.doc(body=update_franchisee_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required(Permission.ADMINISTRATOR)
+    def put(self, **kwargs):
+        """修改加盟商信息"""
+        try:
+            args = update_franchisee_parser.parse_args()
+            franchisee_obj = Franchisees.query.get(kwargs['franchisee_id'])
+            occupied_scope = list()
+            present_scopes = franchisee_obj.scopes.all()
+            target_scopes = list()
+            for key in args.keys():
+                if key != 'scopes':
+                    if hasattr(franchisee_obj, key):
+                        setattr(franchisee_obj, key, args[key])
+                    else:
+                        raise Exception(f"attribute {key} does not exist")
+                elif key == 'scopes' and args.get(key):
+
+                    for scope in args['scopes']:
+                        new_scope = new_data_obj("FranchiseeScopes", **{"province": scope["province"],
+                                                                        "city": scope['city'],
+                                                                        "district": scope['district']})
+                        if not new_scope:
+                            raise Exception("新增FranchiseeScopes表记录失败")
+                        target_scopes.append(new_scope['obj'])
+                        if new_scope['status']:
+                            new_scope['obj'].franchisee_id = franchisee_obj.id
+                        elif not new_scope['status']:
+                            if new_scope['obj'].franchisee_id is not None and new_scope['obj'].franchisee_id != franchisee_obj.id:
+                                occupied_scope.append("区域" + "".join(
+                                    [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营")
+                            else:
+                                new_scope['obj'].franchisee_id = franchisee_obj.id
+                                new_scope['obj'].delete_at = None
+            if not occupied_scope:
+                delete_scopes = (set(present_scopes) | set(target_scopes)) - set(target_scopes)
+                for ds in delete_scopes:
+                    ds.franchisee_id = None
+                    ds.delete_at = datetime.datetime.now()
+                return submit_return("加盟商修改成功", "加盟商修改失败")
+            else:
+                return false_return(data=occupied_scope, message="所选运营区域有冲突")
+        except Exception as e:
+            return false_return(message=str(e))
 
 
 @franchisee_ns.route('/scopes')
@@ -155,6 +221,7 @@ class FranchiseeScopesAPI(Resource):
 
 
 @franchisee_ns.route('/scopes/<string:scope_id>/franchisee')
+@franchisee_ns.expect(head_parser)
 class FranchiseeScopeBindAPI(Resource):
     @franchisee_ns.doc(body=put_scope)
     @franchisee_ns.marshal_with(return_json)
