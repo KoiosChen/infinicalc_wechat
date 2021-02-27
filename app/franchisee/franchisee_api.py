@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
 from ..models import Permission, Franchisees, FranchiseeScopes, FranchiseeOperators, FranchiseePurchaseOrders, \
-    BusinessUnits
+    BusinessUnits, FranchiseeInventory, BusinessPurchaseOrders
 from . import franchisee
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
@@ -10,6 +10,7 @@ from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 from collections import defaultdict
 from app.scene_invitation.scene_invitation_api import generate_code
+import datetime
 
 franchisee_ns = default_api.namespace('franchisee', path='/franchisee', description='加盟商')
 
@@ -30,7 +31,7 @@ create_franchisee_parser.add_argument('phone1', required=True, type=str, help='�
 create_franchisee_parser.add_argument('phone2', required=False, type=str, help='电话2')
 create_franchisee_parser.add_argument('address', required=True, type=str, help='地址，手工输入')
 create_franchisee_parser.add_argument('scopes', type=list, required=True,
-                                      help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区", "street": "xxx"}]',
+                                      help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区"}]',
                                       location='json')
 
 create_franchisee_scope = reqparse.RequestParser()
@@ -52,6 +53,17 @@ new_operator.add_argument('job_desc', required=True, type=int, default=1, choice
 employee_bind_appid = reqparse.RequestParser()
 employee_bind_appid.add_argument('age', required=False, help='年龄')
 employee_bind_appid.add_argument('phone', required=False, help='填写手机号验证')
+
+inventory_search_parser = reqparse.RequestParser()
+inventory_search_parser.add_argument('sku_id', required=False, type=str, help='需要搜索的sku id')
+
+inventory_dispatch_parser = reqparse.RequestParser()
+inventory_dispatch_parser.add_argument('sku_id', required=True, type=str, help='发货的sku id')
+inventory_dispatch_parser.add_argument('amount', required=True, type=int, help='发货数量，此数值不能大于当前库存量')
+inventory_dispatch_parser.add_argument('sell_to', required=True, type=str, help='发货目标店铺ID')
+
+inventory_cancel_parser = reqparse.RequestParser()
+inventory_cancel_parser.add_argument('id', required=True, type=str, help='加盟商发货ID，franchisee_inventory_id')
 
 
 @franchisee_ns.route('')
@@ -75,11 +87,7 @@ class FranchiseesAPI(Resource):
     @franchisee_ns.marshal_with(return_json)
     @permission_required(Permission.ADMINISTRATOR)
     def post(self, **kwargs):
-        """
-        新增加盟商
-        :param kwargs:
-        :return:
-        """
+        """新增加盟商"""
         try:
             args = create_franchisee_parser.parse_args()
             if Franchisees.query.filter_by(name=args['name']).first():
@@ -234,15 +242,106 @@ class FranchiseeOperator(Resource):
         pass
 
 
-@franchisee_ns.route('/dispatch')
+@franchisee_ns.route('/inventory')
 @franchisee_ns.expect(head_parser)
-class FranchiseeDispatch(Resource):
+class FranchiseeInventoryAPI(Resource):
+    @franchisee_ns.doc(body=inventory_search_parser)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeDispatch.post"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeInventoryAPI.get"])
+    def get(self, **kwargs):
+        """获取该加盟商当前库存"""
+        args = inventory_search_parser.parse_args()
+        if args.get('sku_id'):
+            search = {"sku_id": args['sku_id']}
+        else:
+            search = None
+        current_user = kwargs.get('current_user')
+        franchisee_id = current_user.franchisee_operator.franchisee_id
+        return success_return(data=get_table_data_by_id(FranchiseeInventory, franchisee_id, search=search))
+
+    @franchisee_ns.doc(body=inventory_dispatch_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeInventoryAPI.post"])
     def post(self, **kwargs):
         # franchisee 发货给business unit。 根据填写提交人员账号来找对应的franchisee id
+        try:
+            args = inventory_dispatch_parser.parse_args()
+            amount = args.get('amount')
+            sku_id = args.get('sku_id')
+            sell_to = args.get('sell_to')
+            current_user = kwargs.get('current_user')
+            franchisee_id = current_user.franchisee_operator.franchisee_id
+
+            inventory_obj = db.session.query(FranchiseeInventory).with_for_update().filter(
+                FranchiseeInventory.franchisee_id.__eq__(franchisee_id),
+                FranchiseeInventory.sku_id.__eq__(sku_id),
+                FranchiseeInventory.amount.__ge__(amount)
+            ).first()
+
+            if not inventory_obj:
+                raise Exception("无库存")
+            else:
+                inventory_obj.amount -= amount
+                new_purchase_order = new_data_obj("FranchiseePurchaseOrders", **{"franchisee_id": franchisee_id,
+                                                                                 "sku_id": sku_id,
+                                                                                 "amount": amount,
+                                                                                 "purchase_from": None,
+                                                                                 "sell_to": sell_to,
+                                                                                 "operate_at": datetime.datetime.now(),
+                                                                                 "operator": current_user.id})
+                if not new_purchase_order:
+                    raise Exception("创建加盟商出库单失败")
+
+                new_bu_purchase_order = new_data_obj("BusinessPurchaseOrders",
+                                                     **{"bu_id": sell_to,
+                                                        "amount": amount,
+                                                        "purchase_from": franchisee_id,
+                                                        "original_order_id": new_purchase_order['obj'].id})
+
+                if not new_bu_purchase_order:
+                    raise Exception("创建店铺入库单失败")
+
+                return submit_return(f"加盟商{current_user.franchisee_operator.franchisee.name}出库{sku_id} {amount}瓶成功",
+                                     f"加盟商{current_user.franchisee_operator.franchisee.name}出库{sku_id} {amount}瓶失败，数据库提交错误")
+
+        except Exception as e:
+            return false_return(message=str(e)), 400
+
+    @franchisee_ns.doc(body=inventory_cancel_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeInventoryAPI.delete"])
+    def delete(self, **kwargs):
+        """如果status是0，则可以取消该发货订单"""
+        args = inventory_cancel_parser.parse_args()
         current_user = kwargs.get('current_user')
-        pass
+        franchisee_id = current_user.franchisee_operator.franchisee_id
+        fpo_id = args.get('id')
+        # 获取加盟商进货单数据
+        franchisee_purchase_order_obj = FranchiseePurchaseOrders.query.filter_by(id=fpo_id, status=0).first()
+
+        # 获取对应店铺入库单，切状态是0，并且锁定此行
+        bu_purchase_order_obj = db.session.query(BusinessPurchaseOrders).with_for_update().filter(
+            BusinessPurchaseOrders.original_order_id.__eq__(fpo_id),
+            BusinessPurchaseOrders.status.__eq__(0)
+        ).first()
+
+        # 获取加盟商库存量，并且锁定此行
+        franchisee_inventory_obj = db.session.query(FranchiseeInventory).filter(
+            FranchiseeInventory.sku_id == franchisee_purchase_order_obj.sku_id,
+            FranchiseeInventory.franchisee_id == franchisee_purchase_order_obj.franchisee_id).first()
+
+        if not franchisee_purchase_order_obj:
+            return false_return(message="当前订单不可取消，请联系公司客户"), 400
+
+        # 删除出库单
+        franchisee_purchase_order_obj.delete_at = datetime.datetime.now()
+
+        # 删除入库单
+        bu_purchase_order_obj.delete_at = datetime.datetime.now()
+
+        # 恢复库存
+        franchisee_inventory_obj.amount += franchisee_purchase_order_obj.amount
+        return submit_return("出库单取消成功", "出库单取消失败")
 
 
 @franchisee_ns.route('/business_units')
