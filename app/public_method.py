@@ -246,6 +246,12 @@ def __make_table(fields, table, strainer=None):
                 tmp[f] = FIRST_PAGE_POPUP_URL
             else:
                 tmp[f] = ""
+        elif f == 'scopes':
+            scope_fields = table_fields(FranchiseeScopes, removes=['franchisee_id', 'street'])
+            scope_list = list()
+            for scope in table.scopes:
+                scope_list.append(__make_table(scope_fields, scope))
+            tmp[f] = scope_list
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
