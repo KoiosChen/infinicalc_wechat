@@ -356,7 +356,7 @@ class BusinessPurchaseOrders(db.Model):
     bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     amount = db.Column(db.SmallInteger, comment="进货或者出货量")
     purchase_from = db.relationship("Franchisees", backref="sell_to_orders", lazy="dynamic",)
-    original_order_id = db.Column(db.String(64), db.ForeignKey('franchisee_purchase_orders'.id))
+    original_order_id = db.Column(db.String(64), db.ForeignKey('franchisee_purchase_orders.id'))
     sell_to = db.Column(db.String(64), db.ForeignKey('customers.id'))
     status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
