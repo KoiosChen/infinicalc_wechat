@@ -327,8 +327,7 @@ class SKUPurchase(Resource):
             purchase_data = {"sku_id": sku_id,
                              "amount": eval(args['amount']),
                              "operator": operator,
-                             "operator_at": datetime.datetime.now(),
-                             "express_to_id": args['franchisee_id']}
+                             "operator_at": datetime.datetime.now()}
             operate_key = str(uuid.uuid4())
             key = f"change_sku_quantity::{sku_id}::{operate_key}"
             change_thread = threading.Thread(target=change_sku_quantity, args=(key, purchase_data, sku_lock))
@@ -338,12 +337,8 @@ class SKUPurchase(Resource):
                 result = json.loads(redis_db.get(key))
                 redis_db.delete(key)
                 return result
-            else:
-                if not args['franchisee_id']:
-                    return submit_return(f"进（退）货操作成功", "数据提交失败，进（退）货操作失败")
-                else:
-                    # 修改加盟商订单
-                    pass
+
+            return submit_return(f"进（退）货操作成功", "数据提交失败，进（退）货操作失败")
 
         elif sku and sku.status:
             return false_return(message=f"SKU <{sku.id}> 目前是上架状态，无法增加进（退）货单，请先下架"), 400
