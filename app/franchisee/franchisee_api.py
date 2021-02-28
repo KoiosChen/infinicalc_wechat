@@ -351,7 +351,7 @@ class FranchiseeInventoryAPI(Resource):
                 inventory_obj.amount -= amount
                 new_purchase_order = new_data_obj("FranchiseePurchaseOrders", **{"franchisee_id": franchisee_id,
                                                                                  "sku_id": sku_id,
-                                                                                 "amount": amount,
+                                                                                 "amount": -amount,
                                                                                  "purchase_from": None,
                                                                                  "sell_to": sell_to,
                                                                                  "operate_at": datetime.datetime.now(),
@@ -406,8 +406,8 @@ class FranchiseeInventoryAPI(Resource):
         # 删除入库单
         bu_purchase_order_obj.delete_at = datetime.datetime.now()
 
-        # 恢复库存
-        franchisee_inventory_obj.amount += franchisee_purchase_order_obj.amount
+        # 恢复库存, 因为出库单记录的是负值，所以这里用减去
+        franchisee_inventory_obj.amount -= franchisee_purchase_order_obj.amount
         return submit_return("出库单取消成功", "出库单取消失败")
 
 

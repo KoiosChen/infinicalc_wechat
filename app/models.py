@@ -339,6 +339,7 @@ class FranchiseePurchaseOrders(db.Model):
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     amount = db.Column(db.SmallInteger, comment="进货或者出货量，进货为正数， 出货为负数")
+    original_order_id = db.Column(db.String(64), db.ForeignKey('purchase_info.id'))
     purchase_from = db.Column(db.String(64), default="ShengZhuanJiuYe", comment="购入方，默认为盛馔酒业，代表总部")
     sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     operate_at = db.Column(db.DateTime, comment='进出货日期')
@@ -970,8 +971,10 @@ class PurchaseInfo(db.Model):
     operator = db.Column(db.String(64))
     operator_at = db.Column(db.DateTime, comment="进货或者出货时间")
     express_to_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
+    franchisee_purchase_order = db.relationship("FranchiseePurchaseOrders", backref="original_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废")
+    dispatch_status = db.Column(db.SmallInteger, default=0, comment="0 已发货未确认，1已发货并确认 ")
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
