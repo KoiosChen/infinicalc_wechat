@@ -344,7 +344,7 @@ class FranchiseePurchaseOrders(db.Model):
     sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     operate_at = db.Column(db.DateTime, comment='进出货日期')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
-    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到')
     bu_purchase_order = db.relationship("BusinessPurchaseOrders", backref="franchisee_purchase_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)

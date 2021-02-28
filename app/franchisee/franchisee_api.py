@@ -74,6 +74,10 @@ inventory_dispatch_parser.add_argument('sell_to', required=True, type=str, help=
 inventory_cancel_parser = reqparse.RequestParser()
 inventory_cancel_parser.add_argument('id', required=True, type=str, help='加盟商发货ID，franchisee_inventory_id')
 
+dispatch_confirm_parser = reqparse.RequestParser()
+dispatch_confirm_parser.add_argument('status', required=True, type=int, help='0,已发货未确认；1， 已发货已确认；2， 已发货未收到')
+dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未启用，后续考虑用来添加备注')
+
 
 @franchisee_ns.route('')
 @franchisee_ns.expect(head_parser)
@@ -187,7 +191,8 @@ class PerFranchisee(Resource):
                         if new_scope['status']:
                             new_scope['obj'].franchisee_id = franchisee_obj.id
                         elif not new_scope['status']:
-                            if new_scope['obj'].franchisee_id is not None and new_scope['obj'].franchisee_id != franchisee_obj.id:
+                            if new_scope['obj'].franchisee_id is not None and new_scope[
+                                'obj'].franchisee_id != franchisee_obj.id:
                                 occupied_scope.append("区域" + "".join(
                                     [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营")
                             else:
@@ -425,3 +430,38 @@ class FranchiseeBU(Resource):
             args = defaultdict(dict)
             args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
             return success_return(data=get_table_data(BusinessUnits, args))
+
+
+@franchisee_ns.route('/purchase_orders/<string:franchisee_purchase_order_id>/confirm')
+@franchisee_ns.param('franchisee_purchase_order_id', '货单ID')
+@franchisee_ns.expect(head_parser)
+class FranchiseePurchaseOrdersAPI(Resource):
+    @franchisee_ns.doc(body=dispatch_confirm_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseePurchaseOrders.put"])
+    def put(self, **kwargs):
+        """修改入库记录状态，如果修改为已收货并确认，则将入库单货物计入库存量中"""
+        args = dispatch_confirm_parser.parse_args()
+        status = args['status']
+        current_user = kwargs.get('current_user')
+        if not current_user.franchisee_operator:
+            return false_return(message="当前用户无加盟商角色")
+
+        franchisee_id = current_user.franchisee_operator.franchisee_id
+        fpo_obj = FranchiseePurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
+        fi_obj = new_data_obj("FranchiseeInventory",
+                              **{"sku_id": fpo_obj.sku_id,
+                                 "franchisee_id": franchisee_id})
+
+        if not fi_obj:
+            return false_return(message="获取加盟商库存失败")
+
+        if fpo_obj.status in (1, 2) or fpo_obj.delete_at is not None:
+            return false_return(message="该货单状态异常不可确认")
+
+        if status == 1:
+            fpo_obj.status = status
+            fpo_obj.original_order.dispatch_status = status
+            fi_obj['obj'].amount += fpo_obj.amount
+
+        return submit_return("确认成功", "确认失败")

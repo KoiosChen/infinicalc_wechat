@@ -14,7 +14,7 @@ delete_purchase_info.add_argument("memo", required=True, help='作废原因')
 
 dispatch_parser = reqparse.RequestParser()
 dispatch_parser.add_argument("sku_id", required=True, help='要发货的sku id')
-dispatch_parser.add_argument("amount", required=True, type=str, help='发货数量')
+dispatch_parser.add_argument("amount", required=True, type=int, help='发货数量')
 
 
 @mall_ns.route('/purchase_info/<string:buy_id>')
@@ -51,8 +51,8 @@ class PerPurchase(Resource):
             return false_return(message=f"进货单不存在"), 400
 
 
-@mall_ns.route('/purchase_info/dispatch/franchisee/<string:f_id>')
-@mall_ns.param('f_id', '加盟商ID')
+@mall_ns.route('/purchase_info/dispatch/franchisee/<string:franchisee_id>')
+@mall_ns.param('franchisee_id', '加盟商ID')
 @mall_ns.expect(head_parser)
 class DispatchFranchisee(Resource):
     @mall_ns.doc(body=dispatch_parser)
@@ -61,11 +61,11 @@ class DispatchFranchisee(Resource):
     def post(self, **kwargs):
         """发货到加盟商"""
         args = dispatch_parser.parse_args()
-        amount = args['amount']
+        amount = args['amount'] if isinstance(args['amount'], int) else eval(args['amount'])
         sku_id = args['sku_id']
         franchisee_id = kwargs['franchisee_id']
-        sku_obj = db.session.query(SKU).with_for_update().query.filter(SKU.id == sku_id,
-                                                                       SKU.quantity.__ge__(amount)).first()
+        sku_obj = db.session.query(SKU).with_for_update().filter(SKU.id == sku_id,
+                                                                 SKU.quantity.__ge__(amount)).first()
         if not sku_obj:
             return false_return(message=f"{sku_id}不存在或者库存不足")
 
