@@ -12,6 +12,8 @@ from flask import session
 from decimal import Decimal
 from .models import Coupons, CouponReady
 from geopy.distance import geodesic
+import geopy.distance
+import geopy
 
 str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
             'start_time', 'end_time', 'total_consumption', 'express_fee']
@@ -549,24 +551,29 @@ def get_nearby(lat, lng, distance=0.5):
     """
     获取纬度经度范围
     """
-    import math
-    EARTH_RADIUS = 6378137
-
-    def deg2rad(deg):  # 角度转弧度
-        return math.radians(deg)
-
-    d_lng = 2 * math.asin(math.sin(distance / (2 * EARTH_RADIUS)) / math.cos(deg2rad(lat)))
-    d_lng = deg2rad(d_lng)
-    d_lat = distance / EARTH_RADIUS
-    d_lat = deg2rad(d_lat)
     result = {
-        'left_top': {'lat': lat + d_lat, 'lng': lng - d_lng},
-        'right_top': {'lat': lat + d_lat, 'lng': lng + d_lng},
-        'left_bottom': {'lat': lat - d_lat, 'lng': lng - d_lng},
-        'right_bottom': {'lat': lat - d_lat, 'lng': lng + d_lng},
+        'west': get_distance_point(lat, lng, distance, 360),
+        'east': get_distance_point(lat, lng, distance, 90),
+        'north': get_distance_point(lat, lng, distance, 0),
+        'south': get_distance_point(lat, lng, distance, 180),
     }
     return result
 
 
 def geo_distance(addr_src, addr_to):
     return geodesic(addr_src, addr_to).m
+
+
+def get_distance_point(lat, lon, distance, direction):
+    """
+    根据经纬度，距离，方向获得一个地点
+    :param lat: 纬度
+    :param lon: 经度
+    :param distance: 距离（千米）
+    :param direction: 方向（北：0，东：90，南：180，西：360）
+    :return:
+    """
+    start = geopy.Point(lat, lon)
+    d = geopy.distance.geodesic(kilometers=distance)
+    result = d.destination(point=start, bearing=direction)
+    return result

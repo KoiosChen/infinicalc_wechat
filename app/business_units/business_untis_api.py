@@ -77,9 +77,8 @@ class BusinessUnitsAPI(Resource):
         获取所有店铺
         """
         args = bu_page_parser.parse_args()
-        if 'search' not in args.keys():
-            args['search'] = {}
-        args['search'] = {"name": args['name']}
+        if args.get('name'):
+            args['search'] = {"name": args['name']}
         return success_return(get_table_data(BusinessUnits, args), "请求成功")
 
     @bu_ns.doc(body=create_bu_parser)
@@ -292,11 +291,11 @@ class BUNearby(Resource):
         nearby_range = get_nearby(latitude, longitude, distance * 0.001)
 
         # 查表，获取符合范围内的店铺
-        nearby_objs = [{"obj": {"id": obj.id, "name": obj.name, "desc": obj.desc, "image": obj.decorated_images[0]},
+        nearby_objs = [{"obj": {"id": obj.id, "name": obj.name, "desc": obj.desc, "image": obj.objects},
                         "distance": geo_distance((latitude, longitude), (obj.latitude, obj.longitude))} for
                        obj in BusinessUnits.query.filter(
-                BusinessUnits.latitude.between(nearby_range['left_bottom']['lat'], nearby_range['left_top']['lat']),
-                BusinessUnits.longitude.between(nearby_range['left_top']['lng'], nearby_range['right_top']['lng'])
+                BusinessUnits.latitude.between(nearby_range['south'].latitude, nearby_range['north'].latitude),
+                BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude)
             ).all()]
 
         # 按照距离排序
