@@ -41,7 +41,6 @@ update_bu_parser.add_argument('address', required=False, type=str, help='地址�
 update_bu_parser.add_argument('unit_type', required=False, type=int, choices=[1], default=1, help='1: 餐饮')
 update_bu_parser.add_argument('longitude', required=False, type=str, help='经度')
 update_bu_parser.add_argument('latitude', required=False, type=str, help='纬度')
-update_bu_parser.add_argument('franchisee_id', required=False, type=str, help='加盟商ID， 由注册页面参数带入，餐饮店注册提交时一并提交')
 update_bu_parser.add_argument('status', required=False, type=int, choices=[0, 1],
                               help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
 
@@ -133,41 +132,47 @@ class BusinessUnitsAPI(Resource):
             return false_return(message=str(e)), 400
 
 
-@bu_ns.route('/<string:bu_id>/products')
+@bu_ns.route('/products')
 @bu_ns.param('business unit', 'BUSINESS UNIT ID')
-@bu_ns.expect(head_parser)
 class BUProductsApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.BUProductsApi.get"])
+    @permission_required(Permission.BU_OPERATOR)
     def get(self, **kwargs):
         """获取指定BU的商品列表"""
         args = bu_detail_page_parser.parse_args()
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        args['search'] = {"id": bu_id}
         return success_return(data=get_table_data(BusinessUnitProducts, args))
 
 
-@bu_ns.route('/<string:bu_id>/inventory')
+@bu_ns.route('/inventory')
 @bu_ns.param('business unit', 'BUSINESS UNIT ID')
 @bu_ns.expect(head_parser)
 class BUInventoryApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.BUInventoryApi.get"])
+    @permission_required(Permission.BU_OPERATOR)
     def get(self, **kwargs):
         """获取指定BU的库存量"""
         args = bu_detail_page_parser.parse_args()
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        args['search'] = {"id": bu_id}
         return success_return(data=get_table_data(BusinessUnitInventory, args, appends=['sku']))
 
 
-@bu_ns.route('/<string:bu_id>')
-@bu_ns.param('business unit', 'BUSINESS UNIT ID')
+@bu_ns.route('/per_bu')
 @bu_ns.expect(head_parser)
 class PerBUApi(Resource):
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
     def get(self, **kwargs):
         """获取指定BU详情"""
-        return success_return(get_table_data_by_id(BusinessUnits, kwargs['bu_id']))
+        return success_return(
+            get_table_data_by_id(BusinessUnits,
+                                 kwargs['current_user'].business_unit_employee.business_unit_id
+                                 )
+        )
 
     @bu_ns.doc(body=update_bu_parser)
     @bu_ns.marshal_with(return_json)
@@ -175,14 +180,14 @@ class PerBUApi(Resource):
     def put(self, **kwargs):
         """更新BU"""
         args = update_bu_parser.parse_args()
-        bu = BusinessUnits.query.get(kwargs['bu_id'])
+        bu = kwargs['current_user'].business_unit_employee.business_unit
         for k, v in args.items():
             if k == 'decorated_images':
                 image_operate.operate(bu, None, None)
                 image_operate.operate(obj=bu, imgs=args[k], action="append")
                 continue
 
-            check_bu = BusinessUnits.query.filter(BusinessUnits.id.__eq__(args['bu_id']),
+            check_bu = BusinessUnits.query.filter(BusinessUnits.id.__eq__(bu.id),
                                                   BusinessUnits.name.__eq__(args['name']),
                                                   BusinessUnits.status.__eq__(1),
                                                   BusinessUnits.delete_at.__eq__(None)).first()
@@ -195,43 +200,42 @@ class PerBUApi(Resource):
 
         return submit_return(f"SKU更新成功{args.keys()}", f"SKU更新失败{args.keys()}")
 
-    @bu_ns.marshal_with(return_json)
-    @permission_required("app.business_units.PerBUApi.delete")
-    def delete(self, **kwargs):
-        """删除"""
-        bu = BusinessUnits.query.get(kwargs['bu_id'])
-        if bu:
-            bu.status = 0
-            bu.delete_at = datetime.datetime.now()
-            return submit_return("删除店铺成功", "删除店铺失败")
-        else:
-            return false_return(message=f"<{kwargs['sku_id']}>不存在"), 400
+    # @bu_ns.marshal_with(return_json)
+    # @permission_required(Permission.BU_MANAGER)
+    # def delete(self, **kwargs):
+    #     """删除"""
+    #     bu = kwargs['current_user'].business_unit_employee.business_unit
+    #     if bu:
+    #         bu.status = 0
+    #         bu.delete_at = datetime.datetime.now()
+    #         return submit_return("删除店铺成功", "删除店铺失败")
+    #     else:
+    #         return false_return(message=f"<{kwargs['sku_id']}>不存在"), 400
 
 
-@bu_ns.route('/<string:bu_id>/employee')
-@bu_ns.param('business unit', 'BUSINESS UNIT ID')
+@bu_ns.route('/employee')
 @bu_ns.expect(head_parser)
 class BUEmployeesApi(Resource):
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
+    @permission_required(Permission.BU_OPERATOR)
     def get(self, **kwargs):
         """
         获取店铺所属员工
         """
         args = bu_employees_page_parser.parse_args()
-        args['search']['business_unit_id'] = kwargs['bu_id']
+        args['search']['business_unit_id'] = kwargs['current_user'].business_unit_employee.business_unit_id
         return success_return(data=get_table_data(BusinessUnitEmployees, args))
 
     @bu_ns.doc(body=new_bu_employee)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.put"])
+    @permission_required(Permission.BU_OPERATOR)
     def post(self, **kwargs):
         """新增员工"""
         args = new_bu_employee.parse_args()
-
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
                                                                 "job_desc": args['job_desc'],
-                                                                "business_unit_id": kwargs['bu_id']})
+                                                                "business_unit_id": bu_id})
         if not new_employee or (new_employee and not new_employee['status']):
             return false_return(message=f"create user {args['name']} fail")
         else:
@@ -258,7 +262,7 @@ class BUEmployeeBindOpenID(Resource):
 
     @bu_ns.doc(body=update_employee_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.put"])
+    @permission_required(Permission.BU_WAITER)
     def put(self, **kwargs):
         """修改员工账号信息"""
         args = update_employee_parser.parse_args()
@@ -327,20 +331,20 @@ class BusinessPurchaseOrdersAPI(Resource):
             return false_return(message="当前用户无加盟商角色")
 
         bu_id = current_user.business_unit_employee.business_unit_id
-        fpo_obj = BusinessPurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
-        fi_obj = new_data_obj("FranchiseeInventory",
-                              **{"sku_id": fpo_obj.sku_id,
-                                 "franchisee_id": franchisee_id})
+        bpo_obj = BusinessPurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
+        bi_obj = new_data_obj("FranchiseeInventory",
+                              **{"sku_id": bpo_obj.sku_id,
+                                 "franchisee_id": bu_id})
 
-        if not fi_obj:
+        if not bi_obj:
             return false_return(message="获取加盟商库存失败")
 
-        if fpo_obj.status in (1, 2) or fpo_obj.delete_at is not None:
+        if bpo_obj.status in (1, 2) or bpo_obj.delete_at is not None:
             return false_return(message="该货单状态异常不可确认")
 
         if status == 1:
-            fpo_obj.status = status
-            fpo_obj.original_order.dispatch_status = status
-            fi_obj['obj'].amount += fpo_obj.amount
+            bpo_obj.status = status
+            bpo_obj.original_order.dispatch_status = status
+            bi_obj['obj'].amount += bpo_obj.amount
 
         return submit_return("确认成功", "确认失败")
