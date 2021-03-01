@@ -29,7 +29,6 @@ create_bu_parser.add_argument('address', required=True, type=str, help='地址�
 create_bu_parser.add_argument('unit_type', required=True, type=int, choices=[1], default=1, help='1: 餐饮')
 create_bu_parser.add_argument('longitude', required=True, type=float, help='经度')
 create_bu_parser.add_argument('latitude', required=True, type=float, help='纬度')
-create_bu_parser.add_argument('franchisee_id', required=True, type=str, help='加盟商ID， 由注册页面参数带入，餐饮店注册提交时一并提交')
 create_bu_parser.add_argument('status', required=True, type=int, default=0, choices=[0, 1],
                               help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
 create_bu_parser.add_argument('objects', type=list, required=False, help='店铺装修图片', location='json')
@@ -75,7 +74,7 @@ dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未
 class BusinessUnitsAPI(Resource):
     @bu_ns.marshal_with(return_json)
     @bu_ns.expect(bu_page_parser)
-    @permission_required([Permission.BU_MANAGER, "app.business_unit.BusinessUnitsAPI.get"])
+    @permission_required([Permission.FRANCHISEE_MANAGER, "app.business_unit.BusinessUnitsAPI.get"])
     def get(self, **kwargs):
         """
         获取所有店铺
@@ -87,13 +86,15 @@ class BusinessUnitsAPI(Resource):
 
     @bu_ns.doc(body=create_bu_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
     def post(self, **kwargs):
         """
         新增店铺,返回新增的店铺ID
         """
         try:
             args = create_bu_parser.parse_args()
+            current_user = kwargs['current_user']
+            franchisee_id = current_user.franchisee_operator.franchisee_id
             check_name = BusinessUnits.query.filter(BusinessUnits.name.__eq__(args['name']),
                                                     BusinessUnits.status.__eq__(1),
                                                     BusinessUnits.delete_at.__eq__(None)).first()
@@ -108,7 +109,7 @@ class BusinessUnitsAPI(Resource):
                                      "address": args['address'],
                                      "unit_type": args.get('unit_type'),
                                      "latitude": args['latitude'],
-                                     "franchisee_id": args['franchisee_id'],
+                                     "franchisee_id": franchisee_id,
                                      "longitude": args['longitude']})
 
             if not new_bu or (new_bu and not new_bu['status']):
@@ -325,7 +326,7 @@ class BusinessPurchaseOrdersAPI(Resource):
         if not current_user.franchisee_operator:
             return false_return(message="当前用户无加盟商角色")
 
-        franchisee_id = current_user.franchisee_operator.franchisee_id
+        bu_id = current_user.business_unit_employee.business_unit_id
         fpo_obj = BusinessPurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
         fi_obj = new_data_obj("FranchiseeInventory",
                               **{"sku_id": fpo_obj.sku_id,
