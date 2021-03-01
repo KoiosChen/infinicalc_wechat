@@ -78,6 +78,11 @@ dispatch_confirm_parser = reqparse.RequestParser()
 dispatch_confirm_parser.add_argument('status', required=True, type=int, help='0,已发货未确认；1， 已发货已确认；2， 已发货未收到')
 dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未启用，后续考虑用来添加备注')
 
+dispatch_parser = reqparse.RequestParser()
+dispatch_parser.add_argument("sku_id", required=True, type=str)
+dispatch_parser.add_argument("amount", required=True, type=int)
+dispatch_parser.add_argument("bu_id", required=True, type=str, help='发给店铺的id')
+
 
 @franchisee_ns.route('')
 @franchisee_ns.expect(head_parser)
@@ -420,7 +425,7 @@ class FranchiseeInventoryAPI(Resource):
 @franchisee_ns.expect(head_parser)
 class FranchiseeBU(Resource):
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeBU.get"])
+    @permission_required(Permission.FRANCHISEE_MANAGER)
     def get(self, **kwargs):
         """加盟商下店铺列表(查看通过自己注册的店铺的列表)"""
         current_user = kwargs.get('current_user')
@@ -438,7 +443,7 @@ class FranchiseeBU(Resource):
 class FranchiseePurchaseOrdersAPI(Resource):
     @franchisee_ns.doc(body=dispatch_confirm_parser)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseePurchaseOrders.put"])
+    @permission_required(Permission.FRANCHISEE_MANAGER)
     def put(self, **kwargs):
         """修改入库记录状态，如果修改为已收货并确认，则将入库单货物计入库存量中"""
         args = dispatch_confirm_parser.parse_args()
@@ -465,3 +470,46 @@ class FranchiseePurchaseOrdersAPI(Resource):
             fi_obj['obj'].amount += fpo_obj.amount
 
         return submit_return("确认成功", "确认失败")
+
+
+@franchisee_ns.route('/purchase_orders/dispatch')
+@franchisee_ns.expect(head_parser)
+class FranchiseeDispatch(Resource):
+    @franchisee_ns.doc(body=dispatch_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required(Permission.FRANCHISEE_MANAGER, )
+    def post(self, **kwargs):
+        """加盟商发货给店铺"""
+        args = dispatch_parser.parse_args()
+        sku_id = args['sku_id']
+        bu_id = args['bu_id']
+        amount = args['amount']
+        current_user = kwargs['current_user']
+        franchisee_id = current_user.franchisee_operator.franchisee_id
+        fi_obj = db.session.query(FranchiseeInventory).with_for_update().filter(
+            FranchiseeInventory.sku_id.__eq__(sku_id), FranchiseeInventory.franchisee_id.__eq__(franchisee_id),
+            FranchiseeInventory.amount.__ge__(amount)).first()
+        if not fi_obj:
+            return false_return(message="加盟商库存不足")
+
+        new_franchisee_dispatch = new_data_obj("FranchiseePurchaseOrders",
+                                               **{"franchisee_id": franchisee_id,
+                                                  "sku_id": sku_id,
+                                                  "amount": -amount,
+                                                  "sell_to": bu_id,
+                                                  "operator": current_user.id,
+                                                  "operate_at": datetime.datetime.now()})
+        if not new_franchisee_dispatch:
+            return false_return(message="创建发货单失败")
+
+        new_bu_purchase_order = new_data_obj("BusinessPurchaseOrders",
+                                             **{"bu_id": bu_id, "amount": amount, "purchase_from": franchisee_id,
+                                                "original_order_id": new_franchisee_dispatch['obj'].id,
+                                                "operate_at": datetime.datetime.now(),
+                                                "operator": current_user.id})
+
+        if not new_bu_purchase_order:
+            return false_return(message="创建入库单失败")
+
+        fi_obj.amount -= amount
+        return submit_return("加盟商出库到店铺成功", "出库失败")
