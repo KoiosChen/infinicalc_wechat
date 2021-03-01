@@ -65,6 +65,10 @@ bu_nearby.add_argument('closest', required=True, default=0, type=int, help='0:�
 bu_detail_page_parser = page_parser.copy()
 bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
 
+dispatch_confirm_parser = reqparse.RequestParser()
+dispatch_confirm_parser.add_argument('status', required=True, type=int, help='0,已发货未确认；1， 已发货已确认；2， 已发货未收到')
+dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未启用，后续考虑用来添加备注')
+
 
 @bu_ns.route('')
 @bu_ns.expect(head_parser)
@@ -98,11 +102,11 @@ class BusinessUnitsAPI(Resource):
                 raise Exception("100米内商铺名字重复")
             new_bu = new_data_obj("BusinessUnits",
                                   **{"name": args['name'],
-                                     "chain_store_code": args['chain_store_code'],
+                                     "chain_store_code": args.get('chain_store_code'),
                                      "phone1": args['phone1'],
-                                     "phone2": args['phone2'],
+                                     "phone2": args.get('phone2'),
                                      "address": args['address'],
-                                     "unit_type": args['unit_type'],
+                                     "unit_type": args.get('unit_type'),
                                      "latitude": args['latitude'],
                                      "franchisee_id": args['franchisee_id'],
                                      "longitude": args['longitude']})
@@ -304,3 +308,38 @@ class BUNearby(Resource):
             return success_return(data=nearby_objs)
         else:
             return success_return(data=nearby_objs[0])
+
+
+@bu_ns.route('/purchase_orders/<string:business_purchase_order_id>/confirm')
+@bu_ns.param('business_purchase_order_id', '货单ID')
+@bu_ns.expect(head_parser)
+class BusinessPurchaseOrdersAPI(Resource):
+    @bu_ns.doc(body=dispatch_confirm_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required(Permission.FRANCHISEE_MANAGER)
+    def put(self, **kwargs):
+        """修改入库记录状态，如果修改为已收货并确认，则将入库单货物计入库存量中"""
+        args = dispatch_confirm_parser.parse_args()
+        status = args['status']
+        current_user = kwargs.get('current_user')
+        if not current_user.franchisee_operator:
+            return false_return(message="当前用户无加盟商角色")
+
+        franchisee_id = current_user.franchisee_operator.franchisee_id
+        fpo_obj = BusinessPurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
+        fi_obj = new_data_obj("FranchiseeInventory",
+                              **{"sku_id": fpo_obj.sku_id,
+                                 "franchisee_id": franchisee_id})
+
+        if not fi_obj:
+            return false_return(message="获取加盟商库存失败")
+
+        if fpo_obj.status in (1, 2) or fpo_obj.delete_at is not None:
+            return false_return(message="该货单状态异常不可确认")
+
+        if status == 1:
+            fpo_obj.status = status
+            fpo_obj.original_order.dispatch_status = status
+            fi_obj['obj'].amount += fpo_obj.amount
+
+        return submit_return("确认成功", "确认失败")
