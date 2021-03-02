@@ -43,6 +43,8 @@ update_bu_parser.add_argument('longitude', required=False, type=str, help='经�
 update_bu_parser.add_argument('latitude', required=False, type=str, help='纬度')
 update_bu_parser.add_argument('status', required=False, type=int, choices=[0, 1],
                               help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
+update_bu_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+
 
 bu_employees_page_parser = page_parser.copy()
 
@@ -62,10 +64,14 @@ bu_nearby.add_argument('closest', required=True, default=0, type=int, help='0:�
 
 bu_detail_page_parser = page_parser.copy()
 bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
+bu_detail_page_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 dispatch_confirm_parser = reqparse.RequestParser()
 dispatch_confirm_parser.add_argument('status', required=True, type=int, help='0,已发货未确认；1， 已发货已确认；2， 已发货未收到')
 dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未启用，后续考虑用来添加备注')
+
+get_bu_by_id = reqparse.RequestParser()
+get_bu_by_id.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 
 @bu_ns.route('')
@@ -141,7 +147,10 @@ class BUProductsApi(Resource):
     def get(self, **kwargs):
         """获取指定BU的商品列表"""
         args = bu_detail_page_parser.parse_args()
-        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        if 'bu_id' in args.keys():
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         args['search'] = {"id": bu_id}
         return success_return(data=get_table_data(BusinessUnitProducts, args))
 
@@ -156,7 +165,10 @@ class BUInventoryApi(Resource):
     def get(self, **kwargs):
         """获取指定BU的库存量"""
         args = bu_detail_page_parser.parse_args()
-        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        if 'bu_id' in args.keys():
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         args['search'] = {"id": bu_id}
         return success_return(data=get_table_data(BusinessUnitInventory, args, appends=['sku']))
 
@@ -168,11 +180,12 @@ class PerBUApi(Resource):
     @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
     def get(self, **kwargs):
         """获取指定BU详情"""
-        return success_return(
-            get_table_data_by_id(BusinessUnits,
-                                 kwargs['current_user'].business_unit_employee.business_unit_id
-                                 )
-        )
+        args = get_bu_by_id.parse_args()
+        if 'bu_id' in args.keys():
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        return success_return(get_table_data_by_id(BusinessUnits, bu_id))
 
     @bu_ns.doc(body=update_bu_parser)
     @bu_ns.marshal_with(return_json)
@@ -180,7 +193,10 @@ class PerBUApi(Resource):
     def put(self, **kwargs):
         """更新BU"""
         args = update_bu_parser.parse_args()
-        bu = kwargs['current_user'].business_unit_employee.business_unit
+        if 'bu_id' in args.keys():
+            bu = BusinessUnits.query.get(args['bu_id'])
+        else:
+            bu = kwargs['current_user'].business_unit_employee.business_unit
         for k, v in args.items():
             if k == 'decorated_images':
                 image_operate.operate(bu, None, None)
@@ -223,7 +239,11 @@ class BUEmployeesApi(Resource):
         获取店铺所属员工
         """
         args = bu_employees_page_parser.parse_args()
-        args['search']['business_unit_id'] = kwargs['current_user'].business_unit_employee.business_unit_id
+        if 'bu_id' in args.keys():
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        args['search']['business_unit_id'] = bu_id
         return success_return(data=get_table_data(BusinessUnitEmployees, args))
 
     @bu_ns.doc(body=new_bu_employee)
@@ -232,7 +252,10 @@ class BUEmployeesApi(Resource):
     def post(self, **kwargs):
         """新增员工"""
         args = new_bu_employee.parse_args()
-        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        if 'bu_id' in args.keys():
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
                                                                 "job_desc": args['job_desc'],
                                                                 "business_unit_id": bu_id})
