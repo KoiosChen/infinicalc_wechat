@@ -43,7 +43,7 @@ update_bu_parser.replace_argument('longitude', required=False, type=str, help='�
 update_bu_parser.replace_argument('latitude', required=False, type=str, help='纬度')
 update_bu_parser.replace_argument('status', required=False, type=int, choices=[0, 1],
                                   help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
-update_bu_parser.replace_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+update_bu_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 bu_employees_page_parser = page_parser.copy()
 
@@ -146,6 +146,7 @@ class BusinessUnitsAPI(Resource):
 
 @bu_ns.route('/products')
 @bu_ns.param('business unit', 'BUSINESS UNIT ID')
+@bu_ns.expect(head_parser)
 class BUProductsApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
@@ -168,11 +169,24 @@ class BUProductsApi(Resource):
         新增店铺商品，返回新增的商品ID
         """
         args = create_bu_parser.parse_args()
-        for k, v in args.items():
-            if k == 'objects' and args.get(k):
-                image_operate.operate(bu, None, None)
-                image_operate.operate(obj=bu, imgs=args[k], action="append")
-                continue
+        if BusinessUnitProducts.query.filter_by(name=args.get('name')).first():
+            return false_return(message="店铺产品名重复")
+        new_product = new_data_obj("BusinessUnitProducts", **{"name": args.get('name'),
+                                                              "desc": args.get('desc'),
+                                                              "price": args.get('price'),
+                                                              "order": args.get('order')})
+        if not new_product or (new_product and new_product['status']):
+            return false_return(message="店铺产品名已存在")
+
+        if args.get("objects"):
+            append_image = image_operate.operate(obj=new_product['obj'], imgs=args["objects"], action="append")
+            if append_image.get("code") == 'success':
+                return submit_return("产品添加成功", "产品添加失败")
+            else:
+                return false_return("图片添加失败")
+        else:
+            return submit_return("产品添加成功", "产品添加失败")
+
 
 @bu_ns.route('/inventory')
 @bu_ns.expect(head_parser)
