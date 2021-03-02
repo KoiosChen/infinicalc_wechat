@@ -2,8 +2,8 @@ from .scene_invitation_api import *
 from app.models import BusinessUnitEmployees
 
 qrcode_parser = reqparse.RequestParser()
-qrcode_parser.add_argument('obj_id', required=True, type=str, help='对象ID， 例如加盟商ID， 店铺ID，员工ID')
-qrcode_parser.add_argument('scene', required=True, type=str, help='例如，新增加盟商时返回的key是new_franchisee')
+qrcode_parser.add_argument('obj_id', required=True, type=str, help='对象ID， 例如加盟商ID， 店铺ID，员工ID', location='args')
+qrcode_parser.add_argument('scene', required=True, type=str, help='例如，新增加盟商时返回的key是new_franchisee', location='args')
 
 
 @scene_invite_ns.route('/taobao_qrcode')
@@ -11,7 +11,7 @@ qrcode_parser.add_argument('scene', required=True, type=str, help='例如，新�
 class TaobaoInvitationApi(Resource):
     @scene_invite_ns.marshal_with(return_json)
     @scene_invite_ns.doc(body=qrcode_parser)
-    @permission_required(Permission.BU_OPERATOR)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """
         新小程序邀请码生成接口
