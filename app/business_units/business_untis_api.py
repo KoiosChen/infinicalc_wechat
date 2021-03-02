@@ -42,9 +42,8 @@ update_bu_parser.replace_argument('unit_type', required=False, type=int, choices
 update_bu_parser.replace_argument('longitude', required=False, type=str, help='经度')
 update_bu_parser.replace_argument('latitude', required=False, type=str, help='纬度')
 update_bu_parser.replace_argument('status', required=False, type=int, choices=[0, 1],
-                              help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
+                                  help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
 update_bu_parser.replace_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
-
 
 bu_employees_page_parser = page_parser.copy()
 
@@ -72,6 +71,12 @@ dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未
 
 get_bu_by_id = reqparse.RequestParser()
 get_bu_by_id.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+
+create_bu_product_parser = reqparse.RequestParser()
+create_bu_parser.add_argument('name', required=True, type=str, help='产品名称（10）')
+create_bu_parser.add_argument('desc', required=False, type=str, help='产品描述（50）')
+create_bu_parser.add_argument('objects', required=True, type=list, help='产品图片', location='json')
+create_bu_parser.add_argument('order', required=False, type=int, help='产品排序, 不传为0')
 
 
 @bu_ns.route('')
@@ -155,6 +160,19 @@ class BUProductsApi(Resource):
         args['search'] = {"id": bu_id}
         return success_return(data=get_table_data(BusinessUnitProducts, args))
 
+    @bu_ns.doc(body=create_bu_product_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    def post(self, **kwargs):
+        """
+        新增店铺商品，返回新增的商品ID
+        """
+        args = create_bu_parser.parse_args()
+        for k, v in args.items():
+            if k == 'objects' and args.get(k):
+                image_operate.operate(bu, None, None)
+                image_operate.operate(obj=bu, imgs=args[k], action="append")
+                continue
 
 @bu_ns.route('/inventory')
 @bu_ns.expect(head_parser)
@@ -204,18 +222,19 @@ class PerBUApi(Resource):
                 image_operate.operate(obj=bu, imgs=args[k], action="append")
                 continue
 
-            check_bu = BusinessUnits.query.filter(BusinessUnits.id.__eq__(bu.id),
-                                                  BusinessUnits.name.__eq__(args['name']),
-                                                  BusinessUnits.status.__eq__(1),
-                                                  BusinessUnits.delete_at.__eq__(None)).first()
-            if k == 'name' and check_bu and geo_distance((check_bu.latitude, check_bu.longitude),
-                                                         (bu.latitude, bu.longitude)) <= 100:
-                return false_return(message=f"<100米内存在{args['name']}>已经存在"), 400
+            if k == 'name':
+                check_bu = BusinessUnits.query.filter(BusinessUnits.id.__eq__(bu.id),
+                                                      BusinessUnits.name.__eq__(args['name']),
+                                                      BusinessUnits.status.__eq__(1),
+                                                      BusinessUnits.delete_at.__eq__(None)).first()
+                if check_bu and geo_distance((check_bu.latitude, check_bu.longitude),
+                                             (bu.latitude, bu.longitude)) <= 100:
+                    return false_return(message=f"<100米内存在{args['name']}>已经存在"), 400
 
             if hasattr(bu, k) and v:
                 setattr(bu, k, v)
 
-        return submit_return(f"SKU更新成功{args.keys()}", f"SKU更新失败{args.keys()}")
+        return submit_return(f"BU更新成功{args.keys()}", f"SKU更新失败{args.keys()}")
 
     # @bu_ns.marshal_with(return_json)
     # @permission_required(Permission.BU_MANAGER)
