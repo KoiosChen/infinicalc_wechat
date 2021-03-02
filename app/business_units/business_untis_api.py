@@ -73,10 +73,10 @@ get_bu_by_id = reqparse.RequestParser()
 get_bu_by_id.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 create_bu_product_parser = reqparse.RequestParser()
-create_bu_parser.add_argument('name', required=True, type=str, help='产品名称（10）')
-create_bu_parser.add_argument('desc', required=False, type=str, help='产品描述（50）')
-create_bu_parser.add_argument('objects', required=True, type=list, help='产品图片', location='json')
-create_bu_parser.add_argument('order', required=False, type=int, help='产品排序, 不传为0')
+create_bu_product_parser.add_argument('name', required=True, type=str, help='产品名称（10）')
+create_bu_product_parser.add_argument('desc', required=False, type=str, help='产品描述（50）')
+create_bu_product_parser.add_argument('objects', required=True, type=list, help='产品图片', location='json')
+create_bu_product_parser.add_argument('order', required=False, type=int, help='产品排序, 不传为0')
 
 
 @bu_ns.route('')
