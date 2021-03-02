@@ -251,8 +251,7 @@ class FranchiseeScopeBindAPI(Resource):
             return false_return(message=f"{kwargs['scope_id']}'s franchisee id is not null")
 
 
-@franchisee_ns.route('/<string:f_id>/operator')
-@franchisee_ns.param('f_id', 'Franchisee ID')
+@franchisee_ns.route('/operator')
 @franchisee_ns.expect(head_parser)
 class FranchiseeOperatorsApi(Resource):
     @franchisee_ns.marshal_with(return_json)
@@ -260,7 +259,7 @@ class FranchiseeOperatorsApi(Resource):
     def get(self, **kwargs):
         """获取加盟商运营人员"""
         args = franchisee_operator_page_parser.parse_args()
-        args['search']['franchisee_id'] = kwargs['f_id']
+        args['search']['franchisee_id'] = kwargs['current_user'].franchisee_operator.franchisee_id
         return success_return(data=get_table_data(FranchiseeOperators, args))
 
     @franchisee_ns.doc(body=new_operator)
@@ -268,10 +267,11 @@ class FranchiseeOperatorsApi(Resource):
     @permission_required([Permission.FRANCHISEE_MANAGER, "app.business_units.PerBUApi.put"])
     def post(self, **kwargs):
         args = new_operator.parse_args()
+        franchisee_id = kwargs['current_user'].franchisee_operator.franchisee_id
         new_employee = new_data_obj("FranchiseeOperators", **{"name": args['name'],
                                                               "age": args['age'],
                                                               "job_desc": args['job_desc'],
-                                                              "franchisee_id": kwargs['f_id']})
+                                                              "franchisee_id": franchisee_id})
         if not new_employee or (new_employee and not new_employee['status']):
             return false_return(message=f"create user {args['name']} fail")
         else:
