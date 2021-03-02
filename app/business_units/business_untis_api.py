@@ -36,21 +36,21 @@ create_bu_parser.add_argument('objects', type=list, required=False, help='店铺
 update_bu_parser = create_bu_parser.copy()
 update_bu_parser.replace_argument('name', required=False, help='店铺名称（64）')
 update_bu_parser.replace_argument('desc', required=False, type=str, help='店铺描述（200）')
-update_bu_parser.add_argument('phone1', required=False, type=str, help='电话1')
-update_bu_parser.add_argument('address', required=False, type=str, help='地址，手工输入')
-update_bu_parser.add_argument('unit_type', required=False, type=int, choices=[1], default=1, help='1: 餐饮')
-update_bu_parser.add_argument('longitude', required=False, type=str, help='经度')
-update_bu_parser.add_argument('latitude', required=False, type=str, help='纬度')
-update_bu_parser.add_argument('status', required=False, type=int, choices=[0, 1],
+update_bu_parser.replace_argument('phone1', required=False, type=str, help='电话1')
+update_bu_parser.replace_argument('address', required=False, type=str, help='地址，手工输入')
+update_bu_parser.replace_argument('unit_type', required=False, type=int, choices=[1], default=1, help='1: 餐饮')
+update_bu_parser.replace_argument('longitude', required=False, type=str, help='经度')
+update_bu_parser.replace_argument('latitude', required=False, type=str, help='纬度')
+update_bu_parser.replace_argument('status', required=False, type=int, choices=[0, 1],
                               help='默认0，下架（页面不可见）；1，直接上架（页面需要提示用户，“请确认已上传店铺装修图片及产品信息”）')
-update_bu_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+update_bu_parser.replace_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 
 bu_employees_page_parser = page_parser.copy()
 
 new_bu_employee = reqparse.RequestParser()
 new_bu_employee.add_argument('name', required=True, help='员工姓名')
-new_bu_employee.add_argument('job_desc', required=True, choices=[1, 2, 3], help='1: boss, 2: leader, 3: waiter')
+new_bu_employee.add_argument('job_desc', required=True, help='1: boss, 2: leader, 3: waiter')
 
 update_employee_parser = reqparse.RequestParser()
 update_employee_parser.add_argument('age', required=False, help='年龄')
@@ -126,10 +126,11 @@ class BusinessUnitsAPI(Resource):
                     append_image = {'code': 'success'}
 
                 if append_image.get("code") == 'success' and session_commit().get('code') == 'success':
-                    invitation_code = generate_code(12)
-                    redis_db.set(invitation_code, new_bu['obj'].id)
-                    redis_db.expire(invitation_code, 600)
-                    return success_return(data={'scene': 'new_bu', 'scene_invitation': invitation_code})
+                    # invitation_code = generate_code(12)
+                    # redis_db.set(invitation_code, new_bu['obj'].id)
+                    # redis_db.expire(invitation_code, 600)
+                    # return success_return(data={'scene': 'new_bu', 'scene_invitation': invitation_code})
+                    return success_return(data={'new_bu': new_bu['obj'].id})
                 elif append_image.get("code") == 'false':
                     raise Exception("图片添加失败")
                 else:
@@ -147,7 +148,7 @@ class BUProductsApi(Resource):
     def get(self, **kwargs):
         """获取指定BU的商品列表"""
         args = bu_detail_page_parser.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
@@ -156,7 +157,6 @@ class BUProductsApi(Resource):
 
 
 @bu_ns.route('/inventory')
-@bu_ns.param('business unit', 'BUSINESS UNIT ID')
 @bu_ns.expect(head_parser)
 class BUInventoryApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
@@ -165,7 +165,7 @@ class BUInventoryApi(Resource):
     def get(self, **kwargs):
         """获取指定BU的库存量"""
         args = bu_detail_page_parser.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
@@ -176,16 +176,17 @@ class BUInventoryApi(Resource):
 @bu_ns.route('/per_bu')
 @bu_ns.expect(head_parser)
 class PerBUApi(Resource):
+    @bu_ns.doc(body=get_bu_by_id)
     @bu_ns.marshal_with(return_json)
     @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
     def get(self, **kwargs):
         """获取指定BU详情"""
         args = get_bu_by_id.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        return success_return(get_table_data_by_id(BusinessUnits, bu_id))
+        return success_return(get_table_data_by_id(BusinessUnits, bu_id, appends=['objects']))
 
     @bu_ns.doc(body=update_bu_parser)
     @bu_ns.marshal_with(return_json)
@@ -193,12 +194,12 @@ class PerBUApi(Resource):
     def put(self, **kwargs):
         """更新BU"""
         args = update_bu_parser.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu = BusinessUnits.query.get(args['bu_id'])
         else:
             bu = kwargs['current_user'].business_unit_employee.business_unit
         for k, v in args.items():
-            if k == 'decorated_images':
+            if k == 'objects':
                 image_operate.operate(bu, None, None)
                 image_operate.operate(obj=bu, imgs=args[k], action="append")
                 continue
@@ -239,7 +240,7 @@ class BUEmployeesApi(Resource):
         获取店铺所属员工
         """
         args = bu_employees_page_parser.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
@@ -252,7 +253,7 @@ class BUEmployeesApi(Resource):
     def post(self, **kwargs):
         """新增员工"""
         args = new_bu_employee.parse_args()
-        if 'bu_id' in args.keys():
+        if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
@@ -263,10 +264,11 @@ class BUEmployeesApi(Resource):
             return false_return(message=f"create user {args['name']} fail")
         else:
             if session_commit().get("code") == 'success':
-                invitation_code = generate_code(12)
-                redis_db.set(invitation_code, new_employee['obj'].id)
-                redis_db.expire(invitation_code, 600)
-                return success_return(data={'scene': 'new_bu_employee', 'scene_invitation': invitation_code})
+                # invitation_code = generate_code(12)
+                # redis_db.set(invitation_code, new_employee['obj'].id)
+                # redis_db.expire(invitation_code, 600)
+                # return success_return(data={'scene': 'new_bu_employee', 'scene_invitation': invitation_code})
+                return success_return(data={'new_bu_employee': new_employee['obj'.id]})
             else:
                 return false_return(message="create employee fail")
 

@@ -146,10 +146,11 @@ class FranchiseesAPI(Resource):
 
             if not occupied_scopes:
                 if session_commit().get('code') == 'success':
-                    scene_invitation = generate_code(12)
-                    redis_db.set(scene_invitation, new_one['obj'].id)
-                    redis_db.expire(scene_invitation, 600)
-                    return success_return(data={'scene': 'new_franchisee', 'scene_invitation': scene_invitation})
+                    # scene_invitation = generate_code(12)
+                    # redis_db.set(scene_invitation, new_one['obj'].id)
+                    # redis_db.expire(scene_invitation, 600)
+                    # return success_return(data={'scene': 'new_franchisee', 'scene_invitation': scene_invitation})
+                    return success_return(data={'new_franchisee': new_one['obj'].id})
                 else:
                     raise Exception('添加加盟商失败')
             else:
@@ -275,11 +276,11 @@ class FranchiseeOperatorsApi(Resource):
             return false_return(message=f"create user {args['name']} fail")
         else:
             if session_commit().get('code') == 'success':
-                scene_invitation = generate_code(12)
-                redis_db.set(scene_invitation, new_employee['obj'].id)
-                redis_db.expire(scene_invitation, 600)
-                return success_return(data={'scene': 'new_franchisee_employee',
-                                            'scene_invitation': scene_invitation})
+                # scene_invitation = generate_code(12)
+                # redis_db.set(scene_invitation, new_employee['obj'].id)
+                # redis_db.expire(scene_invitation, 600)
+                # return success_return(data={'scene': 'new_franchisee_employee', 'scene_invitation': scene_invitation})
+                return success_return(data={'new_franchisee_employee': new_employee['obj'].id})
             else:
                 return false_return("create employee fail")
 
