@@ -75,6 +75,7 @@ get_bu_by_id.add_argument('bu_id', required=False, location='args', help='如果
 create_bu_product_parser = reqparse.RequestParser()
 create_bu_product_parser.add_argument('name', required=True, type=str, help='产品名称（10）')
 create_bu_product_parser.add_argument('desc', required=False, type=str, help='产品描述（50）')
+create_bu_product_parser.add_argument('price', required=True, type=str, help='产品价格')
 create_bu_product_parser.add_argument('objects', required=True, type=list, help='产品图片', location='json')
 create_bu_product_parser.add_argument('order', required=False, type=int, help='产品排序, 不传为0')
 
@@ -159,7 +160,7 @@ class BUProductsApi(Resource):
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         args['search'] = {'bu_id': bu_id}
-        return success_return(data=get_table_data(BusinessUnitProducts, args))
+        return success_return(data=get_table_data(BusinessUnitProducts, args, appends=['objects']))
 
     @bu_ns.doc(body=create_bu_product_parser)
     @bu_ns.marshal_with(return_json)
