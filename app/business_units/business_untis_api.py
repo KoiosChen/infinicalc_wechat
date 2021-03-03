@@ -170,11 +170,16 @@ class BUProductsApi(Resource):
         新增店铺商品，返回新增的商品ID
         """
         args = create_bu_product_parser.parse_args()
+        if args.get('bu_id'):
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         if BusinessUnitProducts.query.filter_by(name=args.get('name')).first():
             return false_return(message="店铺产品名重复")
         new_product = new_data_obj("BusinessUnitProducts", **{"name": args.get('name'),
                                                               "desc": args.get('desc'),
                                                               "price": args.get('price'),
+                                                              "bu_id": bu_id,
                                                               "order": args.get('order')})
         if not new_product or (new_product and not new_product['status']):
             return false_return(message="店铺产品名已存在")
