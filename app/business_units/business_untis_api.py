@@ -146,7 +146,6 @@ class BusinessUnitsAPI(Resource):
 
 
 @bu_ns.route('/products')
-@bu_ns.param('business unit', 'BUSINESS UNIT ID')
 @bu_ns.expect(head_parser)
 class BUProductsApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
@@ -159,7 +158,7 @@ class BUProductsApi(Resource):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        args['search'] = {"id": bu_id}
+        args['search'] = {"bu_id": bu_id}
         return success_return(data=get_table_data(BusinessUnitProducts, args))
 
     @bu_ns.doc(body=create_bu_product_parser)
@@ -169,14 +168,14 @@ class BUProductsApi(Resource):
         """
         新增店铺商品，返回新增的商品ID
         """
-        args = create_bu_parser.parse_args()
+        args = create_bu_product_parser.parse_args()
         if BusinessUnitProducts.query.filter_by(name=args.get('name')).first():
             return false_return(message="店铺产品名重复")
         new_product = new_data_obj("BusinessUnitProducts", **{"name": args.get('name'),
                                                               "desc": args.get('desc'),
                                                               "price": args.get('price'),
                                                               "order": args.get('order')})
-        if not new_product or (new_product and new_product['status']):
+        if not new_product or (new_product and not new_product['status']):
             return false_return(message="店铺产品名已存在")
 
         if args.get("objects"):
