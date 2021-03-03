@@ -113,6 +113,7 @@ class BusinessUnitsAPI(Resource):
                 raise Exception("100米内商铺名字重复")
             new_bu = new_data_obj("BusinessUnits",
                                   **{"name": args['name'],
+                                     "desc": args['desc'],
                                      "chain_store_code": args.get('chain_store_code'),
                                      "phone1": args['phone1'],
                                      "phone2": args.get('phone2'),
