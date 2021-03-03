@@ -79,6 +79,11 @@ create_bu_product_parser.add_argument('price', required=True, type=str, help='�
 create_bu_product_parser.add_argument('objects', required=True, type=list, help='产品图片', location='json')
 create_bu_product_parser.add_argument('order', required=False, type=int, help='产品排序, 不传为0')
 
+update_bu_product_parser = create_bu_product_parser.copy()
+update_bu_product_parser.replace_argument('name', required=False, type=str)
+update_bu_product_parser.replace_argument('price', required=False, type=str)
+update_bu_product_parser.replace_argument('objects', required=False, type=list, help='产品图片', location='json')
+
 
 @bu_ns.route('')
 @bu_ns.expect(head_parser)
@@ -159,7 +164,7 @@ class BUProductsApi(Resource):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        args['search'] = {'bu_id': bu_id}
+        args['search'] = {'bu_id': bu_id, "delete_at": None}
         return success_return(data=get_table_data(BusinessUnitProducts, args, appends=['objects']))
 
     @bu_ns.doc(body=create_bu_product_parser)
@@ -170,11 +175,16 @@ class BUProductsApi(Resource):
         新增店铺商品，返回新增的商品ID
         """
         args = create_bu_product_parser.parse_args()
+        if args.get('bu_id'):
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         if BusinessUnitProducts.query.filter_by(name=args.get('name')).first():
             return false_return(message="店铺产品名重复")
         new_product = new_data_obj("BusinessUnitProducts", **{"name": args.get('name'),
                                                               "desc": args.get('desc'),
                                                               "price": args.get('price'),
+                                                              "bu_id": bu_id,
                                                               "order": args.get('order')})
         if not new_product or (new_product and not new_product['status']):
             return false_return(message="店铺产品名已存在")
@@ -187,6 +197,48 @@ class BUProductsApi(Resource):
                 return false_return("图片添加失败")
         else:
             return submit_return("产品添加成功", "产品添加失败")
+
+
+@bu_ns.route('/product/<string:bu_product_id>')
+@bu_ns.param('bu_product_id', '店铺产品ID')
+@bu_ns.expect(head_parser)
+class BUPerProductsApi(Resource):
+    @bu_ns.doc(body=update_bu_product_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    def put(self, **kwargs):
+        """
+        修改店铺商品
+        """
+        args = update_bu_product_parser.parse_args()
+        if args.get('bu_id'):
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+
+        bu_product = BusinessUnitProducts.query.filter(BusinessUnitProducts.id == kwargs['bu_product_id'],
+                                                       BusinessUnitProducts.bu_id == bu_id,
+                                                       BusinessUnitProducts.delete_at.__eq__(None)).first()
+
+        for k, v in args.items():
+            if k == 'objects':
+                image_operate.operate(bu_product, None, None)
+                image_operate.operate(obj=bu_product, imgs=args[k], action="append")
+                continue
+
+            if hasattr(bu_product, k) and v:
+                setattr(bu_product, k, v)
+
+        return submit_return(f"BU PRODUCT更新成功{args.keys()}", f"SKU更新失败{args.keys()}")
+
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    def delete(self, **kwargs):
+        """删除产品"""
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        bu_product = BusinessUnitProducts.query.filter_by(id=kwargs['bu_product_id'], bu_id=bu_id).first()
+        bu_product.delete_at = datetime.datetime.now()
+        return submit_return(f"删除成功", f"删除失败")
 
 
 @bu_ns.route('/inventory')
