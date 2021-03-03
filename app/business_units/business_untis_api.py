@@ -158,7 +158,7 @@ class BUProductsApi(Resource):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        args['search'] = {"bu_id": bu_id}
+        args['search'] = {'bu_id': bu_id}
         return success_return(data=get_table_data(BusinessUnitProducts, args))
 
     @bu_ns.doc(body=create_bu_product_parser)
