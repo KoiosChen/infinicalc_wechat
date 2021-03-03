@@ -418,7 +418,7 @@ class BusinessUnitProducts(db.Model):
         secondary=bu_products_images,
         backref=db.backref('bup')
     )
-    bu_id = db.Column(db.String(64), db.ForeignKey('business_units'))
+    bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     order = db.Column(db.SmallInteger, default=0, comment='商品显示排序，默认0不排序')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
