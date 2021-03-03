@@ -396,7 +396,7 @@ class BusinessUnits(db.Model):
     inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
     deposit = db.Column(db.SmallInteger, default=0, comment='寄存量')
     employees = db.relationship("BusinessUnitEmployees", backref='business_unit', uselist=False)
-    products = db.relationship("BusinessUnitProducts", backref='business_unit', lazy='dynamic')
+    products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
