@@ -259,7 +259,7 @@ class FranchiseeOperatorsApi(Resource):
     def get(self, **kwargs):
         """获取加盟商运营人员"""
         args = franchisee_operator_page_parser.parse_args()
-        args['search']['franchisee_id'] = kwargs['current_user'].franchisee_operator.franchisee_id
+        args['search'] = {'franchisee_id': kwargs['current_user'].franchisee_operator.franchisee_id}
         return success_return(data=get_table_data(FranchiseeOperators, args))
 
     @franchisee_ns.doc(body=new_operator)
