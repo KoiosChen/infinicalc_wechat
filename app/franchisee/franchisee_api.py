@@ -305,8 +305,9 @@ class FranchiseeOperator(Resource):
         """
         args = employee_bind_appid.parse_args()
         current_user = kwargs.get('current_user')
+        franchisee_id = current_user.franchisee_operator.franchisee_id
         f_operator = FranchiseeOperators.query.filter(FranchiseeOperators.id.__eq__(kwargs['employee_id']),
-                                                      FranchiseeOperators.franchisee_id.__eq__(kwargs['f_id'])).first()
+                                                      FranchiseeOperators.franchisee_id.__eq__(franchisee_id)).first()
         f_operator.customer_id = current_user.id
         if args.get('phone'):
             f_operator.phone = args['phone']
