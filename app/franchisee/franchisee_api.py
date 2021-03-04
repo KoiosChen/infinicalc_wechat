@@ -294,7 +294,7 @@ class FranchiseeOperator(Resource):
         """查询店铺下指定员工的详情"""
         return success_return(get_table_data_by_id(FranchiseeOperators,
                                                    kwargs['operator_id'],
-                                                   appends=['f_name', 'job_name']))
+                                                   appends=['franchisee_name', 'job_name']))
 
     @franchisee_ns.doc(body=employee_bind_appid)
     @franchisee_ns.marshal_with(return_json)

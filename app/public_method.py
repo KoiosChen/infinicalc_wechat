@@ -254,6 +254,12 @@ def __make_table(fields, table, strainer=None):
             for scope in table.scopes:
                 scope_list.append(__make_table(scope_fields, scope))
             tmp[f] = scope_list
+        elif f == 'job_roles':
+            pass
+        elif f == 'franchisee_name':
+            tmp[f] = table.franchisee.name
+        elif f == 'job_name':
+            tmp[f] = table.role.name
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):

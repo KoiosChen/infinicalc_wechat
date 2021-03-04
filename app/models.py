@@ -225,6 +225,7 @@ class CustomerRoles(db.Model):
     default = db.Column(db.Boolean, default=False, index=True)
     permissions = db.Column(db.Integer)
     customers = db.relationship('Customers', backref='role', lazy='dynamic')
+    franchisee_operators = db.relationship('FranchiseeOperators', backref='role', lazy='dynamic')
 
     @staticmethod
     def insert_roles():

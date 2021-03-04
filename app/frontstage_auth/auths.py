@@ -93,7 +93,8 @@ def authenticate(login_ip, **kwargs):
                 now_invitees = len(si_obj.invitees)
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
                     create_member_card_by_invitation(new_customer['obj'], si_obj)
-        elif kwargs.get('scene_invitation') and kwargs.get('scene'):
+        elif kwargs.get('scene_invitation') and kwargs.get('scene') and (
+                not customer.business_unit_employee and not customer.franchisee_operator):
             scene = kwargs.get('scene')
             scene_invitation = kwargs.get('scene_invitation')
             if scene in ('new_franchisee', 'new_bu', 'new_franchisee_employee', 'new_bu_employee'):
@@ -103,7 +104,6 @@ def authenticate(login_ip, **kwargs):
                     if scene == 'new_franchisee':
                         # bind to the franchisee
                         # 创建manager
-
                         job_role = CustomerRoles.query.filter_by(name="FRANCHISEE_MANAGER").first()
                         new_employee = new_data_obj("FranchiseeOperators", **{"customer_id": customer.id,
                                                                               "job_desc": job_role.id,
@@ -190,7 +190,9 @@ def authenticate(login_ip, **kwargs):
         if commit_result.get("code") == "false":
             raise Exception(json.dumps(commit_result))
 
-        ru = get_table_data_by_id(Customers, customer.id, ["role", "member_info", "first_page_popup"], ["role_id"])
+        ru = get_table_data_by_id(Customers, customer.id,
+                                  ["role", "member_info", "first_page_popup", "job_roles"],
+                                  ["role_id"])
 
         return success_return(data={'customer_info': ru, 'session_key': session_key}, message='登录成功')
     except Exception as e:
