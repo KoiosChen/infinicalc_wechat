@@ -313,6 +313,7 @@ class FranchiseeOperator(Resource):
             f_operator.phone = args['phone']
             f_operator.phone_validated = True
         f_operator.age = args.get('age')
+        db.session.add(f_operator)
         return submit_return("修改成功", "修改失败")
 
     @franchisee_ns.marshal_with(return_json)
