@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
 from ..models import Permission, Franchisees, FranchiseeScopes, FranchiseeOperators, FranchiseePurchaseOrders, \
-    BusinessUnits, FranchiseeInventory, BusinessPurchaseOrders
+    BusinessUnits, FranchiseeInventory, BusinessPurchaseOrders, CustomerRoles
 from . import franchisee
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
@@ -59,9 +59,11 @@ new_operator.add_argument('age', required=False, type=int, help='年龄')
 new_operator.add_argument('job_desc', required=True, type=int, default=1, choices=[1, 2, 3],
                           help='1: boss, 2: leader, 3: waiter')
 
-employee_bind_appid = reqparse.RequestParser()
-employee_bind_appid.add_argument('age', required=False, help='年龄')
-employee_bind_appid.add_argument('phone', required=False, help='填写手机号验证')
+update_operator_parser = reqparse.RequestParser()
+update_operator_parser.add_argument('name', required=False, help='员工姓名')
+update_operator_parser.add_argument('job_desc', required=False, help='店铺员工，传入FRANCHISEE_OPERATOR, FRANCHISEE_MANAGER')
+update_operator_parser.add_argument('age', required=False, help='年龄')
+update_operator_parser.add_argument('phone', required=False, help='填写手机号验证')
 
 inventory_search_parser = reqparse.RequestParser()
 inventory_search_parser.add_argument('sku_id', required=False, type=str, help='需要搜索的sku id')
@@ -259,7 +261,8 @@ class FranchiseeOperatorsApi(Resource):
     def get(self, **kwargs):
         """获取加盟商运营人员"""
         args = franchisee_operator_page_parser.parse_args()
-        args['search'] = {'franchisee_id': kwargs['current_user'].franchisee_operator.franchisee_id}
+        args['search'] = {'franchisee_id': kwargs['current_user'].franchisee_operator.franchisee_id,
+                          'delete_at': None}
         return success_return(data=get_table_data(FranchiseeOperators, args))
 
     @franchisee_ns.doc(body=new_operator)
@@ -294,26 +297,30 @@ class FranchiseeOperator(Resource):
         """查询店铺下指定员工的详情"""
         return success_return(get_table_data_by_id(FranchiseeOperators,
                                                    kwargs['operator_id'],
-                                                   appends=['franchisee_name', 'job_name']))
+                                                   appends=['franchisee_name', 'job_name'],
+                                                   search={"delete_at": None}))
 
-    @franchisee_ns.doc(body=employee_bind_appid)
+    @franchisee_ns.doc(body=update_operator_parser)
     @franchisee_ns.marshal_with(return_json)
     @permission_required([Permission.USER, "app.franchisee.FranchiseeOperatorBind.put"])
     def put(self, **kwargs):
-        """
-        修改店铺员工信息
-        """
-        args = employee_bind_appid.parse_args()
+        """修改员工账号信息"""
+        args = update_operator_parser.parse_args()
         current_user = kwargs.get('current_user')
-        franchisee_id = current_user.franchisee_operator.franchisee_id
-        f_operator = FranchiseeOperators.query.filter(FranchiseeOperators.id.__eq__(kwargs['operator_id']),
-                                                      FranchiseeOperators.franchisee_id.__eq__(franchisee_id)).first()
-        f_operator.customer_id = current_user.id
-        if args.get('phone'):
-            f_operator.phone = args['phone']
-            f_operator.phone_validated = True
-        f_operator.age = args.get('age')
-        db.session.add(f_operator)
+        bu_id = current_user.business_unit_employee.business_unit_id
+        bu_employee = FranchiseeOperator.query.filter(FranchiseeOperator.id.__eq__(kwargs['operator_id']),
+                                                      FranchiseeOperator.business_unit_id.__eq__(bu_id)).first()
+        for k, v in args.items():
+            if k == 'job_desc' and v in ('FRANCHISEE_MANAGER', 'FRANCHISEE_MANAGER'):
+                role_obj = CustomerRoles.query.filter_by(name=v).first()
+                if not role_obj:
+                    return false_return(message="角色不存在"), 400
+                bu_employee.role = role_obj
+
+            elif hasattr(bu_employee, k):
+                setattr(bu_employee, k, v)
+            else:
+                return false_return(message="角色属性不存在"), 400
         return submit_return("修改成功", "修改失败")
 
     @franchisee_ns.marshal_with(return_json)

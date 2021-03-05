@@ -254,8 +254,11 @@ def __make_table(fields, table, strainer=None):
             for scope in table.scopes:
                 scope_list.append(__make_table(scope_fields, scope))
             tmp[f] = scope_list
-        elif f == 'job_roles':
-            pass
+        elif f == 'job_role':
+            if table.business_unit_employee:
+                tmp[f] = table.business_unit_employee.name
+            if table.franchisee_operator:
+                tmp[f] = table.franchisee_operator.name
         elif f == 'franchisee_name':
             tmp[f] = table.franchisee.name
         elif f == 'job_name':
