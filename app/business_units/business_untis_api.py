@@ -1,7 +1,7 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
 from ..models import Permission, BusinessUnits, BusinessPurchaseOrders, BusinessUnitEmployees, BusinessUnitProducts, \
-    Roles, BusinessUnitInventory
+    Roles, BusinessUnitInventory, CustomerRoles
 from . import business_units
 from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
@@ -52,6 +52,8 @@ new_bu_employee.add_argument('name', required=True, help='员工姓名')
 new_bu_employee.add_argument('job_desc', required=True, help='1: boss, 2: leader, 3: waiter')
 
 update_employee_parser = reqparse.RequestParser()
+update_employee_parser.add_argument('name', required=False, help='员工姓名')
+update_employee_parser.add_argument('job_desc', required=False, help='店铺员工，传入BU_MANAGER, BU_OPERATOR, BU_WAITER')
 update_employee_parser.add_argument('age', required=False, help='年龄')
 update_employee_parser.add_argument('phone', required=False, help='用户扫描绑定入口，填写手机号验证')
 
@@ -330,8 +332,8 @@ class BUEmployeesApi(Resource):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        args['search']['business_unit_id'] = bu_id
-        return success_return(data=get_table_data(BusinessUnitEmployees, args))
+        args['search'] = {'business_unit_id': bu_id, 'delete_at': None}
+        return success_return(data=get_table_data(BusinessUnitEmployees, args, appends=['job_name']))
 
     @bu_ns.doc(body=new_bu_employee)
     @bu_ns.marshal_with(return_json)
@@ -359,18 +361,9 @@ class BUEmployeesApi(Resource):
                 return false_return(message="create employee fail")
 
 
-@bu_ns.route('/<string:bu_id>/employee/<string:employee_id>/bind')
+@bu_ns.route('/employee/<string:employee_id>')
 @bu_ns.expect(head_parser)
-class BUEmployeeBindOpenID(Resource):
-    @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.put"])
-    def get(self, **kwargs):
-        """提交后用此接口连接产生二维码作为绑定入口，入口页面将以填写数据的内容显示出来，名字、职位不可修改，其它字段按照post方法表单补全"""
-        return success_return(get_table_data_by_id(BusinessUnitEmployees,
-                                                   kwargs['employee_id'],
-                                                   appends=['bu_name', 'job_name'],
-                                                   removes=['age', 'phone', 'phone_validated']))
-
+class PerBUEmployee(Resource):
     @bu_ns.doc(body=update_employee_parser)
     @bu_ns.marshal_with(return_json)
     @permission_required(Permission.BU_WAITER)
@@ -378,20 +371,28 @@ class BUEmployeeBindOpenID(Resource):
         """修改员工账号信息"""
         args = update_employee_parser.parse_args()
         current_user = kwargs.get('current_user')
+        bu_id = current_user.business_unit_employee.business_unit_id
         bu_employee = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.id.__eq__(kwargs['employee_id']),
-                                                         BusinessUnitEmployees.business_unit_id.__eq__(
-                                                             kwargs['bu_id'])).first()
-        bu_employee.customer_id = current_user.id
-        if args.get('phone'):
-            bu_employee.phone = args['phone']
-            bu_employee.phone_validated = True
-        bu_employee.age = args.get('age')
-        return submit_return("绑定成功", "绑定失败")
+                                                         BusinessUnitEmployees.business_unit_id.__eq__(bu_id)).first()
+        for k, v in args.items():
+            if k == 'job_desc' and v in ("BU_MANAGER", "BU_OPERATOR", "BU_WAITER"):
+                role_obj = CustomerRoles.query.filter_by(name=v).first()
+                if not role_obj:
+                    return false_return(message="角色不存在"), 400
+                bu_employee.role = role_obj
+
+            elif hasattr(bu_employee, k):
+                setattr(bu_employee, k, v)
+            else:
+                return false_return(message="角色属性不存在"), 400
+        return submit_return("修改成功", "修改失败")
 
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.USER, "app.business_units.BUEmployeeBindAppID.delete"])
+    @permission_required(Permission.BU_OPERATOR)
     def delete(self, **kwargs):
-        pass
+        employee_obj = BusinessUnitEmployees.query.get(kwargs['employee_id'])
+        employee_obj.delete_at = datetime.datetime.now()
+        return submit_return("delete successful", "delete failed")
 
 
 @bu_ns.route('/nearby')
