@@ -171,7 +171,7 @@ class BUProductsApi(Resource):
 
     @bu_ns.doc(body=create_bu_product_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
     def post(self, **kwargs):
         """
         新增店铺商品，返回新增的商品ID
@@ -205,9 +205,19 @@ class BUProductsApi(Resource):
 @bu_ns.param('bu_product_id', '店铺产品ID')
 @bu_ns.expect(head_parser)
 class BUPerProductsApi(Resource):
+    @bu_ns.marshal_with(return_json)
+    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    def get(self, **kwargs):
+        """获取店铺产品"""
+        return success_return(
+            data=get_table_data_by_id(BusinessUnitProducts,
+                                      kwargs['bu_product_id'],
+                                      appends=['objects'],
+                                      search={'delete_at': None}))
+
     @bu_ns.doc(body=update_bu_product_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
     def put(self, **kwargs):
         """
         修改店铺商品
@@ -234,7 +244,7 @@ class BUPerProductsApi(Resource):
         return submit_return(f"BU PRODUCT更新成功{args.keys()}", f"SKU更新失败{args.keys()}")
 
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.FRANCHISEE_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
     def delete(self, **kwargs):
         """删除产品"""
         bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
