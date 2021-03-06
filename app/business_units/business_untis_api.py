@@ -369,8 +369,11 @@ class PerBUEmployee(Resource):
     def get(self, **kwargs):
         """获取指定员工的详情"""
         return success_return(
-            data=get_table_data_by_id(BusinessUnitEmployees, kwargs['employee_id'], appends=['job_name'],
-                                      removes=['job_desc']))
+            data=get_table_data_by_id(BusinessUnitEmployees,
+                                      kwargs['employee_id'],
+                                      appends=['job_name'],
+                                      removes=['job_desc'],
+                                      search={'delete_at': None}))
 
     @bu_ns.doc(body=update_employee_parser)
     @bu_ns.marshal_with(return_json)
