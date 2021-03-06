@@ -356,7 +356,7 @@ class BUEmployeesApi(Resource):
                 # redis_db.set(invitation_code, new_employee['obj'].id)
                 # redis_db.expire(invitation_code, 600)
                 # return success_return(data={'scene': 'new_bu_employee', 'scene_invitation': invitation_code})
-                return success_return(data={'new_bu_employee': new_employee['obj'.id]})
+                return success_return(data={'new_bu_employee': new_employee['obj'].id})
             else:
                 return false_return(message="create employee fail")
 
@@ -364,6 +364,14 @@ class BUEmployeesApi(Resource):
 @bu_ns.route('/employee/<string:employee_id>')
 @bu_ns.expect(head_parser)
 class PerBUEmployee(Resource):
+    @bu_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_OPERATOR)
+    def get(self, **kwargs):
+        """获取指定员工的详情"""
+        return success_return(
+            data=get_table_data_by_id(BusinessUnitEmployees, kwargs['employee_id'], appends=['job_name'],
+                                      removes=['job_desc']))
+
     @bu_ns.doc(body=update_employee_parser)
     @bu_ns.marshal_with(return_json)
     @permission_required(Permission.BU_WAITER)
