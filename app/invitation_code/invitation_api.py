@@ -45,9 +45,7 @@ class InvitationApi(Resource):
     @invite_ns.doc(body=invite_page_parser)
     @permission_required([Permission.USER, "app.invitation_code.query_all"])
     def get(self, **kwargs):
-        """
-        获取所有邀请码
-        """
+        """ 获取所有邀请码 """
         args = invite_page_parser.parse_args()
         # 如果是前端客户，则只显示本人管理的邀请码，且只显示有效的
         if kwargs.get('current_user') and kwargs['current_user'].__class__.__name__ == 'Customers':
@@ -60,7 +58,7 @@ class InvitationApi(Resource):
     @invite_ns.marshal_with(return_json)
     @permission_required("app.invitation_code.generate_codes")
     def post(self, **kwargs):
-        """生成邀请码"""
+        """ 生成邀请码 """
         args = invitation_parser.parse_args()
         number = args.pop('number')
         validity_days = args.pop('validity_days')
