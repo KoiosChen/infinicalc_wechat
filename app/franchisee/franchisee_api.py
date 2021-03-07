@@ -217,6 +217,15 @@ class PerFranchisee(Resource):
         except Exception as e:
             return false_return(message=str(e))
 
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required([Permission.ADMINISTRATOR, "app.franchisee.FranchiseeOperatorBind.delete"])
+    def delete(self, **kwargs):
+        """删除加盟商"""
+        franchisee_id = kwargs['franchisee_id']
+        f_obj = Franchisees.query.get(franchisee_id)
+        f_obj.delete_at = datetime.datetime.now()
+        return submit_return("删除成功", "删除失败")
+
 
 @franchisee_ns.route('/scopes')
 class FranchiseeScopesAPI(Resource):
@@ -326,7 +335,11 @@ class FranchiseeOperator(Resource):
     @franchisee_ns.marshal_with(return_json)
     @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeOperatorBind.delete"])
     def delete(self, **kwargs):
-        pass
+        """删除加盟商员工"""
+        franchisee_id = kwargs['franchisee_id']
+        f_obj = Franchisees.query.get(franchisee_id)
+        f_obj.delete_at = datetime.datetime.now()
+        return submit_return("删除成功", "删除失败")
 
 
 @franchisee_ns.route('/inventory')

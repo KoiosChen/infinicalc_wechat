@@ -3,7 +3,7 @@ from flask_restplus import Resource, reqparse
 from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders, CouponReady
 from . import customers
 from app.frontstage_auth import auths
-from .. import db, default_api, logger
+from .. import db, default_api, logger, redis_db
 from ..common import success_return, false_return, submit_return
 from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj
 import datetime
@@ -378,3 +378,23 @@ class CustomerPointsResource(Resource):
         except Exception as e:
             traceback.print_exc()
             return false_return(message=str(e))
+
+
+@customers_ns.route('/self')
+@customers_ns.expect(head_parser)
+class BindMe(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_WAITER)
+    def get(self, **kwargs):
+        """ 店铺员工初始给用户，用户扫码之后，如果用户未进入过小程序，则绑定字员工所在店铺"""
+        current_user = kwargs['current_user']
+        bu_employee = current_user.business_unit_employee
+        # franchisee_operator = current_user.franchisee_operator
+        if bu_employee and bu_employee.delete_at is not None:
+            redis_db.set(current_user.id, bu_employee.id)
+            redis_db.expire(current_user.id, 600)
+            return success_return(data={'new_customer': current_user.id})
+        # elif franchisee_operator and franchisee_operator.delete_at is not None:
+        #     return success_return(data={'franchisee_bind_me': current_user.id})
+        else:
+            return false_return(f'绑定对象非店铺员工')

@@ -100,7 +100,7 @@ class BusinessUnitsAPI(Resource):
         args = bu_page_parser.parse_args()
         if args.get('name'):
             args['search'] = {"name": args['name']}
-        return success_return(get_table_data(BusinessUnits, args), "请求成功")
+        return success_return(get_table_data(BusinessUnits, args, appends=['objects']), "请求成功")
 
     @bu_ns.doc(body=create_bu_parser)
     @bu_ns.marshal_with(return_json)
