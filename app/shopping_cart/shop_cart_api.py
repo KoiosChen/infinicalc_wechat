@@ -44,7 +44,7 @@ pay_parser.add_argument("packing_order", help='当在分装流程中，传递预
 pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
 pay_parser.add_argument("invoice_title", help='发票抬头， 如果invoice_type为1，显示此input框')
 pay_parser.add_argument("invoice_tax_no", help="发票公司税号， 如果invoice_type为1，显示此input框")
-pay_parser.add_argument("inovice_email", help="发票")
+pay_parser.add_argument("invoice_email", help="发票")
 
 shopping_cart_parser = page_parser.copy()
 shopping_cart_parser.add_argument('packing_order', help='若是分装流程，获取购物车页面需传递此参数; 否则不传，或者为空', location='args')
