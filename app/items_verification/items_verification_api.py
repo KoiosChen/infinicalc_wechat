@@ -35,16 +35,20 @@ class ItemPreVerification(Resource):
                                     "left_verification_quantity": item_order_obj.left_verification_quantity})
 
 
-@item_verification_ns.route('/<string:item_order_id>/verification')
+@item_verification_ns.route('/<string:item_order_id>/business_unit/<string:bu_id>/verification')
 @item_verification_ns.expect(head_parser)
 class ItemVerification(Resource):
     @item_verification_ns.marshal_with(return_json)
     @permission_required([Permission.BU_WAITER, "app.item_verification.ItemPreVerification.get"])
     def post(self, **kwargs):
-        """核销订单中指定数量的sku"""
+        """核销订单中指定数量的sku, 取酒的入口在店铺中，所以可以传递店铺的id， 在店铺员工扫码核销的时候需要核对员工和店铺关系"""
+        """核销环节需要检查时候需要返佣"""
         args = verification_parser.parse_args()
+        current_user = kwargs['current_user']
+        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != kwargs['bu_id']:
+            return false_return(message=f'此员工无权核销'), 400
         if not redis_db.exists(kwargs['item_order_id']):
-            return false_return(message="二维码一分钟内有效，已过期请重新生成")
+            return false_return(message="二维码一分钟内有效，已过期请重新生成"), 400
         else:
             new_id = redis_db.get(args['item_order_id'])
             redis_db.delete(args['item_order_id'])

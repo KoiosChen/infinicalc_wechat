@@ -445,7 +445,7 @@ class BUNearby(Resource):
         if args['closest'] == 0:
             return success_return(data=nearby_objs)
         else:
-            return success_return(data=nearby_objs[0])
+            return success_return(data=nearby_objs[0] if nearby_objs else None)
 
 
 @bu_ns.route('/purchase_orders/<string:business_purchase_order_id>/confirm')
