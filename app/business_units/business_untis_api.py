@@ -424,29 +424,32 @@ class BUNearby(Resource):
     @permission_required([Permission.USER, "app.business_units.BUNearby.post"])
     def get(self, **kwargs):
         """附近的店铺。若需要查找距离最近的店铺， distance传1000， closest传1"""
-        import math
-        args = bu_nearby.parse_args()
-        distance = args['distance']
-        longitude = eval(args['longitude'])
-        latitude = eval(args['latitude'])
+        try:
+            import math
+            args = bu_nearby.parse_args()
+            distance = args['distance']
+            longitude = eval(args['longitude'])
+            latitude = eval(args['latitude'])
 
-        # 获取距离是distance内的坐标范围，用左上，左下，右上，右下四个坐标来圈定范围
-        nearby_range = get_nearby(latitude, longitude, distance * 0.001)
+            # 获取距离是distance内的坐标范围，用左上，左下，右上，右下四个坐标来圈定范围
+            nearby_range = get_nearby(latitude, longitude, distance * 0.001)
 
-        # 查表，获取符合范围内的店铺
-        nearby_objs = [{"obj": get_table_data_by_id(BusinessUnits, obj.id, appends=['objects'], search={'delete_at': None}),
-                        "distance": math.ceil(geo_distance((latitude, longitude), (obj.latitude, obj.longitude)))} for
-                       obj in BusinessUnits.query.filter(
-                BusinessUnits.latitude.between(nearby_range['south'].latitude, nearby_range['north'].latitude),
-                BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude)
-            ).all()]
+            # 查表，获取符合范围内的店铺
+            nearby_objs = [{"obj": get_table_data_by_id(BusinessUnits, obj.id, appends=['objects'], search={'delete_at': None}),
+                            "distance": math.ceil(geo_distance((latitude, longitude), (obj.latitude, obj.longitude)))} for
+                           obj in BusinessUnits.query.filter(
+                    BusinessUnits.latitude.between(nearby_range['south'].latitude, nearby_range['north'].latitude),
+                    BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude)
+                ).all()]
 
-        # 按照距离排序
-        nearby_objs.sort(key=lambda x: x['distance'])
-        if args['closest'] == 0:
-            return success_return(data=nearby_objs)
-        else:
-            return success_return(data=nearby_objs[0] if nearby_objs else None)
+            # 按照距离排序
+            nearby_objs.sort(key=lambda x: x['distance'])
+            if args['closest'] == 0:
+                return success_return(data=nearby_objs)
+            else:
+                return success_return(data=nearby_objs[0] if nearby_objs else None)
+        except Exception as e:
+            return false_return(message=str(e)), 400
 
 
 @bu_ns.route('/purchase_orders/<string:business_purchase_order_id>/confirm')
