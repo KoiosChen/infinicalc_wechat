@@ -561,7 +561,7 @@ def get_nearby(lat, lng, distance=0.5):
     获取纬度经度范围
     """
     result = {
-        'west': get_distance_point(lat, lng, distance, 360),
+        'west': get_distance_point(lat, lng, distance, 270),
         'east': get_distance_point(lat, lng, distance, 90),
         'north': get_distance_point(lat, lng, distance, 0),
         'south': get_distance_point(lat, lng, distance, 180),
@@ -579,7 +579,7 @@ def get_distance_point(lat, lon, distance, direction):
     :param lat: 纬度
     :param lon: 经度
     :param distance: 距离（千米）
-    :param direction: 方向（北：0，东：90，南：180，西：360）
+    :param direction: 方向（北：0，东：90，南：180，西：270）
     :return:
     """
     start = geopy.Point(lat, lon)
