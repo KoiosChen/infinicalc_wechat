@@ -120,8 +120,11 @@ def __make_table(fields, table, strainer=None):
                         get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
-            tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
-                      table.sku]
+            if 'Inventory' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects'])
+            else:
+                tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
+                          table.sku]
         elif f == 'spu':
             tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['sku', 'objects']) for e in
                       table.spu.all()]
