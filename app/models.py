@@ -357,11 +357,11 @@ class BusinessPurchaseOrders(db.Model):
     __tablename__ = "business_purchase_orders"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     amount = db.Column(db.SmallInteger, comment="进货或者出货量")
-    purchase_from = db.relationship("Franchisees", backref="sell_to_orders", lazy="dynamic")
     original_order_id = db.Column(db.String(64), db.ForeignKey('franchisee_purchase_orders.id'))
     sell_to = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
     operate_at = db.Column(db.DateTime)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)

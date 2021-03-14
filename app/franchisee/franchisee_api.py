@@ -350,14 +350,14 @@ class FranchiseeInventoryAPI(Resource):
     @permission_required([Permission.FRANCHISEE_MANAGER, "app.franchisee.FranchiseeInventoryAPI.get"])
     def get(self, **kwargs):
         """获取该加盟商当前库存"""
-        args = inventory_search_parser.parse_args()
-        if args.get('sku_id'):
-            search = {"sku_id": args['sku_id']}
-        else:
-            search = None
         current_user = kwargs.get('current_user')
         franchisee_id = current_user.franchisee_operator.franchisee_id
-        return success_return(data=get_table_data_by_id(FranchiseeInventory, franchisee_id, search=search))
+        args = inventory_search_parser.parse_args()
+        if args.get('sku_id'):
+            args['search'] = {'sku_id': args.pop('sku_id'), 'franchisee_id': franchisee_id}
+        else:
+            args['search'] = {'franchisee_id': franchisee_id}
+        return success_return(data=get_table_data(FranchiseeInventory, args))
 
     @franchisee_ns.doc(body=inventory_dispatch_parser)
     @franchisee_ns.marshal_with(return_json)
@@ -526,7 +526,7 @@ class FranchiseeDispatch(Resource):
             return false_return(message="创建发货单失败")
 
         new_bu_purchase_order = new_data_obj("BusinessPurchaseOrders",
-                                             **{"bu_id": bu_id, "amount": amount, "purchase_from": franchisee_id,
+                                             **{"bu_id": bu_id, "amount": amount,
                                                 "original_order_id": new_franchisee_dispatch['obj'].id,
                                                 "operate_at": datetime.datetime.now(),
                                                 "operator": current_user.id})
