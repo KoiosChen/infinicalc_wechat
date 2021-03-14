@@ -18,6 +18,19 @@ verification_parser.add_argument("original_quantity", required=True, type=int, h
 verification_parser.add_argument("verification_quantity", required=True, type=int, help='核销的数量，小于等于original_quantity')
 
 
+@item_verification_ns.route('/checkout_item_orders/<string:sku_id>')
+@item_verification_ns.expect(head_parser)
+class ItemCheckout(Resource):
+    @item_verification_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """获取对应SKU Item订单"""
+        return success_return(
+            data=get_table_data(ItemsOrders,
+                                {"search": {"delete_at": None, "item_id": kwargs['sku_id'], "status": 1}},
+                                advance_search=[{"key": "left_verification_quantity", "operator": "__gt__", "value": 0}]))
+
+
 @item_verification_ns.route('/<string:item_order_id>/pre_verification')
 @item_verification_ns.expect(head_parser)
 class ItemPreVerification(Resource):
@@ -45,7 +58,8 @@ class ItemVerification(Resource):
         """核销环节需要检查时候需要返佣"""
         args = verification_parser.parse_args()
         current_user = kwargs['current_user']
-        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != kwargs['bu_id']:
+        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != kwargs[
+            'bu_id']:
             return false_return(message=f'此员工无权核销'), 400
         if not redis_db.exists(kwargs['item_order_id']):
             return false_return(message="二维码一分钟内有效，已过期请重新生成"), 400
