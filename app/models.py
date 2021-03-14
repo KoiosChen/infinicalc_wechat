@@ -680,6 +680,7 @@ class Customers(db.Model):
     session_key = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), index=True)
     true_name = db.Column(db.String(30))
+    purse = db.Column(db.DECIMAL(7, 2), default=0.00, comment='用户零钱包，用于存放返佣金额')
     level = db.Column(db.SmallInteger, default=1, comment="用户等级")
     total_points = db.Column(db.Integer, default=0, comment="用户积分")
     total_consumption = db.Column(db.DECIMAL(7, 2), default=0.00, comment='累积消费')
@@ -1097,7 +1098,6 @@ class SKU(db.Model):
     franchisee_inventory = db.relationship("FranchiseeInventory", backref='sku', lazy='dynamic')
     bu_inventory = db.relationship("BusinessUnitInventory", backref='sku', lazy='dynamic')
     bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
-
 
 
 class PersonalRebates(db.Model):

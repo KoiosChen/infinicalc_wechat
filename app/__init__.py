@@ -186,4 +186,10 @@ def create_app(config_name):
     from .franchisee import franchisee as franchisee_blueprint
     app.register_blueprint(franchisee_blueprint)
 
+    from .items_verification import items_verification as iv_blueprint
+    app.register_blueprint(iv_blueprint)
+
+    from .wechat_purse import wechat_purse as wp_blueprint
+    app.register_blueprint(wp_blueprint)
+
     return app
