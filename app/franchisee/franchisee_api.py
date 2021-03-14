@@ -66,7 +66,7 @@ update_operator_parser.add_argument('age', required=False, help='年龄')
 update_operator_parser.add_argument('phone', required=False, help='填写手机号验证')
 
 inventory_search_parser = reqparse.RequestParser()
-inventory_search_parser.add_argument('sku_id', required=False, type=str, help='需要搜索的sku id')
+inventory_search_parser.add_argument('sku_id', required=False, type=str, help='需要搜索的sku id', location='args')
 
 inventory_dispatch_parser = reqparse.RequestParser()
 inventory_dispatch_parser.add_argument('sku_id', required=True, type=str, help='发货的sku id')

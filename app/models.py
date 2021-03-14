@@ -347,7 +347,7 @@ class FranchiseePurchaseOrders(db.Model):
     operate_at = db.Column(db.DateTime, comment='进出货日期')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
     status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到')
-    bu_purchase_order = db.relationship("BusinessPurchaseOrders", backref="franchisee_purchase_order", uselist=False)
+    bu_purchase_order = db.relationship("BusinessPurchaseOrders", backref="original_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1093,6 +1093,11 @@ class SKU(db.Model):
     sku_layout = db.relationship('SKULayout', backref='layout_sku', lazy='dynamic')
     shopping_cart = db.relationship('ShoppingCart', backref='desire_sku', lazy='dynamic')
     sku_orders = db.relationship("ItemsOrders", backref='bought_sku', lazy='dynamic')
+    franchisee_purchase_skus = db.relationship("FranchiseePurchaseOrders", backref='sku', lazy='dynamic')
+    franchisee_inventory = db.relationship("FranchiseeInventory", backref='sku', lazy='dynamic')
+    bu_inventory = db.relationship("BusinessUnitInventory", backref='sku', lazy='dynamic')
+    bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
+
 
 
 class PersonalRebates(db.Model):

@@ -67,6 +67,9 @@ bu_detail_page_parser = page_parser.copy()
 bu_detail_page_parser.add_argument('Authorization', required=True, location='headers')
 bu_detail_page_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
+inventory_search_parser = bu_detail_page_parser.copy()
+inventory_search_parser.add_argument('sku_id', required=False, type=str, help='需要搜索的sku id', location='args')
+
 dispatch_confirm_parser = reqparse.RequestParser()
 dispatch_confirm_parser.add_argument('status', required=True, type=int, help='0,已发货未确认；1， 已发货已确认；2， 已发货未收到')
 dispatch_confirm_parser.add_argument('memo', required=False, type=str, help='未启用，后续考虑用来添加备注')
@@ -261,12 +264,16 @@ class BUInventoryApi(Resource):
     @permission_required(Permission.BU_OPERATOR)
     def get(self, **kwargs):
         """获取指定BU的库存量"""
-        args = bu_detail_page_parser.parse_args()
+        args = inventory_search_parser.parse_args()
         if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
-        args['search'] = {"id": bu_id}
+
+        if args.get('sku_id'):
+            args['search'] = {'sku_id': args.pop('sku_id'), 'franchisee_id': bu_id}
+        else:
+            args['search'] = {'franchisee_id': bu_id}
         return success_return(data=get_table_data(BusinessUnitInventory, args, appends=['sku']))
 
 
