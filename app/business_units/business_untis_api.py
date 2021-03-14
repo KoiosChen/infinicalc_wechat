@@ -435,9 +435,10 @@ class BUNearby(Resource):
             nearby_range = get_nearby(latitude, longitude, distance * 0.001)
 
             # 查表，获取符合范围内的店铺
-            nearby_objs = [{"obj": get_table_data_by_id(BusinessUnits, obj.id, appends=['objects'], search={'delete_at': None}),
-                            "distance": math.ceil(geo_distance((latitude, longitude), (obj.latitude, obj.longitude)))} for
-                           obj in BusinessUnits.query.filter(
+            nearby_objs = [
+                {"obj": get_table_data_by_id(BusinessUnits, obj.id, appends=['objects'], search={'delete_at': None}),
+                 "distance": math.ceil(geo_distance((latitude, longitude), (obj.latitude, obj.longitude)))} for
+                obj in BusinessUnits.query.filter(
                     BusinessUnits.latitude.between(nearby_range['south'].latitude, nearby_range['north'].latitude),
                     BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude)
                 ).all()]
@@ -452,13 +453,13 @@ class BUNearby(Resource):
             return false_return(message=str(e)), 400
 
 
-@bu_ns.route('/purchase_orders/<string:business_purchase_order_id>/confirm')
-@bu_ns.param('business_purchase_order_id', '货单ID')
+@bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>/confirm')
+@bu_ns.param('bu_purchase_order_id', '货单ID')
 @bu_ns.expect(head_parser)
-class BusinessPurchaseOrdersAPI(Resource):
+class BUPurchaseOrdersAPI(Resource):
     @bu_ns.doc(body=dispatch_confirm_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required(Permission.FRANCHISEE_MANAGER)
+    @permission_required(Permission.BU_OPERATOR)
     def put(self, **kwargs):
         """修改入库记录状态，如果修改为已收货并确认，则将入库单货物计入库存量中"""
         args = dispatch_confirm_parser.parse_args()
@@ -467,14 +468,15 @@ class BusinessPurchaseOrdersAPI(Resource):
         if not current_user.franchisee_operator:
             return false_return(message="当前用户无加盟商角色")
 
-        bu_id = current_user.business_unit_employee.business_unit_id
-        bpo_obj = BusinessPurchaseOrders.query.get(kwargs['franchisee_purchase_order_id'])
-        bi_obj = new_data_obj("FranchiseeInventory",
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+        bpo_obj = BusinessPurchaseOrders.query.get(kwargs['bu_purchase_order_id'])
+        # 创建sku的库存，如果存在则返回对应的记录，如果不存在则新建
+        bi_obj = new_data_obj("BusinessUnitInventory",
                               **{"sku_id": bpo_obj.sku_id,
-                                 "franchisee_id": bu_id})
+                                 "bu_id": bu_id})
 
         if not bi_obj:
-            return false_return(message="获取加盟商库存失败")
+            return false_return(message="获取店铺存失败")
 
         if bpo_obj.status in (1, 2) or bpo_obj.delete_at is not None:
             return false_return(message="该货单状态异常不可确认")
