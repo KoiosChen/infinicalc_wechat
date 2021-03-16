@@ -34,7 +34,7 @@ packing_checkout_parser.add_argument("packing_order", help='分装订单编号')
 pay_parser = reqparse.RequestParser()
 pay_parser.add_argument("score_used", type=int, help='使用的积分，1积分为1元')
 pay_parser.add_argument("card_consumption", help='使用会员充值金额，单位元，例如123.45')
-pay_parser.add_argument("need_express", required=True, type=int, default=0, choices=[0, 1],
+pay_parser.add_argument("need_express", required=True, type=int,
                         help='0, 店铺取酒； 1， 快递. 默认为0， 为店铺取酒。如果用户选择额快递，则页面上出现选择快递地址的选项，并传递express_addr_id')
 pay_parser.add_argument("express_addr_id", type=str, help='express_address表id')
 pay_parser.add_argument("message", type=str, help='用户留言')
@@ -44,7 +44,7 @@ pay_parser.add_argument("packing_order", help='当在分装流程中，传递预
 pay_parser.add_argument("invoice_type", type=int, choices=[0, 1], help='0: 个人，1：企业')
 pay_parser.add_argument("invoice_title", help='发票抬头， 如果invoice_type为1，显示此input框')
 pay_parser.add_argument("invoice_tax_no", help="发票公司税号， 如果invoice_type为1，显示此input框")
-pay_parser.add_argument("invoice_email", help="发票")
+pay_parser.add_argument("inovice_email", help="发票")
 
 shopping_cart_parser = page_parser.copy()
 shopping_cart_parser.add_argument('packing_order', help='若是分装流程，获取购物车页面需传递此参数; 否则不传，或者为空', location='args')
@@ -86,6 +86,7 @@ class Pay(Resource):
                 else:
                     raise Exception(f"快递地址错误，请修正")
             else:
+                args.pop("express_addr_id")
                 addr = ""
                 args['express_address'] = ""
                 args['express_postcode'] = ""
@@ -195,12 +196,12 @@ class Pay(Resource):
 
                 if not new_consumption_record or not new_consumption_record['status']:
                     raise Exception("创建消费记录失败")
+                kwargs['current_user'].card.balance -= consumption_sum
+
+                pay_price -= consumption_sum
             else:
                 new_consumption_record = None
 
-            kwargs['current_user'].card.balance -= consumption_sum
-
-            pay_price -= consumption_sum
             session_commit()
             create_data = {'order_info': args, 'select_items': select_items, 'packing_order': packing_order}
             create_result = pay.create_order(**create_data)
