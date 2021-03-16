@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from app import db, redis_db, sku_lock
 from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, \
-    make_uuid
+    make_uuid, CERT_PATH, KEY_PATH
 from app.wechat.wechat_config import WEIXIN_PURSE_API
 import traceback
 import requests
@@ -15,7 +15,7 @@ import threading
 from .public_method import *
 
 
-def make_payment_info(partner_trade_no=None, amount=None, openid=None, device_info=None, check_name='NO_CHECK', spbill_create_ip=None):
+def make_payment_info(partner_trade_no=None, amount=None, openid=None, device_info=None, check_name='NO_CHECK', spbill_create_ip=None, desc='返佣提现'):
     order_info = {'mch_appid': app_id,
                   'mchid': WEIXIN_MCH_ID,
                   'device_info': device_info,
@@ -24,6 +24,7 @@ def make_payment_info(partner_trade_no=None, amount=None, openid=None, device_in
                   'openid': openid,
                   'check_name': check_name,
                   'amount': amount,
+                  'desc': desc,
                   'spbill_create_ip': spbill_create_ip}
     return order_info
 
@@ -57,7 +58,7 @@ def request_wx_pay(partner_trade_no, amount, openid):
         """
         data = generate_request_data(params_dict)
         headers = {'Content-Type': 'application/xml'}
-        req = requests.post(unified_order_url, data=data, headers=headers)
+        req = requests.post(unified_order_url, data=data, headers=headers, cert=(CERT_PATH, KEY_PATH))
         if req.status_code == 200:
             result = json.loads(json.dumps(xmltodict.parse(req.content)))
             logger.debug(result)
@@ -88,7 +89,7 @@ def weixin_pay_purse(order_id, amount, customer_id, check_name="NO_CHECK"):
     【API】: 创建订单,供商户app调用
     """
     try:
-        customer = db.session.query(Customers).with_for_update().filter(Customers.id.__eq__(customer_id))
+        customer = db.session.query(Customers).with_for_update().filter(Customers.id.__eq__(customer_id)).first()
         if amount > customer.purse:
             raise Exception("取现金额大于账户余额")
 

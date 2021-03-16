@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund, make_uuid, WechatPurseTransfer
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, make_uuid, WechatPurseTransfer, make_order_id
 from .. import db, redis_db, default_api, logger
 from app.wechat import mmpaymkttransfers
 from ..decorators import permission_required
@@ -33,7 +33,8 @@ class WithDrawAPI(Resource):
                 assert withdraw_order, "订单不存在"
                 assert withdraw_order.amount == amount, "订单金额和此次提交金额不符"
             else:
-                order_id = make_uuid()
-            mmpaymkttransfers.weixin_pay_purse(order_id=order_id, amount=amount, customer_id=current_user.id)
+                order_id = make_order_id(prefix='PURSE')
+            return mmpaymkttransfers.weixin_pay_purse(order_id=order_id, amount=eval(amount), customer_id=current_user.id)
+
         except Exception as e:
             return false_return(message=str(e)), 400
