@@ -121,6 +121,8 @@ def update_order(data):
                     order.cash_fee = cash_fee
                     order.pay_time = pay_time
                     order.transaction_id = transaction_id
+                    # 增加累积消费金额
+                    customer.total_consumption += cash_fee
 
                     # 商品订单处理
                     for item_order in items:
