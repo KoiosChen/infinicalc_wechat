@@ -698,7 +698,7 @@ class Customers(db.Model):
     first_order_id = db.Column(db.String(64), index=True, comment='对应first_order_table表的id，用于确认用户首单，但不局限是哪个业务的首单')
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
-    member_card = db.relationship('MemberCards', backref='card_owner', foreign_keys='MemberCards.customer_id',
+    member_card = db.relationship('', backref='card_owner', foreign_keys='MemberCards.customer_id',
                                   lazy='dynamic')
     wechat_purse_transfer = db.relationship('WechatPurseTransfer', backref='purse_owner', uselist=False)
     parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在parent中")
@@ -1046,6 +1046,14 @@ class TotalCargoes(db.Model):
     delete_at = db.Column(db.DateTime)
 
 
+class SkuMemberPrice(db.Model):
+    __tablename__ = 'sku_member_price'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
+    member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
+    customer_level = db.Column(db.SmallInteger, comment='Customers.level')
+
+
 class SKU(db.Model):
     __tablename__ = 'sku'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
@@ -1056,7 +1064,7 @@ class SKU(db.Model):
     price = db.Column(db.DECIMAL(10, 2), default=0.00)
     seckill_price = db.Column(db.DECIMAL(10, 2), default=0.00, comment='当SKU参加秒杀活动时，设置秒杀价格写在这个字段，如果不为0， 则表示参加秒杀，查找秒杀活动')
     discount = db.Column(db.DECIMAL(3, 2), default=1.00)
-    member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
+    member_prices = db.relationship("SkuMemberPrice", backref="the_sku", lazy='dynamic')
     score_type = db.Column(db.SmallInteger, default=0, comment='是否可用积分')
     get_score = db.Column(db.Integer, comment="可以获得的积分")
     max_score = db.Column(db.Integer, comment='最多可用积分')
@@ -1098,6 +1106,10 @@ class SKU(db.Model):
     franchisee_inventory = db.relationship("FranchiseeInventory", backref='sku', lazy='dynamic')
     bu_inventory = db.relationship("BusinessUnitInventory", backref='sku', lazy='dynamic')
     bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
+
+    def member_price(self, customer_level):
+        return SkuMemberPrice.query.filter(SkuMemberPrice.sku_id.__eq__(self.id),
+                                           SkuMemberPrice.customer_level.__eq__(customer_level)).first()
 
 
 class PersonalRebates(db.Model):
@@ -1253,6 +1265,7 @@ class ItemsOrders(db.Model):
     verified_quantity = db.Column(db.Integer, default=0, index=True, comment='已核销的数量')
     item_price = db.Column(db.DECIMAL(10, 2), comment="下单时sku的价格，如果有show_price，记录show_price，否则记录price")
     transaction_price = db.Column(db.DECIMAL(10, 2), comment="实际交易的价格，未使用积分的价格，例如有会员价，有折扣（real_price）")
+    customer_level = db.Column(db.SmallInteger, comment='用户购买是的等级，1，普通，2 代言人，3 达人。对应customer的level 1，2，3')
     benefits = db.relationship('Benefits', secondary=itemsorders_benefits, backref=db.backref('item_orders'))
     status = db.Column(db.SmallInteger, default=0, comment='1：正常 2：禁用 0：订单未完成 3:退货中，4: 退货成功')
     special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
@@ -1651,6 +1664,7 @@ class CloudWineRebates(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), index=True, comment="返佣名称")
     role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
+
     scene = db.Column(db.String(50), comment='业务场景，目前有PAYMENT; PICKUP')
     rebate = db.Column(db.DECIMAL(11, 2), index=True, comment='返佣金额')
     score = db.Column(db.Integer, index=True, comment='积分奖励')
