@@ -63,3 +63,4 @@ class GetAllDepositOrders(Resource):
     @deposit_ns.doc(body=deposit_parser)
     @permission_required(Permission.USER)
     def post(self, **kwargs):
+        pass
