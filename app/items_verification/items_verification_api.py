@@ -109,6 +109,7 @@ class ItemVerification(Resource):
             if diff >= 0:
                 # 表示核销完了
                 __verify(verify_quantity)
+                break
             elif diff < 0:
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)

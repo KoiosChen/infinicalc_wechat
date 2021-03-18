@@ -27,7 +27,7 @@ def wechat_pay_callback():
 def weixinpay_call_back(request):
     """
     微信支付回调
-    :param args: 回调参数
+    :param request: 回调参数
     :return:
     """
 
