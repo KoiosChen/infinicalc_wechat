@@ -16,7 +16,7 @@ from app.rebates import calc_rebate
 from .update_order import update_order
 
 
-@wechat.route('/wechat_pay/callback/', methods=['POST', 'GET'])
+@wechat.route('/wechat_pay/callback2/', methods=['POST', 'GET'])
 def wechat_pay_callback():
     if request.method == 'GET':
         return 'GOT'
