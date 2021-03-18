@@ -698,7 +698,7 @@ class Customers(db.Model):
     first_order_id = db.Column(db.String(64), index=True, comment='对应first_order_table表的id，用于确认用户首单，但不局限是哪个业务的首单')
     express_addresses = db.relationship("ExpressAddress", backref='item_sender', lazy='dynamic')
     coupons = db.relationship('CouponReady', backref='receiptor', lazy='dynamic')
-    member_card = db.relationship('', backref='card_owner', foreign_keys='MemberCards.customer_id',
+    member_card = db.relationship('MemberCards', backref='card_owner', foreign_keys='MemberCards.customer_id',
                                   lazy='dynamic')
     wechat_purse_transfer = db.relationship('WechatPurseTransfer', backref='purse_owner', uselist=False)
     parent_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="邀请者，分享小程序入口之后的级联关系写在parent中")
