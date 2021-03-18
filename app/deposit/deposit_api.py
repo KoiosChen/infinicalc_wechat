@@ -1,12 +1,13 @@
 from flask_restplus import Resource, reqparse
 from ..models import ShopOrders, Permission, ItemsOrders, Refund, make_uuid, Deposit
-from .. import db, redis_db, default_api, logger
+from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.type_validation import checkout_sku_type
 from ..wechat.pay import weixin_pay
+from app.scene_invitation.scene_invitation_api import generate_code
 import datetime
 
 deposit_ns = default_api.namespace('Deposit', path='/deposit', description='存酒接口')
@@ -57,7 +58,75 @@ class GetAllDepositOrders(Resource):
         current_user = kwargs['current_user']
         if not args['search']["deposit_person"]:
             args['search']['deposit_person'] = current_user.id
+        args['search']['delete_at'] = None
         return success_return(data=get_table_data(Deposit, args, appends=['objects']))
+
+    @deposit_ns.marshal_with(return_json)
+    @deposit_ns.doc(body=deposit_parser)
+    @permission_required(Permission.USER)
+    def post(self, **kwargs):
+        args = deposit_parser.parse_args()
+        sku_id = args['sku_id']
+        deposit_status = args['deposit_status']
+        deposit_id = make_uuid()
+        new_deposit = new_data_obj("Deposit", **{"id": deposit_id,
+                                                 "sku_id": sku_id,
+                                                 "deposit_status": deposit_status,
+                                                 "deposit_person": kwargs['current_user'].id})
+
+        if not new_deposit:
+            return false_return(message="寄存失败"), 400
+
+        image_operate.operate(obj=new_deposit['obj'], imgs=args['objects'], action="append")
+
+        if session_commit().get("code") == "success":
+            qrcode = generate_code(12)
+            redis_db.set(qrcode, deposit_id)
+            redis_db.expire(qrcode, 120)
+            return success_return(data=qrcode)
+        else:
+            return false_return(message='寄存失败'), 400
+
+
+@deposit_ns.route('/verification/<string:qrcode>')
+@deposit_ns.expect(head_parser)
+class VerifyDeposit(Resource):
+    @deposit_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_WAITER)
+    def post(self, **kwargs):
+        """服务员核销用户寄存订单，表示确认寄存"""
+        employee_obj = kwargs['current_user'].business_unit_employee
+        business_unit = employee_obj.business_unit
+        qrcode = kwargs['qrcode']
+        if not redis_db.exists(qrcode):
+            return false_return(message=f'{qrcode} 不存在或超时，请客户查找寄存订单重新生成核销码'), 400
+
+        deposit_id = redis_db.get(qrcode)
+        redis_db.delete(qrcode)
+        deposit_obj = Deposit.query.filter(Deposit.id.__eq__(deposit_id), Deposit.delete_at.__eq__(None),
+                                           Deposit.deposit_bu_id.__eq__(None),
+                                           Deposit.deposit_confirm_waiter.__eq__(None)).first()
+        if not deposit_obj:
+            return false_return(message='寄存订单无效，不可核销')
+
+        deposit_obj.deposit_confirm_waiter = kwargs['current_user'].id
+        deposit_obj.deposit_bu_id = business_unit.id
+        deposit_obj.deposit_confirm_at = datetime.datetime.now()
+        return submit_return('寄存核销成功', '寄存核销失败')
+
+
+@deposit_ns.route('/pickup/<string:deposit_id>')
+@deposit_ns.expect(head_parser)
+class PickupDeposit(Resource):
+    @deposit_ns.marshal_with(return_json)
+    @deposit_ns.doc(body=deposit_parser)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """用户取寄存的酒，产生取酒的二维码"""
+        qrcode = generate_code(12)
+        redis_db.set(qrcode, kwargs['deposit_id'])
+        redis_db.expire(qrcode, 60)
+        return success_return(data=qrcode)
 
     @deposit_ns.marshal_with(return_json)
     @deposit_ns.doc(body=deposit_parser)
