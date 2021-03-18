@@ -1,5 +1,5 @@
 from app import db, logger
-from app.models import ShopOrders, make_order_id, MemberPolicies, MemberRechargeRecords, make_uuid
+from app.models import ShopOrders, make_order_id, MemberPolicies, MemberRechargeRecords, make_uuid, Customers
 import datetime
 from app.common import submit_return, session_commit
 from app.public_method import new_data_obj, query_coupon, create_member_card_num
@@ -55,6 +55,12 @@ def update_order(data):
 
             if consumer_openid != order_customer:
                 raise Exception(f"回调中openid {consumer_openid}与订单记录不符{order_customer}")
+
+            # 判断是否为首单
+            if not customer.first_order_table or (customer.first_order_table == 'ShopOrders' and not customer.first_order_id):
+                # 为首单， 则将首单记录到用户信息中
+                customer.first_order_table = data['device_info']
+                customer.first_order_id = order.id
 
             if data['device_info'] == 'MemberRecharge':
                 wechat_pay_result = order.wechat_pay_result
@@ -127,6 +133,8 @@ def update_order(data):
                     # 商品订单处理
                     for item_order in items:
                         item_order.status = 1
+                        item_order.customer_level = customer.level
+
                         if item_order.special == 31:
                             # 封坛货物
                             standard_value = item_order.bought_sku.values
@@ -162,10 +170,10 @@ def update_order(data):
                             res = '数据提交失败'
 
                     # 返佣计算
-                    calc_result = calc_rebate.calc(order.id, order.consumer)
-                    if calc_result.get('code') != 'success':
-                        res = calc_result.get('message')
-                        logger.error(f"订单<{order.id}>返佣结果{res}")
+                    # calc_result = calc_rebate.calc(order.id, order.consumer)
+                    # if calc_result.get('code') != 'success':
+                    #     res = calc_result.get('message')
+                    #     logger.error(f"订单<{order.id}>返佣结果{res}")
 
                     if res == 'success':
                         if session_commit().get("code") != 'success':

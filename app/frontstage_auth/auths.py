@@ -137,6 +137,8 @@ def authenticate(login_ip, **kwargs):
                     if scene == 'new_customer':
                         customer.bu_employee_id = obj_id
                         customer.bu_id = BusinessUnitEmployees.query.get(obj_id).business_unit_id
+                else:
+                    logger.error('二维码过期')
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
