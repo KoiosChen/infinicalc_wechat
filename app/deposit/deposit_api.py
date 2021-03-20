@@ -32,6 +32,12 @@ deposit_parser.add_argument("sku_id", required=True, type=str, help='需要寄�
 deposit_parser.add_argument('objects', type=list, help='寄存酒的照片', location='json')
 deposit_parser.add_argument("deposit_status", required=True, type=int, help='0，已开瓶；1 ，未开瓶')
 
+pickup_parser = reqparse.RequestParser()
+pickup_parser.add_argument('deposit_id', required=True,help='寄存订单id', location='args')
+
+pickup_verify = reqparse.RequestParser()
+pickup_verify.add_argument('qrcode', required=True, help='取寄存酒的二维码code')
+
 
 @deposit_ns.route('')
 @deposit_ns.expect(head_parser)
@@ -115,21 +121,33 @@ class VerifyDeposit(Resource):
         return submit_return('寄存核销成功', '寄存核销失败')
 
 
-@deposit_ns.route('/pickup/<string:deposit_id>')
+@deposit_ns.route('/pickup')
 @deposit_ns.expect(head_parser)
 class PickupDeposit(Resource):
     @deposit_ns.marshal_with(return_json)
-    @deposit_ns.doc(body=deposit_parser)
+    @deposit_ns.doc(body=pickup_parser)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
         """用户取寄存的酒，产生取酒的二维码"""
+        args = pickup_parser.parse_args()
         qrcode = generate_code(12)
-        redis_db.set(qrcode, kwargs['deposit_id'])
+        redis_db.set(qrcode, args['deposit_id'])
         redis_db.expire(qrcode, 60)
         return success_return(data=qrcode)
 
     @deposit_ns.marshal_with(return_json)
-    @deposit_ns.doc(body=deposit_parser)
-    @permission_required(Permission.USER)
+    @deposit_ns.doc(body=pickup_verify)
+    @permission_required(Permission.BU_WAITER)
     def post(self, **kwargs):
-        pass
+        args = pickup_verify.parse_args()
+        qrcode = args['qrcode']
+        if not redis_db.exists(qrcode):
+            return false_return(message='核销二维码不存在'), 400
+        deposit_id = redis_db.get(qrcode)
+        redis_db.delete(qrcode)
+        deposit_obj = Deposit.query.get(deposit_id)
+        if deposit_obj.pickup_waiter and deposit_obj.pickup_at:
+            return false_return(message=f'此寄存酒已在{deposit_obj.pickup_at}取走')
+        deposit_obj.pickup_waiter = kwargs['current_user'].id
+        deposit_obj.pickup_at = datetime.datetime.now()
+        return submit_return('取酒成功', '取酒失败')
