@@ -5,7 +5,7 @@ from ..common import success_return, false_return, submit_return
 from ..public_method import new_data_obj
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
-
+import json
 from app.scene_invitation.scene_invitation_api import generate_code
 
 item_verification_ns = default_api.namespace('Items Verification', path='/items_verification', description='物品核销接口')
@@ -14,7 +14,7 @@ return_json = item_verification_ns.model('ReturnRegister', return_dict)
 
 verify_quantity_parser = reqparse.RequestParser()
 verify_quantity_parser.add_argument("sku_id", required=True, type=str, help='需要核销的sku id', location='args')
-verify_quantity_parser.add_argument("quantity", required=True, type=str, help='核销数量', location='args')
+verify_quantity_parser.add_argument("quantity", required=True, help='核销数量', location='args')
 
 verification_parser = reqparse.RequestParser()
 verification_parser.add_argument("qrcode", required=True, type=str, help='get_verify_qrcode 返回的值')
@@ -42,7 +42,7 @@ class ItemVerifyQRCode(Resource):
     @permission_required(Permission.BU_WAITER)
     def get(self, **kwargs):
         """获取核销验证码"""
-        args = verification_parser.parse_args()
+        args = verify_quantity_parser.parse_args()
         sku_id = args['sku_id']
         quantity = eval(args['quantity'])
         sum_item_quantity = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in
@@ -55,7 +55,8 @@ class ItemVerifyQRCode(Resource):
         else:
             qrcode = generate_code(16)
             args['present_quantity'] = sum_item_quantity
-            redis_db.set(qrcode, args)
+            redis_db.set(qrcode,
+                         json.dumps({"sku_id": sku_id, "quantity": quantity, "present_quantity": sum_item_quantity}))
             redis_db.expire(qrcode, 120)
             return success_return(data=qrcode)
 
@@ -64,28 +65,29 @@ class ItemVerifyQRCode(Resource):
 @item_verification_ns.expect(head_parser)
 class ItemVerification(Resource):
     @item_verification_ns.marshal_with(return_json)
+    @item_verification_ns.doc(body=verification_parser)
     @permission_required([Permission.BU_WAITER, "app.item_verification.ItemPreVerification.get"])
     def post(self, **kwargs):
         """核销订单中指定数量的sku, 取酒的入口在店铺中，所以可以传递店铺的id， 在店铺员工扫码核销的时候需要核对员工和店铺关系"""
         """核销环节需要检查时候需要返佣"""
 
-        def __verify(to_verify_quantity):
+        def __verify(to_verify_quantity, item_order_id):
             new_verify = new_data_obj("ItemVerification",
                                       **{"id": make_uuid(),
-                                         "item_order_id": kwargs['item_order_id'],
+                                         "item_order_id": item_order_id,
                                          "verification_quantity": to_verify_quantity,
                                          "verification_customer_id": kwargs['current_user'].id,
-                                         "bu_id": kwargs['current_user'].business_unit_employee.business_unit_id
+                                         "bu_id": args['bu_id']
                                          })
             item_order_obj.verified_quantity += to_verify_quantity
 
         args = verification_parser.parse_args()
         qrcode = args['qrcode']
-        verify_quantity = qrcode['quantity']
         if not redis_db.exists(qrcode):
             return false_return(message='核销码无效')
 
-        verify_info = redis_db.get(qrcode)
+        verify_info = json.loads(redis_db.get(qrcode))
+        verify_quantity = verify_info['quantity']
         redis_db.delete(qrcode)
         all_objs = db.session.query(ItemsOrders).with_for_update().filter(
             ItemsOrders.delete_at.__eq__(None),
@@ -96,9 +98,11 @@ class ItemVerification(Resource):
             return false_return(message='用户库存有变化，请重新生成核销码')
 
         current_user = kwargs['current_user']
-        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != kwargs[
+        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != args[
             'bu_id']:
             return false_return(message=f'此员工无权核销'), 400
+
+        # db.session.commit()
 
         for item_order_obj in all_objs:
             left_quantity = item_order_obj.item_quantity - item_order_obj.verified_quantity
@@ -106,10 +110,10 @@ class ItemVerification(Resource):
 
             if diff >= 0:
                 # 表示核销完了
-                __verify(verify_quantity)
+                __verify(verify_quantity, item_order_obj.id)
                 break
             elif diff < 0:
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)
-                __verify(left_quantity)
+                __verify(left_quantity, item_order_obj.id)
         return submit_return("核销成功", "核销失败")
