@@ -89,6 +89,12 @@ update_bu_product_parser.replace_argument('name', required=False, type=str)
 update_bu_product_parser.replace_argument('price', required=False, type=str)
 update_bu_product_parser.replace_argument('objects', required=False, type=list, help='产品图片', location='json')
 
+dispatch_parser = page_parser.copy()
+dispatch_parser.add_argument("status", required=False, type=int, help='0: 已发货未确认，1：已发货已确认, 2:已发货未收到', location='args')
+dispatch_parser.add_argument('operator', required=False, help='操作人员的ID', location='args')
+dispatch_parser.add_argument('operate_at', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="操作日期，格式'%Y-%m-%d", location='args')
+
 
 @bu_ns.route('')
 @bu_ns.expect(head_parser)
@@ -460,10 +466,34 @@ class BUNearby(Resource):
             return false_return(message=str(e)), 400
 
 
-@bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>/confirm')
+@bu_ns.route('/purchase_orders')
+@bu_ns.expect(head_parser)
+class BUPurchaseOrdersAPI(Resource):
+    @bu_ns.doc(body=dispatch_parser)
+    @bu_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_OPERATOR)
+    def get(self, **kwargs):
+        """获取所有入库单"""
+        args = dispatch_parser.parse_args()
+        args['search'] = dict()
+        for k, v in args.items():
+            if k in ('status', 'operator', 'operate_at'):
+                args['search'][k] = v
+        args['search']['delete_at'] = None
+        return success_return(data=get_table_data(BusinessPurchaseOrders, args))
+
+
+@bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>')
 @bu_ns.param('bu_purchase_order_id', '货单ID')
 @bu_ns.expect(head_parser)
 class BUPurchaseOrdersAPI(Resource):
+    @bu_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_OPERATOR)
+    def get(self, **kwargs):
+        """获取指定入库单"""
+        return success_return(
+            data=get_table_data_by_id(BusinessPurchaseOrders, kwargs['bu_purchase_order_id'], search={'delete_at': None}))
+
     @bu_ns.doc(body=dispatch_confirm_parser)
     @bu_ns.marshal_with(return_json)
     @permission_required(Permission.BU_OPERATOR)
