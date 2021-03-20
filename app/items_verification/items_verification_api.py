@@ -31,7 +31,7 @@ class ItemPreVerification(Resource):
         item_objs = ItemsOrders.query.filter(ItemsOrders.delete_at.__eq__(None),
                                              ItemsOrders.item_id.__eq__(kwargs['sku_id']),
                                              ItemsOrders.status.__eq__(1)).all()
-        return success_return(data=sum(item_obj.item_quantity - item_objs.verified_quantity for item_obj in item_objs))
+        return success_return(data=sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in item_objs))
 
 
 @item_verification_ns.route('/get_verify_qrcode')
