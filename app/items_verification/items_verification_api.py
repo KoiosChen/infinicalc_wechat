@@ -13,8 +13,8 @@ item_verification_ns = default_api.namespace('Items Verification', path='/items_
 return_json = item_verification_ns.model('ReturnRegister', return_dict)
 
 all_verification_orders = reqparse.RequestParser()
-all_verification_orders.add_argument("item_order_id", required=False, help='根据商品订单好来查询其所有核销订单')
-all_verification_orders.add_argument("bu_id", required=False, help='店铺ID，查询该用户在指定店铺下的所有核销订单')
+all_verification_orders.add_argument("item_order_id", required=False, help='根据商品订单好来查询其所有核销订单', location='args')
+all_verification_orders.add_argument("bu_id", required=False, help='店铺ID，查询该用户在指定店铺下的所有核销订单', location='args')
 
 verify_quantity_parser = reqparse.RequestParser()
 verify_quantity_parser.add_argument("sku_id", required=True, type=str, help='需要核销的sku id', location='args')
