@@ -1053,6 +1053,9 @@ class SkuMemberPrice(db.Model):
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
     customer_level = db.Column(db.SmallInteger, comment='Customers.level')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
 
 
 class SKU(db.Model):
