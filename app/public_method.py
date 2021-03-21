@@ -15,9 +15,6 @@ from geopy.distance import geodesic
 import geopy.distance
 import geopy
 
-str_list = ['create_at', 'update_at', 'price', 'member_price', 'discount', 'birthday', 'seckill_price',
-            'start_time', 'end_time', 'total_consumption', 'express_fee']
-
 
 def format_decimal(num, zero_format="0.00", to_str=False):
     print(type(num))
@@ -59,6 +56,7 @@ def new_data_obj(table, **kwargs):
 
 
 def calc_sku_price(customer, table):
+    """
     member_card = customer.member_card.filter_by(status=1).first()
     if member_card:
         member_discount = member_card.discount if member_card.discount else Decimal('1.00')
@@ -72,6 +70,8 @@ def calc_sku_price(customer, table):
         discount = table.discount if table.discount else Decimal("1.00")
         total_price = table.price * discount
         return total_price.quantize(Decimal("0.00"))
+    """
+    return str(table.member_price(customer.level))
 
 
 def table_fields(table, appends=[], removes=[]):
@@ -121,14 +121,17 @@ def __make_table(fields, table, strainer=None):
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
             if 'Inventory' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['value','objects'])
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['value', 'objects', 'real_price'])
             elif 'ItemsOrders' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id, appends=['value', 'objects'])
+                tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id,
+                                              appends=['value', 'objects', 'real_price'])
             elif 'FranchiseePurchaseOrders' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects'])
+                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects', 'real_price'])
             else:
-                tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
-                          table.sku]
+                tmp[f] = [
+                    get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects', 'real_price'])
+                    for e in
+                    table.sku]
         elif f == 'spu':
             tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['sku', 'objects']) for e in
                       table.spu.all()]
@@ -226,7 +229,8 @@ def __make_table(fields, table, strainer=None):
             else:
                 tmp[f] = {"member_type": 0}
         elif f == 'cargo_image':
-            tmp[f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
+            tmp[
+                f] = "https://wine-1301791406.cos.ap-shanghai.myqcloud.com//ft/thumbnails/2680f646-8850-44c2-8360-700dcb908d2d.jpeg"
         elif f == 'my_invitees':
             tmp[f] = len(table.invitees)
         elif f == 'customer_info':
