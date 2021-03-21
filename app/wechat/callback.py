@@ -104,6 +104,7 @@ def create_cargoes(**kwargs):
     :param kwargs:
     :return:
     """
+    pass
 
 
 def weixin_rollback(request):
