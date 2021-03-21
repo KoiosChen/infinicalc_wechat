@@ -24,7 +24,8 @@ add_sku_parser.add_argument("unit", required=True, help='SKU单位', location='j
 add_sku_parser.add_argument('objects', type=list, help='sku对应的所有图片或视频', location='json')
 add_sku_parser.add_argument('need_express', type=int, choices=[0, 1], default=1, help='是否需要快递')
 add_sku_parser.add_argument('express_fee', type=float, default=0.00, help='邮费')
-add_sku_parser.add_argument('special', type=int, default=0, help='30以上表示仓储类（例如窖藏），例如31表示窖藏酒，列在商品中；32表示可分装的瓶子，33表示用来分装的盒子，34表示手提袋，35表示纸箱，36表示胶带. 32以上的sku不在首页商品中显示')
+add_sku_parser.add_argument('special', type=int, default=0,
+                            help='30以上表示仓储类（例如窖藏），例如31表示窖藏酒，列在商品中；32表示可分装的瓶子，33表示用来分装的盒子，34表示手提袋，35表示纸箱，36表示胶带. 32以上的sku不在首页商品中显示')
 add_sku_parser.add_argument('could_get_coupon_id', help='购买成功后可获取的优惠券（暂不支持）', location='json')
 add_sku_parser.add_argument('get_score', type=int, help='购买成功后可获取的积分')
 add_sku_parser.add_argument('max_score', type=int, help='最大可用积分')
@@ -117,8 +118,10 @@ class SKUApi(Resource):
         args['search'] = dict()
         if args.get("home_page") in [0, 1]:
             args['search']['home_page'] = args.get('home_page')
+        args['customer_level'] = kwargs['current_user'].level
         return success_return(
-            get_table_data(SKU, args, ['values', 'objects', 'real_price'], ['price', 'member_price', 'discount']))
+            get_table_data(SKU, args, ['values', 'objects', 'real_price'],
+                           ['price', 'member_prices', 'discount']))
 
     @mall_ns.doc(body=add_sku_parser)
     @mall_ns.marshal_with(return_json)
@@ -251,7 +254,8 @@ class SKUAddToShoppingCart(Resource):
                 else:
                     cart_item['obj'].quantity += args['quantity']
 
-                if sku_id in ("be0547c8-bb2b-4fc5-9471-9eb6e9f59ac0", "1c751dce-1118-4eb3-ab36-fbfcfa03dd4e", "9cef190e-6f5c-4557-93eb-c1d2e0d4cf24"):
+                if sku_id in ("be0547c8-bb2b-4fc5-9471-9eb6e9f59ac0", "1c751dce-1118-4eb3-ab36-fbfcfa03dd4e",
+                              "9cef190e-6f5c-4557-93eb-c1d2e0d4cf24"):
                     manager_fee = new_data_obj("ShoppingCart", **{"customer_id": current_user.id,
                                                                   "sku_id": "b54c2fdf-1022-4070-acb7-e6fe48ddaa4e",
                                                                   "delete_at": None})
@@ -264,7 +268,8 @@ class SKUAddToShoppingCart(Resource):
                     else:
                         return false_return(f"管理费绑定失败"), 400
 
-                if sku_id in ("756fc0a1-b641-4b6d-bed4-77232a097afa", "4870060f-307a-4eca-9904-20b0984d1438", "af8008d4-cb84-4c98-bfd4-5d9fb0f6f23d"):
+                if sku_id in ("756fc0a1-b641-4b6d-bed4-77232a097afa", "4870060f-307a-4eca-9904-20b0984d1438",
+                              "af8008d4-cb84-4c98-bfd4-5d9fb0f6f23d"):
                     manager_fee = new_data_obj("ShoppingCart", **{"customer_id": current_user.id,
                                                                   "sku_id": "522e5c42-4ca2-46fd-a3a8-9da06a428e95",
                                                                   "delete_at": None})

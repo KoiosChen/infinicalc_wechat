@@ -1113,7 +1113,7 @@ class SKU(db.Model):
 
     def member_price(self, customer_level):
         return SkuMemberPrice.query.filter(SkuMemberPrice.sku_id.__eq__(self.id),
-                                           SkuMemberPrice.customer_level.__eq__(customer_level)).first()
+                                           SkuMemberPrice.customer_level.__eq__(customer_level)).first().member_price
 
 
 class PersonalRebates(db.Model):
