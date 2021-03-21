@@ -1,8 +1,8 @@
 from flask_restplus import Resource, reqparse
-from ..models import Permission, ItemsOrders, make_uuid
+from ..models import Permission, ItemsOrders, make_uuid, ItemVerification
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, submit_return
-from ..public_method import new_data_obj
+from ..public_method import new_data_obj, get_table_data
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 import json
@@ -12,6 +12,10 @@ item_verification_ns = default_api.namespace('Items Verification', path='/items_
 
 return_json = item_verification_ns.model('ReturnRegister', return_dict)
 
+all_verification_orders = reqparse.RequestParser()
+all_verification_orders.add_argument("item_order_id", required=False, help='根据商品订单好来查询其所有核销订单')
+all_verification_orders.add_argument("bu_id", required=False, help='店铺ID，查询该用户在指定店铺下的所有核销订单')
+
 verify_quantity_parser = reqparse.RequestParser()
 verify_quantity_parser.add_argument("sku_id", required=True, type=str, help='需要核销的sku id', location='args')
 verify_quantity_parser.add_argument("quantity", required=True, help='核销数量', location='args')
@@ -19,6 +23,27 @@ verify_quantity_parser.add_argument("quantity", required=True, help='核销数�
 verification_parser = reqparse.RequestParser()
 verification_parser.add_argument("qrcode", required=True, type=str, help='get_verify_qrcode 返回的值')
 verification_parser.add_argument('bu_id', required=True, type=str, help='用户核销入口所在的店铺ID')
+
+
+@item_verification_ns.route('')
+@item_verification_ns.expect(head_parser)
+class ItemVerificationOrders(Resource):
+    @item_verification_ns.marshal_with(return_json)
+    @item_verification_ns.doc(body=all_verification_orders)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """获取用户所有核销单，可通过状态查询"""
+        current_user = kwargs['current_user']
+        args = all_verification_orders.parse_args()
+        args['search'] = dict()
+        for k, v in args.items():
+            if v:
+                args['search'][k] = v
+        args['search']['delete_at'] = None
+        args['search']['verification_customer_id'] = current_user.id
+        return success_return(data=get_table_data(ItemVerification, args,
+                                                  appends=['items_orders', 'bu'],
+                                                  removes=['item_order_id', 'bu_id']))
 
 
 @item_verification_ns.route('/pre_verification/<string:sku_id>')
@@ -63,7 +88,7 @@ class ItemVerifyQRCode(Resource):
 
 @item_verification_ns.route('/verify')
 @item_verification_ns.expect(head_parser)
-class ItemVerification(Resource):
+class ItemVerificationAPI(Resource):
     @item_verification_ns.marshal_with(return_json)
     @item_verification_ns.doc(body=verification_parser)
     @permission_required([Permission.BU_WAITER, "app.item_verification.ItemPreVerification.get"])

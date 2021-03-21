@@ -121,7 +121,11 @@ def __make_table(fields, table, strainer=None):
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
             if 'Inventory' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects'])
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['value','objects'])
+            elif 'ItemsOrders' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id, appends=['value', 'objects'])
+            elif 'FranchiseePurchaseOrders' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects'])
             else:
                 tmp[f] = [get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects']) for e in
                           table.sku]
@@ -190,7 +194,11 @@ def __make_table(fields, table, strainer=None):
                 tmp[f] = str(calc_sku_price(customer, table))
         elif f == 'items_orders':
             tmp[f] = list()
-            for o in table.items_orders_id.all():
+            if 'ItemVerification' in table.__class__.__name__:
+                query_order = [table.item_order]
+            else:
+                query_order = table.items_orders_id.all()
+            for o in query_order:
                 sku_obj = o.bought_sku.objects
                 sku_thumbnail = ''
                 for obj in sku_obj:
@@ -266,6 +274,16 @@ def __make_table(fields, table, strainer=None):
             tmp[f] = table.franchisee.name
         elif f == 'job_name':
             tmp[f] = table.role.name
+        elif f == 'bu':
+            tmp[f] = get_table_data_by_id(BusinessUnits, table.bu.id, appends=['objects'])
+        elif f == 'original_order':
+            if 'Business' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(Franchisees, table.original_order.franchisee_id)
+            elif 'Franchisee' in table.__class__.__name__:
+                tmp[f] = "盛馔酒业"
+        elif f == 'downstream':
+            if 'Franchisee' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(BusinessUnits, table.sell_to)
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
