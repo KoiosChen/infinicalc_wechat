@@ -121,7 +121,7 @@ def __make_table(fields, table, strainer=None):
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
             if 'Inventory' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['value', 'objects', 'real_price'])
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'])
             elif 'ItemsOrders' in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id,
                                               appends=['value', 'objects', 'real_price'])
