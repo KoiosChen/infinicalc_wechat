@@ -400,6 +400,7 @@ class BusinessUnits(db.Model):
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
+    verify_orders = db.relationship('ItemVerification', backref='bu', lazy='dynamic')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1274,6 +1275,7 @@ class ItemsOrders(db.Model):
     delete_at = db.Column(db.DateTime)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
     refund_order = db.relationship("Refund", backref='item_order', uselist=False)
+    verify_orders = db.relationship("ItemVerification", backref='item_order', lazy='dynamic')
 
 
 class ItemVerification(db.Model):

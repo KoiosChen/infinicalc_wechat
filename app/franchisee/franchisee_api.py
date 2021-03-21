@@ -85,6 +85,12 @@ dispatch_parser.add_argument("sku_id", required=True, type=str)
 dispatch_parser.add_argument("amount", required=True, type=int)
 dispatch_parser.add_argument("bu_id", required=True, type=str, help='发给店铺的id')
 
+purchase_parser = page_parser.copy()
+purchase_parser.add_argument("status", required=False, type=int, help='0: 已发货未确认，1：已发货已确认, 2:已发货未收到', location='args')
+purchase_parser.add_argument('operator', required=False, help='操作人员的ID', location='args')
+purchase_parser.add_argument('operate_at', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                             help="操作日期，格式'%Y-%m-%d", location='args')
+
 
 @franchisee_ns.route('')
 @franchisee_ns.expect(head_parser)
@@ -493,6 +499,25 @@ class FranchiseePurchaseOrdersAPI(Resource):
             fi_obj['obj'].amount += fpo_obj.amount
 
         return submit_return("确认成功", "确认失败")
+
+
+@franchisee_ns.route('/purchase_orders')
+@franchisee_ns.expect(head_parser)
+class FranchiseePurchaseOrdersAPI(Resource):
+    @franchisee_ns.doc(body=purchase_parser)
+    @franchisee_ns.marshal_with(return_json)
+    @permission_required(Permission.BU_OPERATOR)
+    def get(self, **kwargs):
+        """获取所有出入库单"""
+        args = purchase_parser.parse_args()
+        args['search'] = dict()
+        for k, v in args.items():
+            if k in ('status', 'operator', 'operate_at') and v:
+                args['search'][k] = v
+        args['search']['delete_at'] = None
+        return success_return(
+            data=get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
+                                removes=['franchisee_id', 'sku_id', 'purchase_from']))
 
 
 @franchisee_ns.route('/purchase_orders/dispatch')

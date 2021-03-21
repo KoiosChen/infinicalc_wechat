@@ -477,10 +477,10 @@ class BUPurchaseOrdersAPI(Resource):
         args = dispatch_parser.parse_args()
         args['search'] = dict()
         for k, v in args.items():
-            if k in ('status', 'operator', 'operate_at'):
+            if k in ('status', 'operator', 'operate_at') and v:
                 args['search'][k] = v
         args['search']['delete_at'] = None
-        return success_return(data=get_table_data(BusinessPurchaseOrders, args))
+        return success_return(data=get_table_data(BusinessPurchaseOrders, args, appends=['original_order']))
 
 
 @bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>')
@@ -492,7 +492,8 @@ class BUPurchaseOrdersAPI(Resource):
     def get(self, **kwargs):
         """获取指定入库单"""
         return success_return(
-            data=get_table_data_by_id(BusinessPurchaseOrders, kwargs['bu_purchase_order_id'], search={'delete_at': None}))
+            data=get_table_data_by_id(BusinessPurchaseOrders, kwargs['bu_purchase_order_id'],
+                                      search={'delete_at': None}, appends=['original_order']))
 
     @bu_ns.doc(body=dispatch_confirm_parser)
     @bu_ns.marshal_with(return_json)
