@@ -130,6 +130,14 @@ def update_order(data):
                     # 增加累积消费金额
                     customer.total_consumption += cash_fee
 
+                    # 根据累计消费，提升用户等级。若退款降低总消费金额，同样会降低等级
+                    if customer.total_consumption >= Decimal("2000.00"):
+                        customer.level = 3
+                    elif Decimal("1197.00") <= customer.total_consumption < Decimal("2000.00"):
+                        customer.level = 2
+                    else:
+                        customer.level = 1
+
                     # 商品订单处理
                     for item_order in items:
                         item_order.status = 1

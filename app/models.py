@@ -1269,7 +1269,7 @@ class ItemsOrders(db.Model):
     verified_quantity = db.Column(db.Integer, default=0, index=True, comment='已核销的数量')
     item_price = db.Column(db.DECIMAL(10, 2), comment="下单时sku的价格，如果有show_price，记录show_price，否则记录price")
     transaction_price = db.Column(db.DECIMAL(10, 2), comment="实际交易的价格，未使用积分的价格，例如有会员价，有折扣（real_price）")
-    customer_level = db.Column(db.SmallInteger, comment='用户购买是的等级，1，普通，2 代言人，3 达人。对应customer的level 1，2，3')
+    customer_level = db.Column(db.SmallInteger, comment='用户购买时的等级，1，普通，2 代言人，3 达人。对应customer的level 1，2，3')
     benefits = db.relationship('Benefits', secondary=itemsorders_benefits, backref=db.backref('item_orders'))
     status = db.Column(db.SmallInteger, default=0, comment='1：正常 2：禁用 0：订单未完成 3:退货中，4: 退货成功')
     special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
@@ -1668,8 +1668,9 @@ class CloudWineRebates(db.Model):
     __tablename__ = "cloud_wine_rebates"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), index=True, comment="返佣名称")
-    role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
-
+    sku_id = db.Column(db.String(64), comment='sku_id')
+    role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'), comment='职业级别')
+    consumer_level = db.Column(db.SmallInteger, comment='用户级别，customers.level')
     scene = db.Column(db.String(50), comment='业务场景，目前有PAYMENT; PICKUP')
     rebate = db.Column(db.DECIMAL(11, 2), index=True, comment='返佣金额')
     score = db.Column(db.Integer, index=True, comment='积分奖励')

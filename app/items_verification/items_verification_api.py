@@ -7,6 +7,7 @@ from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 import json
 from app.scene_invitation.scene_invitation_api import generate_code
+from app.rebate_calc import *
 
 item_verification_ns = default_api.namespace('Items Verification', path='/items_verification', description='物品核销接口')
 
@@ -126,8 +127,6 @@ class ItemVerificationAPI(Resource):
         if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != args[
             'bu_id']:
             return false_return(message=f'此员工无权核销'), 400
-
-        # db.session.commit()
 
         for item_order_obj in all_objs:
             left_quantity = item_order_obj.item_quantity - item_order_obj.verified_quantity

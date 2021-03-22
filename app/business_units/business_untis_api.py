@@ -368,6 +368,15 @@ class BUEmployeesApi(Resource):
             bu_id = args['bu_id']
         else:
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+
+        # 店铺经理和店长在一个店铺中唯一
+        role_name = CustomerRoles.query.get(args['job_desc']).name
+        if role_name in ("BU_OPERATOR", "BU_MANAGER"):
+            tmp_obj = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.business_unit_id.__eq__(bu_id),
+                                                         BusinessUnitEmployees.job_desc.__eq__(args['job_desc'])).all()
+            if tmp_obj:
+                return false_return(message="当前角色唯一，不可添加"), 400
+
         new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
                                                                 "job_desc": args['job_desc'],
                                                                 "business_unit_id": bu_id})
@@ -375,13 +384,9 @@ class BUEmployeesApi(Resource):
             return false_return(message=f"create user {args['name']} fail")
         else:
             if session_commit().get("code") == 'success':
-                # invitation_code = generate_code(12)
-                # redis_db.set(invitation_code, new_employee['obj'].id)
-                # redis_db.expire(invitation_code, 600)
-                # return success_return(data={'scene': 'new_bu_employee', 'scene_invitation': invitation_code})
                 return success_return(data={'new_bu_employee': new_employee['obj'].id})
             else:
-                return false_return(message="create employee fail")
+                return false_return(message="create employee fail"), 400
 
 
 @bu_ns.route('/employee/<string:employee_id>')
