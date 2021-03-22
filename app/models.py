@@ -1,17 +1,10 @@
 from flask import current_app
-from . import db, redis_db
+from app import db, redis_db
 import datetime
 import os
-import bleach
-import re
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from .common import session_commit
-import sqlalchemy
 import uuid
 from sqlalchemy import UniqueConstraint
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.dialects.mysql import LONGTEXT
 import random
 from decimal import Decimal
 
@@ -1668,10 +1661,10 @@ class CloudWineRebates(db.Model):
     __tablename__ = "cloud_wine_rebates"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), index=True, comment="返佣名称")
-    sku_id = db.Column(db.String(64), comment='sku_id')
+    sku_id = db.Column(db.String(64), index=True, comment='sku_id')
     role_id = db.Column(db.Integer, db.ForeignKey('customer_roles.id'), comment='职业级别')
     consumer_level = db.Column(db.SmallInteger, comment='用户级别，customers.level')
-    scene = db.Column(db.String(50), comment='业务场景，目前有PAYMENT; PICKUP')
+    scene = db.Column(db.String(50), comment='业务场景，目前有PURCHASE; PICKUP')
     rebate = db.Column(db.DECIMAL(11, 2), index=True, comment='返佣金额')
     score = db.Column(db.Integer, index=True, comment='积分奖励')
     status = db.Column(db.SmallInteger, default=1)

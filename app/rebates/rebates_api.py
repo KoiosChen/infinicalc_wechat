@@ -7,6 +7,7 @@ from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from .calc_rebate import self_rebate, calc
 from app.type_validation import checkout_sku_type
+from app.rebate_calc import pickup_rebate, purchase_rebate
 from ..wechat.pay import weixin_pay
 from sqlalchemy import and_
 import datetime
@@ -30,7 +31,8 @@ rebate_statistic.add_argument('rebate_end_time', type=lambda x: datetime.datetim
                               help='统计结束时间，此时间为支付成功回调的时间。前端页面可设置默认为当月末, 格式%Y-%m-%d', location='args')
 
 rebate_parser = reqparse.RequestParser()
-rebate_parser.add_argument("order_id")
+rebate_parser.add_argument("item_order_id")
+rebate_parser.add_argument("pickup_employee_id")
 
 
 @rebates_ns.route('')
@@ -117,4 +119,7 @@ class RebateTestApi(Resource):
     def get(self, **kwargs):
         """获取当前登录用户的返佣"""
         args = rebate_parser.parse_args()
-        return success_return(calc(args.get("order_id"), kwargs['current_user'], pay_type="MessageRecharge"))
+        return success_return(
+            pickup_rebate(item_order_id=args['item_order_id'],
+                          pickup_employee_id=args['pickup_employee_id'],
+                          consumer_id=kwargs['current_user'].id))
