@@ -727,6 +727,7 @@ class Customers(db.Model):
     refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
     score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
     personal_rebates = db.relationship("PersonalRebates", backref='rebates_owner', lazy='dynamic')
+    cloud_wine_personal_rebate_records = db.relationship("CloudWinePersonalRebateRecords", backref='rebate_owner', uselist=False)
     business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
                                              foreign_keys='BusinessUnitEmployees.customer_id')
     franchisee_operator = db.relationship('FranchiseeOperators', backref='operator_wechat', uselist=False)
@@ -1122,8 +1123,21 @@ class PersonalRebates(db.Model):
     rebate_value = db.Column(db.DECIMAL(9, 2), comment='返佣金额')
     score = db.Column(db.SmallInteger, default=0, comment='获赠的积分')
     status = db.Column(db.SmallInteger, default=0, comment='0: 不可提现（刚购买或者用户提出退货后） 1：可提现 2：已提现')
-    # 创建日期过一定天数后才能体现
+    # 创建日期过一定天数后才能提现
     relation = db.Column(db.String(40), comment='返佣关系')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class CloudWinePersonalRebateRecords(db.Model):
+    """云酒窖版本个人返佣记录表"""
+    __tablename__ = 'cloud_wine_personal_rebate_records'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    item_verification_id = db.Column(db.String(64), db.ForeignKey("item_verification.id"))
+    rebate_customer_id = db.Column(db.String(64), db.ForeignKey("customers.id"))
+    rebate_money = db.Column(db.DECIMAL(7, 2), index=True, comment='返佣的金额')
+    rebate_score = db.Column(db.Integer, index=True, comment='返佣、奖励的金额')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1281,6 +1295,7 @@ class ItemVerification(db.Model):
     verification_quantity = db.Column(db.Integer, default=1, index=True, comment="核销的数量")
     verification_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    rebate_status = db.Column(db.SmallInteger, default=0, comment='0,未返佣，1，已返佣，2， 不可返佣')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, default=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
