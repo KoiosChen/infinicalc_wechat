@@ -192,4 +192,7 @@ def create_app(config_name):
     from .wechat_purse import wechat_purse as wp_blueprint
     app.register_blueprint(wp_blueprint)
 
+    from .deposit import deposit as deposit_blueprint
+    app.register_blueprint(deposit_blueprint)
+
     return app

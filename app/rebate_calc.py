@@ -80,7 +80,7 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
     # first order rebate
     item_verification_obj = db.session.query(ItemVerification).with_for_update().filter(
         ItemVerification.id.__eq__(item_verification_id)).first()
-    if item_verification_obj.status != 0:
+    if item_verification_obj.rebate_status != 0:
         return false_return(message='此订单已经返佣'), 400
 
     item_order_id = item_verification_obj.item_order_id
@@ -93,23 +93,46 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
         purchase_rebate(consumer_id, item_order_id)
 
     pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
-    employee_operator = pickup_employee.business_unit.employees
+    bu_employees = pickup_employee.business_unit.employees
+    operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
+    employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
+    manger_role_id = CustomerRoles.query.filter_by(name="BU_MANAGER").first().id
+    employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
 
-    # 获取
+    # 获取rebate
     kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP"}
     waiter_rebate = get_rebate("BU_WAITER", **kwargs)
     operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
     manager_rebate = get_rebate("BU_MANAGER", **kwargs)
 
-    pk_rebate = bu_rebate(pickup_employee, waiter_rebate, operator_rebate, manager_rebate)
+    # pk_rebate = bu_rebate(pickup_employee, waiter_rebate, operator_rebate, manager_rebate)
 
     # 店铺取酒返佣
-    pickup_employee.employee_wechat.purse += pk_rebate
-
-    # create rebate record
+    pickup_employee.employee_wechat.purse += waiter_rebate
     new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
                                                       "item_verification_id": item_verification_id,
-                                                      "rebate_customer_id": pickup_employee.id,
-                                                      "rebate_money": pk_rebate})
+                                                      "rebate_customer_id": pickup_employee.employee_wechat.id,
+                                                      "rebate_money": waiter_rebate})
+    if employee_operator and employee_operator.employee_wechat:
+        employee_operator.employee_wechat.purse += operator_rebate
+        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                          "item_verification_id": item_verification_id,
+                                                          "rebate_customer_id": employee_operator.employee_wechat.id,
+                                                          "rebate_money": operator_rebate})
+    if not employee_operator or not employee_operator.employee_wechat and (
+            employee_manager and employee_manager.employee_wechat):
+        employee_manager.employee_wechat.purse += operator_rebate
+        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                          "item_verification_id": item_verification_id,
+                                                          "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                          "rebate_money": operator_rebate})
+    if employee_manager and employee_manager.employee_wechat:
+        employee_manager.employee_wechat.purse += manager_rebate
+        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                          "item_verification_id": item_verification_id,
+                                                          "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                          "rebate_money": manager_rebate})
+
+    item_verification_obj.rebate_status = 1
 
     return submit_return("返佣成功", "返佣失败")

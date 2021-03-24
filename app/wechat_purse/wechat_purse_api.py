@@ -10,6 +10,9 @@ purse_ns = default_api.namespace('Wechat Purse', path='/wechat_purse', descripti
 
 return_json = purse_ns.model('ReturnRegister', return_dict)
 
+withdraw_get_orders_parser = page_parser.copy()
+withdraw_get_orders_parser.add_argument('status', required=False, type=int, help='提现状态，0，失败，1 成功', location='args')
+
 withdraw_parser = reqparse.RequestParser()
 withdraw_parser.add_argument("order_id", required=False, type=str, help='当提交失败后，用户可查询提现订单再次提交，重复提交用相同ID')
 withdraw_parser.add_argument("amount", required=True, type=str, help='提现金额。无论提现订单号是否提交，金额必须提交。若再次提交订单，金额必须和该订单的相同')
@@ -18,6 +21,14 @@ withdraw_parser.add_argument("amount", required=True, type=str, help='提现金�
 @purse_ns.route('/withdraw')
 @purse_ns.expect(head_parser)
 class WithDrawAPI(Resource):
+    @purse_ns.doc(body=withdraw_get_orders_parser)
+    @purse_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """提现接口查询"""
+        args = withdraw_get_orders_parser.parse_args()
+
+
     @purse_ns.doc(body=withdraw_parser)
     @purse_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
