@@ -33,7 +33,7 @@ def purchase_rebate(consumer_id, item_verification_id):
     """
     购买场景的返佣
     :param consumer_id:
-    :param item_order_id:
+    :param item_verification_id:
     :return:
     """
     consumer_obj = Customers.query.get(consumer_id)
@@ -50,21 +50,52 @@ def purchase_rebate(consumer_id, item_verification_id):
     bu_operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
     bu_waiter_rebate = get_rebate("BU_WAITER", **kwargs)
 
+    # 购买返回，返给加盟商老板
     for fo in franchisee_operators:
         if fo.job_desc == CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER'):
-            the_purchase_rebate = f_manager_rebate
-            fo.operator_wechat.purse += the_purchase_rebate
+            fo.operator_wechat.purse += f_manager_rebate
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": fo.employee_wechat.id,
+                                                              "rebate_money": f_manager_rebate})
             break
 
-    the_purchase_rebate = bu_rebate(consumer_obj.business_unit_employee, waiter_rebate=bu_waiter_rebate,
-                                    operator_rebate=bu_operator_rebate, manager_rebate=bu_manager_rebate)
+    bu_employees = consumer_obj.business_unit_employee
 
-    consumer_obj.business_unit_employee.employee_wechat.purse += the_purchase_rebate
+    operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
+    employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
+    manger_role_id = CustomerRoles.query.filter_by(name="BU_MANAGER").first().id
+    employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
 
-    new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                      "item_verification_id": item_verification_id,
-                                                      "rebate_customer_id": consumer_obj.business_unit_employee.id,
-                                                      "rebate_money": the_purchase_rebate})
+    # 店铺卖酒返佣。老板有躺赚，服务员和店长只有在首单销售中会产生返佣
+    bu_employees.employee_wechat.purse += bu_waiter_rebate
+    if bu_waiter_rebate > 0:
+        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                          "item_verification_id": item_verification_id,
+                                                          "rebate_customer_id": bu_employees.employee_wechat.id,
+                                                          "rebate_money": bu_waiter_rebate})
+    if employee_operator and employee_operator.employee_wechat:
+        employee_operator.employee_wechat.purse += bu_operator_rebate
+        if bu_operator_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_operator.employee_wechat.id,
+                                                              "rebate_money": bu_operator_rebate})
+    if not employee_operator or not employee_operator.employee_wechat and (
+            employee_manager and employee_manager.employee_wechat):
+        employee_manager.employee_wechat.purse += bu_operator_rebate
+        if bu_operator_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                              "rebate_money": bu_operator_rebate})
+    if employee_manager and employee_manager.employee_wechat:
+        employee_manager.employee_wechat.purse += bu_manager_rebate
+        if bu_manager_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                              "rebate_money": bu_manager_rebate})
 
     return True
 
@@ -109,30 +140,34 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
 
     # 店铺取酒返佣
     pickup_employee.employee_wechat.purse += waiter_rebate
-    new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                      "item_verification_id": item_verification_id,
-                                                      "rebate_customer_id": pickup_employee.employee_wechat.id,
-                                                      "rebate_money": waiter_rebate})
-    if employee_operator and employee_operator.employee_wechat:
-        employee_operator.employee_wechat.purse += operator_rebate
+    if waiter_rebate > 0:
         new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
                                                           "item_verification_id": item_verification_id,
-                                                          "rebate_customer_id": employee_operator.employee_wechat.id,
-                                                          "rebate_money": operator_rebate})
+                                                          "rebate_customer_id": pickup_employee.employee_wechat.id,
+                                                          "rebate_money": waiter_rebate})
+    if employee_operator and employee_operator.employee_wechat:
+        employee_operator.employee_wechat.purse += operator_rebate
+        if operator_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_operator.employee_wechat.id,
+                                                              "rebate_money": operator_rebate})
     if not employee_operator or not employee_operator.employee_wechat and (
             employee_manager and employee_manager.employee_wechat):
         employee_manager.employee_wechat.purse += operator_rebate
-        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                          "item_verification_id": item_verification_id,
-                                                          "rebate_customer_id": employee_manager.employee_wechat.id,
-                                                          "rebate_money": operator_rebate})
+        if operator_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                              "rebate_money": operator_rebate})
     if employee_manager and employee_manager.employee_wechat:
         employee_manager.employee_wechat.purse += manager_rebate
-        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                          "item_verification_id": item_verification_id,
-                                                          "rebate_customer_id": employee_manager.employee_wechat.id,
-                                                          "rebate_money": manager_rebate})
+        if manager_rebate > 0:
+            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                              "item_verification_id": item_verification_id,
+                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                              "rebate_money": manager_rebate})
 
-    item_verification_obj.rebate_status = 1
+    item_verification_obj.rebate_status += 1
 
     return submit_return("返佣成功", "返佣失败")
