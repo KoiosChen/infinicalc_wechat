@@ -25,6 +25,7 @@ update_banner_parser.replace_argument('object', required=False, type=str, help='
 
 banner_page_parser = page_parser.copy()
 banner_page_parser.add_argument("name", help='根据banner名称查询', location='args')
+banner_page_parser.add_argument("scene", help='场景', location='args')
 
 
 @banner_ns.route('')
@@ -41,6 +42,8 @@ class BannersApi(Resource):
         args['search'] = dict()
         if args.get("name"):
             args['search']['name'] = args.get('name')
+        if args.get('scene'):
+            args['search']['scene'] = args.get('scene')
         banner_result = get_table_data(Banners, args, appends=['banner_contents'], removes=['objects'])
 
         sort_by_order(banner_result['records'])
