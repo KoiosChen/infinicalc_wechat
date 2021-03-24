@@ -389,7 +389,7 @@ class BusinessUnits(db.Model):
     latitude = db.Column(db.String(20), comment='纬度', index=True)
     inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
     deposit = db.Column(db.SmallInteger, default=0, comment='寄存量')
-    employees = db.relationship("BusinessUnitEmployees", backref='business_unit', uselist=False)
+    employees = db.relationship("BusinessUnitEmployees", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')

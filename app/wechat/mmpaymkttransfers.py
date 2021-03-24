@@ -85,13 +85,18 @@ def weixin_pay_purse(order_id, amount, customer_id, check_name="NO_CHECK"):
                                                      "amount": amount})
         if not new_weixin_pay_purse_order:
             raise Exception("创建取现订单失败")
-
+        pay_purse_order = new_weixin_pay_purse_order['obj']
         try:
             # 提交支付到零钱
             order_info, info = request_wx_pay(order_id, int(amount * 100), customer.openid)
             if order_info and info:
                 if info['result_code'] == "SUCCESS":
+                    pay_purse_order.original_amount = customer.purse
+                    pay_purse_order.result_code = info['result_code']
+                    pay_purse_order.payment_no = info['payment_no']
+                    pay_purse_order.payment_time = info['payment_time']
                     customer.purse -= Decimal(amount)
+
                     if session_commit().get('code') == 'false':
                         raise Exception("订单数据提交失败，事务回滚")
                     return success_return(data=order_info, message="付款到用户零钱成功")
@@ -99,6 +104,12 @@ def weixin_pay_purse(order_id, amount, customer_id, check_name="NO_CHECK"):
                 else:
                     raise Exception(info['result_code'])
             elif order_info:
+                pay_purse_order.original_amount = customer.purse
+                pay_purse_order.result_code = info['result_code']
+                err_code, err_code_des = order_info.split(':')
+                pay_purse_order.err_code = err_code
+                pay_purse_order.err_code_desc = err_code_des
+                db.session.commit()
                 raise Exception(order_info)
             else:
                 raise Exception("请求无响应")
