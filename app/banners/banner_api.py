@@ -14,7 +14,7 @@ return_json = banner_ns.model('ReturnRegister', return_dict)
 
 add_banner_parser = reqparse.RequestParser()
 add_banner_parser.add_argument('name', required=True, help='Banner名称')
-add_banner_parser.add_argument('scene', required=False, choices=['', "home_page"])
+add_banner_parser.add_argument('scene', required=False, help='场景，自定义')
 add_banner_parser.add_argument('object', required=True, type=str, help='上传对象')
 add_banner_parser.add_argument('order', type=int, help='banner顺序，大于等于0的整数')
 add_banner_parser.add_argument('url', help='点击跳转的URL，空值表示不可点击')

@@ -97,15 +97,16 @@ class ItemVerificationAPI(Resource):
         """核销订单中指定数量的sku, 取酒的入口在店铺中，所以可以传递店铺的id， 在店铺员工扫码核销的时候需要核对员工和店铺关系"""
         """核销环节需要检查时候需要返佣"""
 
-        def __verify(to_verify_quantity, item_order_id):
+        def __verify(to_verify_quantity, item_order_obj):
             new_verify = new_data_obj("ItemVerification",
                                       **{"id": make_uuid(),
-                                         "item_order_id": item_order_id,
+                                         "item_order_id": item_order_obj.id,
                                          "verification_quantity": to_verify_quantity,
                                          "verification_customer_id": kwargs['current_user'].id,
                                          "bu_id": args['bu_id']
                                          })
             item_order_obj.verified_quantity += to_verify_quantity
+            return new_verify['obj'].id
 
         args = verification_parser.parse_args()
         qrcode = args['qrcode']
@@ -134,10 +135,13 @@ class ItemVerificationAPI(Resource):
 
             if diff >= 0:
                 # 表示核销完了
-                __verify(verify_quantity, item_order_obj.id)
+                vid = __verify(verify_quantity, item_order_obj)
+                pickup_rebate(vid, current_user.id, item_order_obj.shop_orders.first().customer_id)
                 break
             elif diff < 0:
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)
-                __verify(left_quantity, item_order_obj.id)
+                vid = __verify(left_quantity, item_order_obj)
+                pickup_rebate(vid, current_user.id, item_order_obj.shop_orders.first().customer_id)
+
         return submit_return("核销成功", "核销失败")
