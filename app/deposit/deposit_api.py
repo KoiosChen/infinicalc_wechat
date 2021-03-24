@@ -15,7 +15,7 @@ deposit_ns = default_api.namespace('Deposit', path='/deposit', description='存�
 return_json = deposit_ns.model('ReturnRegister', return_dict)
 
 get_deposit_order = page_parser.copy()
-get_deposit_order.add_argument('deposit_person', required=False, tyep=str, help='寄存人id， 如果为空，则按照调用接口的用户id来查询',
+get_deposit_order.add_argument('deposit_person', required=False, type=str, help='寄存人id， 如果为空，则按照调用接口的用户id来查询',
                                location='args')
 get_deposit_order.add_argument('deposit_status', required=False, help='0,查询开瓶的； 1查询未开瓶的', location='args')
 get_deposit_order.add_argument('deposit_confirm_waiter', required=False, help='操作寄存的服务员ID', location='args')
