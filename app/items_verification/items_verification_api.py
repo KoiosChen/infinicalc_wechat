@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import Permission, ItemsOrders, make_uuid, ItemVerification
+from ..models import Permission, ItemsOrders, make_uuid, ItemVerification, BusinessUnitInventory
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, submit_return
 from ..public_method import new_data_obj, get_table_data
@@ -8,6 +8,7 @@ from ..swagger import return_dict, head_parser, page_parser
 import json
 from app.scene_invitation.scene_invitation_api import generate_code
 from app.rebate_calc import *
+import datetime
 
 item_verification_ns = default_api.namespace('Items Verification', path='/items_verification', description='物品核销接口')
 
@@ -105,6 +106,19 @@ class ItemVerificationAPI(Resource):
                                          "verification_customer_id": kwargs['current_user'].id,
                                          "bu_id": args['bu_id']
                                          })
+
+            new_sell_order = new_data_obj("BusinessPurchaseOrders",
+                                          **{"amount": -to_verify_quantity,
+                                             "sell_to": item_order_obj.shop_orders.customer_id,
+                                             "status": 1,
+                                             "sku_id": item_order_obj.item_id,
+                                             "bu_id": args['bu_id'],
+                                             "operator": kwargs['current_user'].id,
+                                             "operate_at": datetime.datetime.now()})
+            bu_inventory_obj = BusinessUnitInventory.query.filter(BusinessUnitInventory.bu_id.__eq__(args['bu_id']),
+                                                                  BusinessUnitInventory.sku_id.__eq__(
+                                                                      item_order_obj.item_id)).first()
+            bu_inventory_obj.amount -= to_verify_quantity
             item_order_obj.verified_quantity += to_verify_quantity
             return new_verify['obj'].id
 
@@ -129,6 +143,13 @@ class ItemVerificationAPI(Resource):
             'bu_id']:
             return false_return(message=f'此员工无权核销'), 400
 
+        bu_inventory_obj = BusinessUnitInventory.query.filter(BusinessUnitInventory.bu_id.__eq__(args['bu_id']),
+                                                              BusinessUnitInventory.sku_id.__eq__(
+                                                                  verify_info['sku_id'])).first()
+
+        if bu_inventory_obj.amount < verify_quantity:
+            return false_return(message='店铺库存不足'), 400
+
         for item_order_obj in all_objs:
             left_quantity = item_order_obj.item_quantity - item_order_obj.verified_quantity
             diff = left_quantity - verify_quantity
@@ -136,12 +157,12 @@ class ItemVerificationAPI(Resource):
             if diff >= 0:
                 # 表示核销完了
                 vid = __verify(verify_quantity, item_order_obj)
-                pickup_rebate(vid, current_user.id, item_order_obj.shop_orders.first().customer_id)
+                pickup_rebate(vid, current_user.business_unit_employee.id, item_order_obj.shop_orders.customer_id)
                 break
             elif diff < 0:
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)
                 vid = __verify(left_quantity, item_order_obj)
-                pickup_rebate(vid, current_user.id, item_order_obj.shop_orders.first().customer_id)
+                pickup_rebate(vid, current_user.business_unit_employee.id, item_order_obj.shop_orders.customer_id)
 
         return submit_return("核销成功", "核销失败")

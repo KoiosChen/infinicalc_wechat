@@ -109,65 +109,68 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
     :return:
     """
     # first order rebate
-    item_verification_obj = db.session.query(ItemVerification).with_for_update().filter(
-        ItemVerification.id.__eq__(item_verification_id)).first()
-    if item_verification_obj.rebate_status != 0:
-        return false_return(message='此订单已经返佣'), 400
+    try:
+        item_verification_obj = db.session.query(ItemVerification).with_for_update().filter(
+            ItemVerification.id.__eq__(item_verification_id)).first()
+        if item_verification_obj.rebate_status != 0:
+            return false_return(message='此订单已经返佣'), 400
 
-    item_order_id = item_verification_obj.item_order_id
+        item_order_id = item_verification_obj.item_order_id
 
-    item_obj = ItemsOrders.query.get(item_order_id)
-    shop_order_obj = item_obj.shop_orders
-    consumer_obj = Customers.query.get(consumer_id)
-    if consumer_obj.first_order_table == shop_order_obj.__class__.__name__ and consumer_obj.first_order_id == shop_order_obj.id:
-        # 表明当前item order 属于首单，调用 purchase_rebate来计算购买返佣
-        purchase_rebate(consumer_id, item_order_id)
+        item_obj = ItemsOrders.query.get(item_order_id)
+        shop_order_obj = item_obj.shop_orders
+        consumer_obj = Customers.query.get(consumer_id)
+        if consumer_obj.first_order_table == shop_order_obj.__class__.__name__ and consumer_obj.first_order_id == shop_order_obj.id:
+            # 表明当前item order 属于首单，调用 purchase_rebate来计算购买返佣
+            purchase_rebate(consumer_id, item_order_id)
 
-    pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
-    bu_employees = pickup_employee.business_unit.employees
-    operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
-    employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
-    manger_role_id = CustomerRoles.query.filter_by(name="BU_MANAGER").first().id
-    employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
+        pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
+        bu_employees = pickup_employee.business_unit.employees
+        operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
+        employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
+        manger_role_id = CustomerRoles.query.filter_by(name="BU_MANAGER").first().id
+        employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
 
-    # 获取rebate
-    kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP"}
-    waiter_rebate = get_rebate("BU_WAITER", **kwargs)
-    operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
-    manager_rebate = get_rebate("BU_MANAGER", **kwargs)
+        # 获取rebate
+        kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP"}
+        waiter_rebate = get_rebate("BU_WAITER", **kwargs)
+        operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
+        manager_rebate = get_rebate("BU_MANAGER", **kwargs)
 
-    # pk_rebate = bu_rebate(pickup_employee, waiter_rebate, operator_rebate, manager_rebate)
+        # pk_rebate = bu_rebate(pickup_employee, waiter_rebate, operator_rebate, manager_rebate)
 
-    # 店铺取酒返佣
-    pickup_employee.employee_wechat.purse += waiter_rebate
-    if waiter_rebate > 0:
-        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                          "item_verification_id": item_verification_id,
-                                                          "rebate_customer_id": pickup_employee.employee_wechat.id,
-                                                          "rebate_money": waiter_rebate})
-    if employee_operator and employee_operator.employee_wechat:
-        employee_operator.employee_wechat.purse += operator_rebate
-        if operator_rebate > 0:
+        # 店铺取酒返佣
+        pickup_employee.employee_wechat.purse += waiter_rebate
+        if waiter_rebate > 0:
             new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
                                                               "item_verification_id": item_verification_id,
-                                                              "rebate_customer_id": employee_operator.employee_wechat.id,
-                                                              "rebate_money": operator_rebate})
-    if not employee_operator or not employee_operator.employee_wechat and (
-            employee_manager and employee_manager.employee_wechat):
-        employee_manager.employee_wechat.purse += operator_rebate
-        if operator_rebate > 0:
-            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                              "item_verification_id": item_verification_id,
-                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
-                                                              "rebate_money": operator_rebate})
-    if employee_manager and employee_manager.employee_wechat:
-        employee_manager.employee_wechat.purse += manager_rebate
-        if manager_rebate > 0:
-            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                              "item_verification_id": item_verification_id,
-                                                              "rebate_customer_id": employee_manager.employee_wechat.id,
-                                                              "rebate_money": manager_rebate})
+                                                              "rebate_customer_id": pickup_employee.employee_wechat.id,
+                                                              "rebate_money": waiter_rebate})
+        if employee_operator and employee_operator.employee_wechat:
+            employee_operator.employee_wechat.purse += operator_rebate
+            if operator_rebate > 0:
+                new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                                  "item_verification_id": item_verification_id,
+                                                                  "rebate_customer_id": employee_operator.employee_wechat.id,
+                                                                  "rebate_money": operator_rebate})
+        if not employee_operator or not employee_operator.employee_wechat and (
+                employee_manager and employee_manager.employee_wechat):
+            employee_manager.employee_wechat.purse += operator_rebate
+            if operator_rebate > 0:
+                new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                                  "item_verification_id": item_verification_id,
+                                                                  "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                                  "rebate_money": operator_rebate})
+        if employee_manager and employee_manager.employee_wechat:
+            employee_manager.employee_wechat.purse += manager_rebate
+            if manager_rebate > 0:
+                new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                                  "item_verification_id": item_verification_id,
+                                                                  "rebate_customer_id": employee_manager.employee_wechat.id,
+                                                                  "rebate_money": manager_rebate})
 
-    item_verification_obj.rebate_status += 1
+        item_verification_obj.rebate_status += 1
 
-    return submit_return("返佣成功", "返佣失败")
+        return submit_return("返佣成功", "返佣失败")
+    except Exception as e:
+        return false_return(message=str(e)), 400
