@@ -433,7 +433,7 @@ class BusinessUnitEmployees(db.Model):
     job_desc = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     business_unit_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
-
+    consumers = db.relationship("Customers", backref='bu_inviter', lazy='dynamic', foreign_keys='Customers.bu_employee_id')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
