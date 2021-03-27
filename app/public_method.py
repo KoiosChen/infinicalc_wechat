@@ -284,7 +284,8 @@ def __make_table(fields, table, strainer=None):
         elif f == 'job_name':
             tmp[f] = table.role.name
         elif f == 'bu':
-            tmp[f] = get_table_data_by_id(BusinessUnits, table.bu.id, appends=['objects'])
+            if table.bu:
+                tmp[f] = get_table_data_by_id(BusinessUnits, table.bu.id, appends=['objects'])
         elif f == 'original_order':
             if 'Business' in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(Franchisees, table.original_order.franchisee_id)

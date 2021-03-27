@@ -33,7 +33,7 @@ deposit_parser.add_argument('objects', type=list, help='寄存酒的照片', loc
 deposit_parser.add_argument("deposit_status", required=True, type=int, help='0，已开瓶；1 ，未开瓶')
 
 pickup_parser = reqparse.RequestParser()
-pickup_parser.add_argument('deposit_id', required=True,help='寄存订单id', location='args')
+pickup_parser.add_argument('deposit_id', required=True, help='寄存订单id', location='args')
 
 pickup_verify = reqparse.RequestParser()
 pickup_verify.add_argument('qrcode', required=True, help='取寄存酒的二维码code')
@@ -65,7 +65,7 @@ class GetAllDepositOrders(Resource):
         if not args['search'].get("deposit_person"):
             args['search']['deposit_person'] = current_user.id
         args['search']['delete_at'] = None
-        return success_return(data=get_table_data(Deposit, args, appends=['objects','sku']))
+        return success_return(data=get_table_data(Deposit, args, appends=['objects', 'sku', 'bu']))
 
     @deposit_ns.marshal_with(return_json)
     @deposit_ns.doc(body=deposit_parser)
