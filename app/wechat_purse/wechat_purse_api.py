@@ -5,6 +5,7 @@ from app.wechat import mmpaymkttransfers
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
 from app.common import success_return, false_return, submit_return
+from app.public_method import get_table_data
 
 purse_ns = default_api.namespace('Wechat Purse', path='/wechat_purse', description='用户钱包相关接口')
 
@@ -27,6 +28,9 @@ class WithDrawAPI(Resource):
     def get(self, **kwargs):
         """提现接口查询"""
         args = withdraw_get_orders_parser.parse_args()
+        args['search'] = dict()
+        args['search']['customer_id'] = kwargs['current_user'].id
+        return success_return(data=get_table_data(WechatPurseTransfer, args, order_by="payment_time"))
 
 
     @purse_ns.doc(body=withdraw_parser)
