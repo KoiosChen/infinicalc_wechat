@@ -65,7 +65,9 @@ class GetAllDepositOrders(Resource):
         if not args['search'].get("deposit_person"):
             args['search']['deposit_person'] = current_user.id
         args['search']['delete_at'] = None
-        return success_return(data=get_table_data(Deposit, args, appends=['objects', 'sku', 'bu']))
+
+        return success_return(data=get_table_data(Deposit, args, appends=['objects', 'sku', 'bu'], advance_search=[
+            {"key": "deposit_bu_id", "operator": "__ne__", "value": None}]))
 
     @deposit_ns.marshal_with(return_json)
     @deposit_ns.doc(body=deposit_parser)
