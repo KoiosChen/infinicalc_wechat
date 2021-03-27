@@ -390,6 +390,7 @@ class BusinessUnits(db.Model):
     inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
     deposit = db.Column(db.SmallInteger, default=0, comment='寄存量')
     employees = db.relationship("BusinessUnitEmployees", backref='business_unit', lazy='dynamic')
+    consumers = db.relationship("Customers", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='bu', uselist=False)
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
@@ -733,7 +734,7 @@ class Customers(db.Model):
                                                          uselist=False)
     business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
                                              foreign_keys='BusinessUnitEmployees.customer_id')
-    franchisee_operator = db.relationship('FranchiseeOperators', backref='operator_wechat', uselist=False)
+    franchisee_operator = db.relationship('FranchiseeOperators', backref='employee_wechat', uselist=False)
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
