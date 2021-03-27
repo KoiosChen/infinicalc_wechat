@@ -1,11 +1,11 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
 from ..models import Permission, BusinessUnits, BusinessPurchaseOrders, BusinessUnitEmployees, BusinessUnitProducts, \
-    Roles, BusinessUnitInventory, CustomerRoles
+    Roles, BusinessUnitInventory, CustomerRoles, Customers, ShopOrders
 from . import business_units
 from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance, get_nearby
+from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance, get_nearby, _make_data
 from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 import datetime
@@ -95,6 +95,16 @@ dispatch_parser.add_argument('operator', required=False, help='操作人员的ID
 dispatch_parser.add_argument('operate_at', type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                              help="操作日期，格式'%Y-%m-%d", location='args')
 
+sold_parser = page_parser.copy()
+sold_parser.add_argument("start_date", required=False, type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                         help="开始日期，格式'%Y-%m-%d", location='args')
+sold_parser.add_argument("end_date", required=False, type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
+                         help="结束日期，格式'%Y-%m-%d", location='args')
+
+sold_parser.add_argument("sku_id", required=False, help='sku id. 用于针对某种酒统计销售情况', location='args')
+sold_parser.add_argument("bu_employee_id", required=False,
+                         help='如果没传，根据用户id来查询，如果传了则按照员工ID来查询。如果员工是waiter，只能看到自己的卖酒统计，如果是店长则看到本店的，如果是老板，则能看到所有店（如果有连锁）')
+sold_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
 
 @bu_ns.route('')
 @bu_ns.expect(head_parser)
@@ -530,3 +540,54 @@ class BUPurchaseOrdersAPI(Resource):
             bi_obj['obj'].amount += bpo_obj.amount
 
         return submit_return("确认成功", "确认失败")
+
+
+@bu_ns.route('/statistics/<string:scene>')
+@bu_ns.param('scene', "pickup或者sold。Pickup指取酒的统计。sold指卖掉的酒且是消费者首单的酒")
+@bu_ns.expect(head_parser)
+class BUStatistics(Resource):
+    @bu_ns.marshal_with(return_json)
+    @bu_ns.doc(body=sold_parser)
+    @permission_required(Permission.BU_WAITER)
+    def get(self, **kwargs):
+        """店铺卖掉的酒"""
+        args = sold_parser.parse_args()
+
+        advance_search = list()
+        args['search'] = dict()
+
+        if args.get('bu_id'):
+            bu_id = args['bu_id']
+        else:
+            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+
+        if args.get('bu_employee_id'):
+            bu_employee = BusinessUnitEmployees.query.get(args['bu_employee_id'])
+        else:
+            bu_employee = kwargs['current_user'].business_unit_employee
+
+        waiter_role_id = CustomerRoles.query.filter(CustomerRoles.name.__eq__('BU_WAITER')).first().id
+        if bu_employee.job_desc == waiter_role_id:
+            args['search']['operator'] = bu_employee.id
+
+        if args.get('start_date'):
+            advance_search.append({"key": "operate_at", "operator": "__ge__", "value": args.get('start_date')})
+        if args.get('end_date'):
+            advance_search.append({"key": "operate_at", "operator": "__le__", "value": args.get('end_date')})
+        if args.get('status'):
+            args['search']['status'] = args.get('status')
+        if args.get('sku_id'):
+            args['search']['sku_id'] = args.get('sku_id')
+        advance_search.append({"key": "amount", "operator": "__lt__", "value": 0})
+        args['search']['bu_id'] = bu_id
+
+        if kwargs['scene'] == 'pickup':
+            return success_return(
+                data=get_table_data(BusinessPurchaseOrders, args, advance_search=advance_search, order_by="operate_at"))
+        elif kwargs['scene'] == 'sold':
+            consumers = kwargs['current_user'].business_unit_employee.consumers.filter(Customers.first_order_id.__ne__(None)).all()
+            orders = list()
+            for c in consumers:
+                orders.append(ShopOrders.query.get(c.first_order_id))
+            fields = table_fields(ShopOrders)
+            return success_return(data=_make_data(orders, fields))

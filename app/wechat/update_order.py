@@ -4,6 +4,7 @@ import datetime
 from app.common import submit_return, session_commit
 from app.public_method import new_data_obj, query_coupon, create_member_card_num
 from app.rebates import calc_rebate
+from app.rebate_calc import purchase_rebate
 from decimal import Decimal
 
 
@@ -182,6 +183,8 @@ def update_order(data):
                     # if calc_result.get('code') != 'success':
                     #     res = calc_result.get('message')
                     #     logger.error(f"订单<{order.id}>返佣结果{res}")
+                    purchase_rebate(customer.id, )
+
 
                     if res == 'success':
                         if session_commit().get("code") != 'success':

@@ -115,7 +115,7 @@ class VerifyDeposit(Resource):
         if not deposit_obj:
             return false_return(message='寄存订单无效，不可核销')
 
-        deposit_obj.deposit_confirm_waiter = kwargs['current_user'].id
+        deposit_obj.deposit_confirm_waiter = kwargs['current_user'].business_unit_employee.id
         deposit_obj.deposit_bu_id = business_unit.id
         deposit_obj.deposit_confirm_at = datetime.datetime.now()
         return submit_return('寄存核销成功', '寄存核销失败')
