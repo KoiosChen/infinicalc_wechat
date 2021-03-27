@@ -433,7 +433,8 @@ class BusinessUnitEmployees(db.Model):
     job_desc = db.Column(db.Integer, db.ForeignKey('customer_roles.id'))
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     business_unit_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
-    consumers = db.relationship("Customers", backref='bu_inviter', lazy='dynamic', foreign_keys='Customers.bu_employee_id')
+    consumers = db.relationship("Customers", backref='bu_inviter', lazy='dynamic',
+                                foreign_keys='Customers.bu_employee_id')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -727,7 +728,8 @@ class Customers(db.Model):
     refund_orders = db.relationship("Refund", backref='aditor', lazy='dynamic')
     score_changes = db.relationship("Scores", backref='score_owner', lazy='dynamic')
     personal_rebates = db.relationship("PersonalRebates", backref='rebates_owner', lazy='dynamic')
-    cloud_wine_personal_rebate_records = db.relationship("CloudWinePersonalRebateRecords", backref='rebate_owner', uselist=False)
+    cloud_wine_personal_rebate_records = db.relationship("CloudWinePersonalRebateRecords", backref='rebate_owner',
+                                                         uselist=False)
     business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
                                              foreign_keys='BusinessUnitEmployees.customer_id')
     franchisee_operator = db.relationship('FranchiseeOperators', backref='operator_wechat', uselist=False)
@@ -1104,6 +1106,7 @@ class SKU(db.Model):
     franchisee_inventory = db.relationship("FranchiseeInventory", backref='sku', lazy='dynamic')
     bu_inventory = db.relationship("BusinessUnitInventory", backref='sku', lazy='dynamic')
     bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
+    deposits = db.relationship("Deposit", backref='sku', lazy='dynamic')
 
     def member_price(self, customer_level):
         return SkuMemberPrice.query.filter(SkuMemberPrice.sku_id.__eq__(self.id),

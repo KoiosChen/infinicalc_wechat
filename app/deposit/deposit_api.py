@@ -59,13 +59,13 @@ class GetAllDepositOrders(Resource):
             "pickup_at"
         )
         for key in search_key:
-            if key in args.keys():
-                args['search'][key] = args[args[key]]
+            if key in args.keys() and args.get(key):
+                args['search'][key] = args[key]
         current_user = kwargs['current_user']
-        if not args['search']["deposit_person"]:
+        if not args['search'].get("deposit_person"):
             args['search']['deposit_person'] = current_user.id
         args['search']['delete_at'] = None
-        return success_return(data=get_table_data(Deposit, args, appends=['objects']))
+        return success_return(data=get_table_data(Deposit, args, appends=['objects','sku']))
 
     @deposit_ns.marshal_with(return_json)
     @deposit_ns.doc(body=deposit_parser)
