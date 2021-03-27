@@ -148,6 +148,6 @@ class PickupDeposit(Resource):
         deposit_obj = Deposit.query.get(deposit_id)
         if deposit_obj.pickup_waiter and deposit_obj.pickup_at:
             return false_return(message=f'此寄存酒已在{deposit_obj.pickup_at}取走')
-        deposit_obj.pickup_waiter = kwargs['current_user'].id
+        deposit_obj.pickup_waiter = kwargs['current_user'].business_unit_employee.id
         deposit_obj.pickup_at = datetime.datetime.now()
         return submit_return('取酒成功', '取酒失败')
