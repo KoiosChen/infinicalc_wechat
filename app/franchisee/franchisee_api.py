@@ -561,3 +561,15 @@ class FranchiseeDispatch(Resource):
 
         fi_obj.amount -= amount
         return submit_return("加盟商出库到店铺成功", "出库失败")
+
+
+@franchisee_ns.route('/statistics/<string:scene>')
+@franchisee_ns.param('scene', "pickup或者sold。Pickup指取酒的统计。sold指卖掉的酒且是消费者首单的酒")
+@franchisee_ns.expect(head_parser)
+class FranchiseeStatistics(Resource):
+    @franchisee_ns.marshal_with(return_json)
+    # @franchisee_ns.doc(body=sold_parser)
+    @permission_required(Permission.BU_WAITER)
+    def get(self, **kwargs):
+        """店铺卖掉的酒"""
+        pass

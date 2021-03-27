@@ -1,5 +1,5 @@
 from app.models import ItemsOrders, ShopOrders, Customers, BusinessUnits, BusinessUnitEmployees, CustomerRoles, \
-    ItemVerification, CloudWineRebates, make_uuid
+    ItemVerification, CloudWineRebates, make_uuid, FranchiseeOperators
 from decimal import Decimal
 from app.common import submit_return, false_return, success_return
 from app.public_method import new_data_obj
@@ -8,13 +8,13 @@ from app import db
 
 def get_rebate(role_name, sku_id, level, scene):
     role_id = CustomerRoles.query.filter_by(name=role_name).first().id
-    rebate = CloudWineRebates.query.filter(CloudWineRebates.role_id.__eq__(role_id),
-                                           CloudWineRebates.sku_id.__eq__(sku_id),
-                                           CloudWineRebates.consumer_level.__eq__(level),
-                                           CloudWineRebates.scene.__eq__(scene),
-                                           CloudWineRebates.status.__eq__(1),
-                                           CloudWineRebates.delete_at.__eq__(None)).first()
-    return Decimal("0.00") if rebate is None else rebate.rebate
+    rebates = CloudWineRebates.query.filter(CloudWineRebates.role_id.__eq__(role_id),
+                                            CloudWineRebates.sku_id.__eq__(sku_id),
+                                            CloudWineRebates.consumer_level.__eq__(level),
+                                            CloudWineRebates.scene.__eq__(scene),
+                                            CloudWineRebates.status.__eq__(1),
+                                            CloudWineRebates.delete_at.__eq__(None)).all()
+    return Decimal("0.00") if rebates is None else sum(v.rebate for v in rebates)
 
 
 def bu_rebate(employee, waiter_rebate, operator_rebate, manager_rebate):
@@ -39,28 +39,34 @@ def purchase_rebate(consumer_id, item_verification_id):
     consumer_obj = Customers.query.get(consumer_id)
     bu_obj = consumer_obj.business_unit_employee.business_unit
     franchisee_obj = bu_obj.franchisee
-    franchisee_operators = franchisee_obj.operators
+    franchisee_manager = franchisee_obj.operators.filter(
+        FranchiseeOperators.job_desc.__eq__(
+            CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first().id)).first()
     item_verification_obj = ItemVerification.query.get(item_verification_id)
     item_order_id = item_verification_obj.item_order_id
+    item_obj = ItemsOrders.query.get(item_order_id)
+    shop_order_obj = item_obj.shop_orders
     sku_id = ItemsOrders.query.get(item_order_id).item_id
+    if consumer_obj.first_order_table == shop_order_obj.__class__.__name__ and consumer_obj.first_order_id == shop_order_obj.id:
+        # 表明当前item order 属于首单，调用 purchase_rebate来计算购买返佣
+        scene = "FIRST_PURCHASE"
+    else:
+        scene = "PURCHASE"
 
-    kwargs = {"sku_id": sku_id, "level": consumer_obj.level, "scene": "PURCHASE"}
+    kwargs = {"sku_id": sku_id, "level": consumer_obj.level, "scene": scene}
     f_manager_rebate = get_rebate("FRANCHISEE_MANAGER", **kwargs)
     bu_manager_rebate = get_rebate("BU_MANAGER", **kwargs)
     bu_operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
     bu_waiter_rebate = get_rebate("BU_WAITER", **kwargs)
 
     # 购买返回，返给加盟商老板
-    for fo in franchisee_operators:
-        if fo.job_desc == CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER'):
-            fo.operator_wechat.purse += f_manager_rebate
-            new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
-                                                              "item_verification_id": item_verification_id,
-                                                              "rebate_customer_id": fo.employee_wechat.id,
-                                                              "rebate_money": f_manager_rebate})
-            break
+    franchisee_manager.employee_wechat.purse += f_manager_rebate
+    new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                      "item_verification_id": item_verification_id,
+                                                      "rebate_customer_id": franchisee_manager.employee_wechat.id,
+                                                      "rebate_money": f_manager_rebate})
 
-    bu_employees = consumer_obj.business_unit_employee
+    bu_employees = consumer_obj.business_unit.employees
 
     operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
     employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
@@ -68,7 +74,7 @@ def purchase_rebate(consumer_id, item_verification_id):
     employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
 
     # 店铺卖酒返佣。老板有躺赚，服务员和店长只有在首单销售中会产生返佣
-    bu_employees.employee_wechat.purse += bu_waiter_rebate
+    consumer_obj.business_unit_employee.employee_wechat.purse += bu_waiter_rebate
     if bu_waiter_rebate > 0:
         new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
                                                           "item_verification_id": item_verification_id,
@@ -96,6 +102,7 @@ def purchase_rebate(consumer_id, item_verification_id):
                                                               "item_verification_id": item_verification_id,
                                                               "rebate_customer_id": employee_manager.employee_wechat.id,
                                                               "rebate_money": bu_manager_rebate})
+    item_verification_obj.rebate_status += 2
 
     return True
 
@@ -118,11 +125,16 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
         item_order_id = item_verification_obj.item_order_id
 
         item_obj = ItemsOrders.query.get(item_order_id)
-        shop_order_obj = item_obj.shop_orders
+
         consumer_obj = Customers.query.get(consumer_id)
-        if consumer_obj.first_order_table == shop_order_obj.__class__.__name__ and consumer_obj.first_order_id == shop_order_obj.id:
-            # 表明当前item order 属于首单，调用 purchase_rebate来计算购买返佣
-            purchase_rebate(consumer_id, item_order_id)
+        bu_obj = consumer_obj.business_unit_employee.business_unit
+        franchisee_obj = bu_obj.franchisee
+        franchisee_manager = franchisee_obj.operators.filter(
+            FranchiseeOperators.job_desc.__eq__(
+                CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first().id)).first()
+
+        # 卖酒返佣，包括躺赚
+        purchase_rebate(consumer_id, item_verification_id)
 
         pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
         bu_employees = pickup_employee.business_unit.employees
@@ -133,11 +145,17 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
 
         # 获取rebate
         kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP"}
+        f_manager_rebate = get_rebate("FRANCHISEE_MANAGER", **kwargs)
         waiter_rebate = get_rebate("BU_WAITER", **kwargs)
         operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
         manager_rebate = get_rebate("BU_MANAGER", **kwargs)
 
-        # pk_rebate = bu_rebate(pickup_employee, waiter_rebate, operator_rebate, manager_rebate)
+        # 取酒的时候，加盟商躺赚返佣计算
+        franchisee_manager.employee_wechat.purse += f_manager_rebate
+        new_data_obj("CloudWinePersonalRebateRecords", **{"id": make_uuid(),
+                                                          "item_verification_id": item_verification_id,
+                                                          "rebate_customer_id": franchisee_manager.employee_wechat.id,
+                                                          "rebate_money": f_manager_rebate})
 
         # 店铺取酒返佣
         pickup_employee.employee_wechat.purse += waiter_rebate
