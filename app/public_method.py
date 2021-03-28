@@ -126,7 +126,7 @@ def __make_table(fields, table, strainer=None):
                         get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
-            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__:
+            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__ or "BusinessPurchaseOrders" in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'])
             elif 'ItemsOrders' in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id,
@@ -288,12 +288,14 @@ def __make_table(fields, table, strainer=None):
                 tmp[f] = get_table_data_by_id(BusinessUnits, table.bu.id, appends=['objects'])
         elif f == 'original_order':
             if 'Business' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(Franchisees, table.original_order.franchisee_id)
+                if table.original_order:
+                    tmp[f] = get_table_data_by_id(Franchisees, table.original_order.franchisee_id)
             elif 'Franchisee' in table.__class__.__name__:
                 tmp[f] = "盛馔酒业"
         elif f == 'downstream':
             if 'Franchisee' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(BusinessUnits, table.sell_to)
+                if table.sell_to:
+                    tmp[f] = get_table_data_by_id(BusinessUnits, table.sell_to)
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):
