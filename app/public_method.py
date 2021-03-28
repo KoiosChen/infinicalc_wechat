@@ -331,7 +331,7 @@ def _search(table, fields, search):
     return and_fields_list
 
 
-def _advance_search(table, fields, advance_search):
+def _advance_search(table, advance_search):
     and_fields_list = list()
 
     for search in advance_search:
@@ -366,11 +366,11 @@ def get_table_data(table, args, appends=[], removes=[], advance_search=None, ord
     if search:
         filter_args.extend(_search(table, fields, search))
         if advance_search is not None:
-            filter_args.extend(_advance_search(table, fields, advance_search))
+            filter_args.extend(_advance_search(table, advance_search))
         search_sql = base_sql.filter(and_(*filter_args))
     else:
         if advance_search is not None:
-            filter_args.extend(_advance_search(table, fields, advance_search))
+            filter_args.extend(_advance_search(table, advance_search))
             search_sql = base_sql.filter(and_(*filter_args))
         else:
             search_sql = base_sql
@@ -429,7 +429,7 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, s
     if search is None and advance_search is None:
         t = base_sql.get(key_id)
     elif advance_search is not None:
-        filter_args = _advance_search(table, fields, advance_search)
+        filter_args = _advance_search(table, advance_search)
         filter_args.append(getattr(getattr(table, 'id'), '__eq__')(key_id))
         t = base_sql.filter(and_(*filter_args)).first()
     else:

@@ -5,11 +5,12 @@ from ..models import Permission, BusinessUnits, BusinessPurchaseOrders, Business
 from . import business_units
 from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, sort_by_order, code_return, submit_return
-from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance, get_nearby, _make_data
+from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id, geo_distance, get_nearby, \
+    _make_data, _advance_search
 from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 import datetime
-from app.scene_invitation.scene_invitation_api import generate_code
+from sqlalchemy import and_
 
 bu_ns = default_api.namespace('Business Units', path='/business_units', description='店铺接口')
 
@@ -105,6 +106,7 @@ sold_parser.add_argument("sku_id", required=False, help='sku id. 用于针对某
 sold_parser.add_argument("bu_employee_id", required=False,
                          help='如果没传，根据用户id来查询，如果传了则按照员工ID来查询。如果员工是waiter，只能看到自己的卖酒统计，如果是店长则看到本店的，如果是老板，则能看到所有店（如果有连锁）')
 sold_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+
 
 @bu_ns.route('')
 @bu_ns.expect(head_parser)
@@ -571,23 +573,32 @@ class BUStatistics(Resource):
             args['search']['operator'] = bu_employee.id
 
         if args.get('start_date'):
-            advance_search.append({"key": "operate_at", "operator": "__ge__", "value": args.get('start_date')})
+            advance_search.append({"key": "create_at", "operator": "__ge__", "value": args.get('start_date')})
         if args.get('end_date'):
-            advance_search.append({"key": "operate_at", "operator": "__le__", "value": args.get('end_date')})
+            advance_search.append({"key": "create_at", "operator": "__le__", "value": args.get('end_date')})
         if args.get('status'):
             args['search']['status'] = args.get('status')
         if args.get('sku_id'):
             args['search']['sku_id'] = args.get('sku_id')
-        advance_search.append({"key": "amount", "operator": "__lt__", "value": 0})
-        args['search']['bu_id'] = bu_id
 
         if kwargs['scene'] == 'pickup':
+            advance_search.append({"key": "amount", "operator": "__lt__", "value": 0})
+            args['search']['bu_id'] = bu_id
             return success_return(
                 data=get_table_data(BusinessPurchaseOrders, args, advance_search=advance_search, order_by="operate_at"))
         elif kwargs['scene'] == 'sold':
-            consumers = kwargs['current_user'].business_unit_employee.consumers.filter(Customers.first_order_id.__ne__(None)).all()
+            consumers = kwargs['current_user'].business_unit_employee.consumers.filter(
+                Customers.first_order_id.__ne__(None)).all()
             orders = list()
-            for c in consumers:
-                orders.append(ShopOrders.query.get(c.first_order_id))
             fields = table_fields(ShopOrders)
+            for c in consumers:
+                if advance_search:
+                    and_filter = _advance_search(table=ShopOrders, advance_search=advance_search)
+                    and_filter.append(ShopOrders.id.__eq__(c.first_order_id))
+                    order_obj = ShopOrders.query.filter(and_(*and_filter)).first()
+                    if order_obj:
+                        orders.append(order_obj)
+                else:
+                    orders.append(ShopOrders.query.get(c.first_order_id))
             return success_return(data=_make_data(orders, fields))
+
