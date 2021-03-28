@@ -104,8 +104,8 @@ sold_parser.add_argument("end_date", required=False, type=lambda x: datetime.dat
 
 sold_parser.add_argument("sku_id", required=False, help='sku id. 用于针对某种酒统计销售情况', location='args')
 sold_parser.add_argument("bu_employee_id", required=False,
-                         help='如果没传，根据用户id来查询，如果传了则按照员工ID来查询。如果员工是waiter，只能看到自己的卖酒统计，如果是店长则看到本店的，如果是老板，则能看到所有店（如果有连锁）')
-sold_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID')
+                         help='如果没传，根据用户id来查询，如果传了则按照员工ID来查询。如果员工是waiter，只能看到自己的卖酒统计，如果是店长则看到本店的，如果是老板，则能看到所有店（如果有连锁）', location='args')
+sold_parser.add_argument('bu_id', required=False, location='args', help='如果传递则按照bu id来查询，否则从用户反查其对应的BU ID', location='args')
 
 
 @bu_ns.route('')
