@@ -393,6 +393,7 @@ class BusinessUnits(db.Model):
     consumers = db.relationship("Customers", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='bu', uselist=False)
+    purchase_orders = db.relationship("BusinessPurchaseOrders", backref='bu', uselist=False)
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
     verify_orders = db.relationship('ItemVerification', backref='bu', lazy='dynamic')
