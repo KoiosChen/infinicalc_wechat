@@ -58,7 +58,8 @@ def update_order(data):
                 raise Exception(f"回调中openid {consumer_openid}与订单记录不符{order_customer}")
 
             # 判断是否为首单
-            if not customer.first_order_table or (customer.first_order_table == 'ShopOrders' and not customer.first_order_id):
+            if not customer.first_order_table or (
+                    customer.first_order_table == 'ShopOrders' and not customer.first_order_id):
                 # 为首单， 则将首单记录到用户信息中
                 customer.first_order_table = data['device_info']
                 customer.first_order_id = order.id
@@ -129,7 +130,7 @@ def update_order(data):
                     order.pay_time = pay_time
                     order.transaction_id = transaction_id
                     # 增加累积消费金额
-                    customer.total_consumption += cash_fee
+                    customer.total_consumption += Decimal(str(cash_fee))
 
                     # 根据累计消费，提升用户等级。若退款降低总消费金额，同样会降低等级
                     if customer.total_consumption >= Decimal("2000.00"):
@@ -143,6 +144,19 @@ def update_order(data):
                     for item_order in items:
                         item_order.status = 1
                         item_order.customer_level = customer.level
+                        if order.need_express == 1 and customer.bu_id:
+                            new_verify = new_data_obj("ItemVerification",
+                                                      **{"id": make_uuid(),
+                                                         "item_order_id": item_order.id,
+                                                         "verification_quantity": item_order.item_quantity,
+                                                         "verification_customer_id": customer.id,
+                                                         "bu_id": customer.bu_id
+                                                         })
+                            purchase_rebate(customer.id, new_verify['obj'].id)
+                        else:
+                            order.is_ship = 1
+                            order.is_receipt = 3
+                            logger.info('pickup in store')
 
                         if item_order.special == 31:
                             # 封坛货物
@@ -183,7 +197,6 @@ def update_order(data):
                     # if calc_result.get('code') != 'success':
                     #     res = calc_result.get('message')
                     #     logger.error(f"订单<{order.id}>返佣结果{res}")
-                    purchase_rebate(customer.id, )
 
 
                     if res == 'success':

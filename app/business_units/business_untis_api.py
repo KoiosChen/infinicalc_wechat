@@ -279,7 +279,7 @@ class BUPerProductsApi(Resource):
 class BUInventoryApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required(Permission.BU_OPERATOR)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """获取指定BU的库存量"""
         args = inventory_search_parser.parse_args()
