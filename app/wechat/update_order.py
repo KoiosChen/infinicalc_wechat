@@ -155,7 +155,7 @@ def update_order(data):
                             purchase_rebate(customer.id, new_verify['obj'].id)
                         else:
                             order.is_ship = 1
-                            order.is_receipt = 3
+                            order.is_receipt = 1
                             logger.info('pickup in store')
 
                         if item_order.special == 31:
