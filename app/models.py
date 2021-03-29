@@ -282,6 +282,7 @@ class Franchisees(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     name = db.Column(db.String(50), comment="加盟商名称")
     desc = db.Column(db.String(200), comment="描述")
+    level = db.Column(db.SmallInteger, default=1, comment='默认1级，2 表示二级，一次类推')
     phone1 = db.Column(db.String(15), comment="加盟商联系电话1")
     phone2 = db.Column(db.String(15), comment="加盟商联系电话2")
     address = db.Column(db.String(100), comment="加盟商营业地址")
@@ -291,6 +292,11 @@ class Franchisees(db.Model):
     down_streams = db.relationship("BusinessUnits", backref='franchisee', lazy="dynamic")
     inventory = db.relationship("FranchiseeInventory", backref='franchisee', lazy="dynamic")
     status = db.Column(db.SmallInteger, default=0, comment='0 待审核，1 审核通过 2 审核失败')
+
+    # 代理商级联关系
+    parent_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    parent = db.relationship('Franchisees', backref="children", remote_side=[id])
+
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
