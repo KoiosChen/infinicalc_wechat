@@ -102,7 +102,7 @@ def update_order(data):
                     if not now_card.balance:
                         now_card.balance = Decimal("0.00")
 
-                    now_card.balance += Decimal(str(total_fee)) + member_policies.present_amount
+                    now_card.balance += Decimal(str(total_fee)) + Decimal(str(member_policies.present_amount))
 
                 # 赠送部分也增加会员充值记录
                 new_charge_record_present = new_data_obj("MemberRechargeRecords", **{"recharge_amount": total_fee,
