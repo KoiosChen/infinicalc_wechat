@@ -113,7 +113,7 @@ sold_parser.add_argument('bu_id', required=False, location='args', help='如果�
 class BusinessUnitsAPI(Resource):
     @bu_ns.marshal_with(return_json)
     @bu_ns.expect(bu_page_parser)
-    @permission_required([Permission.FRANCHISEE_MANAGER, "app.business_unit.BusinessUnitsAPI.get"])
+    @permission_required([Permission.USER, "app.business_unit.BusinessUnitsAPI.get"])
     def get(self, **kwargs):
         """
         获取所有店铺
@@ -179,7 +179,7 @@ class BusinessUnitsAPI(Resource):
 class BUProductsApi(Resource):
     @bu_ns.doc(body=bu_detail_page_parser)
     @bu_ns.marshal_with(return_json)
-    @permission_required(Permission.BU_OPERATOR)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """获取指定BU的商品列表"""
         args = bu_detail_page_parser.parse_args()
@@ -227,7 +227,7 @@ class BUProductsApi(Resource):
 @bu_ns.expect(head_parser)
 class BUPerProductsApi(Resource):
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.franchisee.FranchiseeAPI.post"])
+    @permission_required([Permission.USER, "app.franchisee.FranchiseeAPI.post"])
     def get(self, **kwargs):
         """获取店铺产品"""
         return success_return(
@@ -300,7 +300,7 @@ class BUInventoryApi(Resource):
 class PerBUApi(Resource):
     @bu_ns.doc(body=get_bu_by_id)
     @bu_ns.marshal_with(return_json)
-    @permission_required([Permission.BU_OPERATOR, "app.business_units.PerBUApi.get"])
+    @permission_required([Permission.USER, "app.business_units.PerBUApi.get"])
     def get(self, **kwargs):
         """获取指定BU详情"""
         args = get_bu_by_id.parse_args()
