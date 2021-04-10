@@ -56,6 +56,7 @@ def authenticate(login_ip, **kwargs):
         open_id = kwargs['openid']
         session_key = kwargs['session_key']
         new_customer = new_data_obj("Customers", **{"openid": open_id, "delete_at": None, "status": 1})
+        logger.debug(f"{new_customer}")
         if new_customer:
             session_commit()
         else:
