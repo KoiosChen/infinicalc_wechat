@@ -763,7 +763,11 @@ class Customers(db.Model):
     business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
                                              foreign_keys='BusinessUnitEmployees.customer_id')
     franchisee_operator = db.relationship('FranchiseeOperators', backref='employee_wechat', uselist=False)
-    cloudwine_express_orders = db.relationship('CloudWineExpressOrders', backref='h', lazy='dynamic')
+    confirmed_express_orders = db.relationship('CloudWineExpressOrders', backref='express_confirmer', lazy='dynamic',
+                                               foreign_keys='CloudWineExpressOrders.confirm_id')
+    applied_express_orders = db.relationship('CloudWineExpressOrders', backref='express_applicant', lazy='dynamic',
+                                             foreign_keys='CloudWineExpressOrders.apply_id')
+
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -1342,7 +1346,7 @@ class ExpressAddress(db.Model):
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     sender = db.Column(db.String(64), db.ForeignKey('customers.id'))
     city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), comment="目前不用，后续拆分地址后存放城市id")
-    district = db.Column(db.Integer, db.ForeignKey('districts.id'), comment="目前不用，后续拆分地址后存放区id")
+    district = db.Column(db.Integer, db.ForeignKey('districts.id'), comment="目前不c用，后续拆分地址后存放区id")
     address1 = db.Column(db.String(100), comment="某某路xx号xx栋xx门牌号")
     address2 = db.Column(db.String(100))
     postcode = db.Column(db.String(10), comment="邮编")
