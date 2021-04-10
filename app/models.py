@@ -246,7 +246,7 @@ class CustomerRoles(db.Model):
                                    Permission.FRANCHISEE_OPERATOR |
                                    Permission.FRANCHISEE_MANAGER, False),
             'CUSTOMER_SERVICE': (Permission.USER | Permission.MEMBER | Permission.CUSTOMER_SERVICE, False),
-            'Administrator': (0xfff, False)
+            'ADMINISTRATOR': (0xfff, False)
         }
         for r in roles:
             role = CustomerRoles.query.filter_by(name=r).first()
