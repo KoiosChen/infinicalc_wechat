@@ -275,8 +275,8 @@ def __make_table(fields, table, strainer=None):
                 scope_list.append(__make_table(scope_fields, scope))
             tmp[f] = scope_list
         elif f == 'job_role':
-            role_admin_id = CustomerRoles.query.filter_by(name="Administrator").first()
-            role_operator_id = CustomerRoles.query.filter_by(name='CUSTOMER_SERVICE').first()
+            role_admin_id = CustomerRoles.query.filter_by(name="Administrator").first().id
+            role_operator_id = CustomerRoles.query.filter_by(name='CUSTOMER_SERVICE').first().id
             if table.role_id == role_admin_id:
                 tmp[f] = "Administrator"
             if table.role_id == role_operator_id:
