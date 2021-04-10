@@ -269,12 +269,29 @@ class FranchiseeScopes(db.Model):
     district = db.Column(db.String(64))
     street = db.Column(db.String(64))
     franchisee_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
+    transaction_price = db.Column(db.DECIMAL(11, 2), comment='当前交易价格')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
     def __repr__(self):
         return '<FranchiseeScopes: %r>' % self.name
+
+
+class ScopeDefinition(db.Model):
+    __tablename__ = "scope_definition"
+    id = db.Column(db.Integer, primary_key=True)
+    province = db.Column(db.String(64))
+    city = db.Column(db.String(10), nullable=False, index=True, comment='定义级别市及区')
+    level = db.Column(db.SmallInteger, index=True, comment='区域级别，1-10')
+    city_price = db.Column(db.DECIMAL(11, 2), index=True, comment='市级定价')
+    district_price = db.Column(db.DECIMAL(11, 2), index=True, comment='区级定价')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'<Scope Definition: {self.city}: {self.city_price}>'
 
 
 class Franchisees(db.Model):
@@ -286,6 +303,10 @@ class Franchisees(db.Model):
     phone1 = db.Column(db.String(15), comment="加盟商联系电话1")
     phone2 = db.Column(db.String(15), comment="加盟商联系电话2")
     address = db.Column(db.String(100), comment="加盟商营业地址")
+    bank_name = db.Column(db.String(50), comment="开户行名称")
+    bank_account = db.Column(db.String(20), comment='银行账号')
+    payee = db.Column(db.String(30), comment='收款人名称')
+    tax_account = db.Column(db.String(20), comment='税号')
     bu_purchase_order_id = db.Column(db.String(64), db.ForeignKey("business_purchase_orders.id"))
     scopes = db.relationship("FranchiseeScopes", backref='franchisee', lazy="dynamic")
     operators = db.relationship("FranchiseeOperators", backref='franchisee', lazy="dynamic")
@@ -742,6 +763,7 @@ class Customers(db.Model):
     business_unit_employee = db.relationship('BusinessUnitEmployees', backref='employee_wechat', uselist=False,
                                              foreign_keys='BusinessUnitEmployees.customer_id')
     franchisee_operator = db.relationship('FranchiseeOperators', backref='employee_wechat', uselist=False)
+    cloudwine_express_orders = db.relationship('CloudWineExpressOrders', backref='h', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -1116,6 +1138,7 @@ class SKU(db.Model):
     bu_inventory = db.relationship("BusinessUnitInventory", backref='sku', lazy='dynamic')
     bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='sku', lazy='dynamic')
+    cloudwine_express_orders = db.relationship("CloudWineExpressOrders", backref='sku', lazy='dynamic')
 
     def member_price(self, customer_level):
         return SkuMemberPrice.query.filter(SkuMemberPrice.sku_id.__eq__(self.id),
@@ -1293,7 +1316,7 @@ class ItemsOrders(db.Model):
     status = db.Column(db.SmallInteger, default=0, comment='1：正常 2：禁用 0：订单未完成 3:退货中，4: 退货成功')
     special = db.Column(db.SmallInteger, default=0, comment='0.默认正常商品；1.有仓储分装流程的商品')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
     rates = db.Column(db.String(64), db.ForeignKey('evaluates.id'), comment='评分')
     refund_order = db.relationship("Refund", backref='item_order', uselist=False)
@@ -1309,11 +1332,12 @@ class ItemVerification(db.Model):
     bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))
     rebate_status = db.Column(db.SmallInteger, default=0, comment='0,未返佣，1，已返佣，2， 不可返佣')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
 
 class ExpressAddress(db.Model):
+    """用于用户自己的收货地址"""
     __tablename__ = 'express_address'
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     sender = db.Column(db.String(64), db.ForeignKey('customers.id'))
@@ -1326,6 +1350,47 @@ class ExpressAddress(db.Model):
     recipient_phone = db.Column(db.String(20), comment="收件人电话")
     status = db.Column(db.SmallInteger, default=1, comment="1：正常 0：删除")
     is_default = db.Column(db.Boolean, default=False)
+
+
+class CloudWineExpressOrders(db.Model):
+    """云酒窖发货单, 加盟商、店铺发货"""
+    __tablename__ = 'cloudwine_express_orders'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    apply_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='发货申请人id')
+    send_unit_type = db.Column(db.String(20), index=True, comment='Franchisee, BusinessUnit')
+    send_unit_id = db.Column(db.String(64), index=True, comment='商业单位的id，Franchisees表、BusinessUnits表的id')
+    recipient_id = db.Column(db.String(64), db.ForeignKey('cloudwine_express_address.id'))
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
+    quantity = db.Column(db.Integer, comment='发货数量')
+    apply_at = db.Column(db.DateTime, comment="申请发货时间")
+    # 是否要公司二次确认？目前不需要
+    confirm_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='当申请人是BU，或者是加盟商运营人员时，需要加盟商老板确认')
+    confirm_at = db.Column(db.DateTime, comment='确认可发货日期')
+    express_company = db.Column(db.String(50), index=True, comment='快递公司，例如安能物流，顺丰快递')
+    express_num = db.Column(db.String(100), comment='快递单号')
+    is_sent = db.Column(db.SmallInteger, default=0, comment="1: 已发出， 2：未发出")
+    send_at = db.Column(db.DateTime, comment='发货日期')
+    is_received = db.Column(db.SmallInteger, default=0, comment="0: 未收到，1:已收到")
+    received_at = db.Column(db.DateTime, comment="收到日期")
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+
+class CloudWineExpressAddress(db.Model):
+    """云酒窖发货地址表"""
+    __tablename__ = 'cloudwine_express_address'
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.id'), comment="目前不用，后续拆分地址后存放城市id")
+    district = db.Column(db.Integer, db.ForeignKey('districts.id'), comment="目前不用，后续拆分地址后存放区id")
+    address1 = db.Column(db.String(100), comment="某某路xx号xx栋xx门牌号")
+    address2 = db.Column(db.String(100))
+    postcode = db.Column(db.String(10), comment="邮编")
+    recipient = db.Column(db.String(50), index=True, comment="收件人")
+    recipient_phone = db.Column(db.String(20), index=True, comment="收件人电话")
+    status = db.Column(db.SmallInteger, default=1, index=True, comment="1：正常 0：删除")
+    express_orders = db.relationship("CloudWineExpressOrders", backref='express_address', lazy="dynamic")
 
 
 class Evaluates(db.Model):

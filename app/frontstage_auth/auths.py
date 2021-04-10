@@ -196,6 +196,8 @@ def authenticate(login_ip, **kwargs):
                                   ["role", "member_info", "first_page_popup", "job_role"],
                                   ["role_id"])
 
+        logger.debug(f"login info {ru}")
+
         return success_return(data={'customer_info': ru, 'session_key': session_key}, message='登录成功')
     except Exception as e:
         traceback.print_exc()

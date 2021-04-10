@@ -24,7 +24,7 @@ withdraw_parser.add_argument("amount", required=True, type=str, help='提现金�
 class WithDrawAPI(Resource):
     @purse_ns.doc(body=withdraw_get_orders_parser)
     @purse_ns.marshal_with(return_json)
-    @permission_required(Permission.USER)
+    @permission_required(Permission.BU_WAITER)  # 当前仅支持BU提现
     def get(self, **kwargs):
         """提现接口查询"""
         args = withdraw_get_orders_parser.parse_args()
@@ -32,10 +32,9 @@ class WithDrawAPI(Resource):
         args['search']['customer_id'] = kwargs['current_user'].id
         return success_return(data=get_table_data(WechatPurseTransfer, args, order_by="payment_time"))
 
-
     @purse_ns.doc(body=withdraw_parser)
     @purse_ns.marshal_with(return_json)
-    @permission_required(Permission.USER)
+    @permission_required(Permission.BU_WAITER)
     def post(self, **kwargs):
         """用户取现到零钱接口"""
         try:
@@ -49,7 +48,8 @@ class WithDrawAPI(Resource):
                 assert withdraw_order.amount == amount, "订单金额和此次提交金额不符"
             else:
                 order_id = make_order_id(prefix='PURSE')
-            return mmpaymkttransfers.weixin_pay_purse(order_id=order_id, amount=eval(amount), customer_id=current_user.id)
+            return mmpaymkttransfers.weixin_pay_purse(order_id=order_id, amount=eval(amount),
+                                                      customer_id=current_user.id)
 
         except Exception as e:
             return false_return(message=str(e)), 400
