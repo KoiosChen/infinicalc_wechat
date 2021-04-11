@@ -282,9 +282,9 @@ def __make_table(fields, table, strainer=None):
             if table.role_id == role_operator_id:
                 tmp[f] = "CUSTOMER_SERVICE"
             if table.business_unit_employee:
-                tmp[f] = table.business_unit_employee.name
+                tmp[f] = table.business_unit_employee.role.name
             if table.franchisee_operator:
-                tmp[f] = table.franchisee_operator.name
+                tmp[f] = table.franchisee_operator.role.name
         elif f == 'franchisee_name':
             tmp[f] = table.franchisee.name
         elif f == 'job_name':
