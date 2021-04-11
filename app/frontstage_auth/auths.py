@@ -63,6 +63,8 @@ def authenticate(login_ip, **kwargs):
             raise Exception(f"创建用户{open_id}失败")
         customer = new_customer['obj']
 
+        logger.debug(f"{customer.business_unit_employee}, {customer.franchisee_operator}")
+
         # 如果数据是新建，那么表示新进入用户
         if new_customer['status']:
             # 如果是新用户，则可获取首单优惠券
