@@ -84,7 +84,7 @@ def authenticate(login_ip, **kwargs):
 
         # 如果父级id为空，那么将此次父级id作为自己的父级
         logger.debug(f">>> shared id is {kwargs.get('shared_id')}")
-        logger.debug(f">>> scene invitation is {kwargs.get('scene_invitation')}")
+        logger.debug(f">>> scene invitation is {kwargs.get('scene_invitation')}, scene is {kwargs.get('scene')}")
 
         if kwargs.get('scene_invitation') and not kwargs.get('scene'):
             # 如果有邀请码，调用邀请码模块
@@ -101,6 +101,7 @@ def authenticate(login_ip, **kwargs):
             if scene in ('new_franchisee', 'new_bu', 'new_franchisee_employee', 'new_bu_employee'):
                 if redis_db.exists(scene_invitation):
                     obj_id = redis_db.get(scene_invitation)
+                    logger.debug(f"scene invitation mapped to value {obj_id}")
                     redis_db.delete(scene_invitation)
                     if scene == 'new_franchisee':
                         # bind to the franchisee
