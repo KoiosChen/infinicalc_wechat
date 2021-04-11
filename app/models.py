@@ -322,9 +322,6 @@ class Franchisees(db.Model):
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
-    def __repr__(self):
-        return '<Franchisee: %r>' % self.name
-
 
 class FranchiseeInventory(db.Model):
     __tablename__ = "franchisee_inventory"
@@ -767,7 +764,6 @@ class Customers(db.Model):
                                                foreign_keys='CloudWineExpressOrders.confirm_id')
     applied_express_orders = db.relationship('CloudWineExpressOrders', backref='express_applicant', lazy='dynamic',
                                              foreign_keys='CloudWineExpressOrders.apply_id')
-
 
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
@@ -1368,6 +1364,7 @@ class CloudWineExpressOrders(db.Model):
     quantity = db.Column(db.Integer, comment='发货数量')
     apply_at = db.Column(db.DateTime, comment="申请发货时间")
     # 是否要公司二次确认？目前不需要
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'), comment='此快递订单归属的加盟商ID')
     confirm_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='当申请人是BU，或者是加盟商运营人员时，需要加盟商老板确认')
     confirm_at = db.Column(db.DateTime, comment='确认可发货日期')
     express_company = db.Column(db.String(50), index=True, comment='快递公司，例如安能物流，顺丰快递')
@@ -1809,8 +1806,8 @@ RETURN_IN_DAYS = 7
 # 在过了退货期之后+3天可提现
 REBATE_TO_CASH = 3
 
-NEW_ONE_SCORES = 88
-SHARE_AWARD = 88
+NEW_ONE_SCORES = 0
+SHARE_AWARD = 0
 
 RETRY_ERR_CODE = ["NOTENOUGH", "SYSTEMERROR", "NAME_MISMATCH", "SIGN_ERROR", "FREQ_LIMIT", "MONEY_LIMIT", "CA_ERROR",
                   "PARAM_IS_NOT_UTF8", "SENDNUM_LIMIT"]
