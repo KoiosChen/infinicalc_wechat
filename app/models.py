@@ -780,7 +780,10 @@ class Customers(db.Model):
         return True if redis_db.exists(login_key) and redis_db.get(login_key) == message else False
 
     def can(self, permissions):
-        return self.role is not None and (self.role.permissions & permissions) == permissions
+        a = self.role is not None and (self.role.permissions & permissions) == permissions
+        b = self.business_unit_employee is not None and (self.business_unit_employee.role.permissions & permissions) == permissions
+        c = self.franchisee_operator is not None and (self.franchisee_operator.role.permissions & permissions) == permissions
+        return a or b or c
 
     @property
     def grade(self):
