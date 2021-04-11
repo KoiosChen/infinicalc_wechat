@@ -348,9 +348,6 @@ class FranchiseeOperators(db.Model):
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
-    def __repr__(self):
-        return '<FranchiseeOperator name: %r>' % self.name
-
 
 class FranchiseePurchaseOrders(db.Model):
     __tablename__ = "franchisee_purchase_orders"
