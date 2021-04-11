@@ -96,9 +96,11 @@ def authenticate(login_ip, **kwargs):
                     create_member_card_by_invitation(new_customer['obj'], si_obj)
         elif kwargs.get('scene_invitation') and kwargs.get('scene') and (
                 not customer.business_unit_employee and not customer.franchisee_operator):
+            logger.debug(">>> scene invitation action")
             scene = kwargs.get('scene')
             scene_invitation = kwargs.get('scene_invitation')
             if scene in ('new_franchisee', 'new_bu', 'new_franchisee_employee', 'new_bu_employee'):
+                logger.debug(f"scene is {scene}")
                 if redis_db.exists(scene_invitation):
                     obj_id = redis_db.get(scene_invitation)
                     logger.debug(f"scene invitation mapped to value {obj_id}")
