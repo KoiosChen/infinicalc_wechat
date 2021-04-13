@@ -30,8 +30,12 @@ create_franchisee_parser.add_argument('desc', required=True, type=str, help='加
 create_franchisee_parser.add_argument('phone1', required=True, type=str, help='电话1')
 create_franchisee_parser.add_argument('phone2', required=False, type=str, help='电话2')
 create_franchisee_parser.add_argument('address', required=True, type=str, help='地址，手工输入')
+create_franchisee_parser.add_argument('bank_name', required=False, help='开户行名称')
+create_franchisee_parser.add_argument('bank_account', required=False, help='银行账号')
+create_franchisee_parser.add_argument('payee', required=False, help='收款人名称')
+create_franchisee_parser.add_argument('tax_account', required=False, help='加盟商税号')
 create_franchisee_parser.add_argument('scopes', type=list, required=True,
-                                      help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区"}]',
+                                      help='运营范围，[{"province": "上海", "city": "上海", "district": "徐汇区", "transaction_price": "1000000"}]',
                                       location='json')
 
 update_franchisee_parser = create_franchisee_parser.copy()
@@ -124,7 +128,11 @@ class FranchiseesAPI(Resource):
                                       "desc": args['desc'],
                                       "phone1": args['phone1'],
                                       "phone2": args['phone2'],
-                                      "address": args['address']})
+                                      "address": args['address'],
+                                      "bank_name": args.get('bank_name'),
+                                      "bank_account": args.get('bank_account'),
+                                      "payee": args.get('payee'),
+                                      "tax_account": args.get('tax_account')})
 
             occupied_scopes = list()
 
@@ -205,8 +213,7 @@ class PerFranchisee(Resource):
                         if new_scope['status']:
                             new_scope['obj'].franchisee_id = franchisee_obj.id
                         elif not new_scope['status']:
-                            if new_scope['obj'].franchisee_id is not None and new_scope[
-                                'obj'].franchisee_id != franchisee_obj.id:
+                            if new_scope['obj'].franchisee_id is not None and new_scope['obj'].franchisee_id != franchisee_obj.id:
                                 occupied_scope.append("区域" + "".join(
                                     [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营")
                             else:
