@@ -149,8 +149,8 @@ class FranchiseesAPI(Resource):
                     ).first()
 
                     if scope_obj and scope_obj.franchisee_id is not None:
-                        occupied_scopes.append = "区域" + "".join(
-                            [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营"
+                        occupied_scopes.append("区域" + "".join(
+                            [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营")
                     else:
                         new_scope = new_data_obj('FranchiseeScopes',
                                                  **{"province": scope["province"],
@@ -213,7 +213,8 @@ class PerFranchisee(Resource):
                         if new_scope['status']:
                             new_scope['obj'].franchisee_id = franchisee_obj.id
                         elif not new_scope['status']:
-                            if new_scope['obj'].franchisee_id is not None and new_scope['obj'].franchisee_id != franchisee_obj.id:
+                            if new_scope['obj'].franchisee_id is not None and new_scope[
+                                'obj'].franchisee_id != franchisee_obj.id:
                                 occupied_scope.append("区域" + "".join(
                                     [scope["province"], scope["city"], scope['district']]) + "已有加盟商运营")
                             else:
