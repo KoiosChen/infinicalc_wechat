@@ -1,6 +1,6 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
-from ..models import Permission, CloudWineExpressAddress, CloudWineExpressOrders, SKU, make_uuid
+from ..models import Permission, CloudWineExpressAddress, CloudWineExpressOrders, SKU, make_uuid, FranchiseeInventory, CustomerRoles
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, sort_by_order, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
@@ -19,6 +19,11 @@ new_express_order_parser.add_argument("recipient_id", required=True, help='收�
 new_express_order_parser.add_argument("sku_id", required=True, help='发货的sku id')
 new_express_order_parser.add_argument("quantity", required=True, help='发货数量')
 
+update_express_order_parser = reqparse.RequestParser()
+update_express_order_parser.add_argument("recipient_id", help='收件人地址的id，cloudwine_express_address表的id')
+update_express_order_parser.add_argument("sku_id", help='发货的SKU ID')
+update_express_order_parser.add_argument("quantity", help='发货数量')
+
 
 @express_ns.route('')
 @express_ns.expect(head_parser)
@@ -29,7 +34,16 @@ class ExpressOrderAPI(Resource):
     def get(self, **kwargs):
         """查询所有快递订单列表"""
         args = express_order_page_parser.parse_args()
-        return success_return(get_table_data(CloudWineExpressOrders, args), "请求成功")
+        current_user = kwargs['current_user']
+        self_args = args
+        self_args['search']['customer_id'] = current_user.id
+        self_orders = get_table_data(CloudWineExpressOrders, self_args, order_by="create_at")
+        confirm_orders = dict()
+        if current_user.franchisee_operator and current_user.franchisee_operator.role.name == "FRANCHISEE_MANAGER":
+            confirm_args = args
+            confirm_args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
+            confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, order_by="create_at")
+        return success_return({"self_orders": self_orders, "confirm_orders": confirm_orders}, "请求成功")
 
     @express_ns.marshal_with(return_json)
     @express_ns.doc(body=new_express_order_parser)
@@ -41,40 +55,141 @@ class ExpressOrderAPI(Resource):
             recipient_id = args['recipient_id']
             sku_id = args['sku_id']
             quantity = args['quantity']
-
+            franchisee_manager_role = CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first()
             current_user = kwargs.get("current_user")
             current_user_belong_bu = current_user.business_unit_employee
             current_user_belong_franchisee = current_user.franchisee_operator
             if current_user_belong_bu:
                 unit_name = "BusinessUnit"
                 unit_id = current_user_belong_bu.business_unit_id
+                franchisee_id = current_user_belong_bu.business_unit.franchisee_id
             elif current_user_belong_franchisee:
                 unit_name = "Franchisee"
                 unit_id = current_user_belong_franchisee.franchisee_id
+                franchisee_id = unit_id
             else:
                 raise Exception("当前用户没有归属店铺或者加盟商")
 
             addr_obj = CloudWineExpressOrders.query.get(recipient_id)
-            sku_obj = db.session.query(SKU).with_for_update().filter(SKU.id.__eq__(sku_id),
-                                                                     SKU.quantity.__ge__(eval(quantity))).first()
 
             if not addr_obj:
                 raise Exception("无当前快递地址，请新增")
 
+            sku_obj = db.session.query(SKU).with_for_update().filter(SKU.id.__eq__(sku_id),
+                                                                     SKU.quantity.__ge__(eval(quantity))).first()
+
             if not sku_obj:
                 raise Exception("无库存SKU")
+
+            franchisee_obj = db.session.query(FranchiseeInventory).with_for_update().filter(
+                FranchiseeInventory.franchisee_id.__eq__(franchisee_id),
+                FranchiseeInventory.sku_id.__eq__(sku_id),
+                FranchiseeInventory.amount.__ge__(eval(quantity))).first()
+
+            if not franchisee_obj:
+                logger.warn("加盟商库存不足需要进货")
 
             new_order = new_data_obj("CloudWineExpressOrders", **{"id": make_uuid(),
                                                                   "apply_id": current_user.id,
                                                                   "send_unit_type": unit_name,
                                                                   "send_unit_id": unit_id,
                                                                   "recipient_id": recipient_id,
+                                                                  "franchisee_id": franchisee_id,
                                                                   "apply_at": datetime.datetime.now(),
                                                                   })
+
+            if current_user.franchisee_operator.job_desc == franchisee_manager_role.id:
+                # 如果当前用户是加盟商manager， 则直接完成确认步骤
+                new_order['obj'].confirm_id = current_user.id
+                new_order['obj'].confirm_at = datetime.datetime.now()
 
             if not new_order:
                 raise Exception("创建快递订单失败")
 
             return submit_return("创建快递订单成功", "创建快递订单失败")
+        except Exception as e:
+            return false_return(message=str(e))
+
+
+@express_ns.route('/<string:express_id>')
+@express_ns.expect(head_parser)
+class PerExpressOrderAPI(Resource):
+    @express_ns.marshal_with(return_json)
+    @express_ns.doc(body=update_express_order_parser)
+    @permission_required([Permission.USER, "app.express_orders.per_express_order_api.ExpressOrderAPI.put"])
+    def get(self, **kwargs):
+        """获取指定订单详情"""
+        return success_return(data=get_table_data_by_id(CloudWineExpressOrders, kwargs['express_id'], appends=['express_address']))
+
+    @express_ns.marshal_with(return_json)
+    @express_ns.doc(body=update_express_order_parser)
+    @permission_required([Permission.USER, "app.express_orders.per_express_order_api.ExpressOrderAPI.put"])
+    def put(self, **kwargs):
+        """修改快递订单，未发货前，申请人可修改此订单"""
+        try:
+            args = update_express_order_parser.parse_args()
+            order_obj = CloudWineExpressOrders.query.get(kwargs['express_id'])
+            current_user = kwargs['current_user']
+
+            apply_update_list = ("recipient_id", "sku_id", "quantity")
+            confirm_update_list = ("confirm_action")
+            express_update_list = ("express_num")
+
+            if not order_obj:
+                raise Exception("快递订单不存在")
+            if order_obj.is_sent != 0:
+                raise Exception('已发货，不可修改')
+
+            apply_update_flag = False
+
+            for key, value in args.items():
+                if hasattr(order_obj, key) and value:
+                    if key in apply_update_list and current_user.id == order_obj.apply_id:
+                        apply_update_flag = True
+                        setattr(order_obj, key, value)
+                    elif key in confirm_update_list and current_user.franchisee_operator and current_user.franchisee_operator.franchisee_id == order_obj.franchisee_id:
+                        if getattr(order_obj, "confirm_id") is None and getattr(order_obj, "confirm_at") is None:
+                            setattr(order_obj, "confirm_id", current_user.id)
+                            setattr(order_obj, "confirm_at", datetime.datetime.now())
+                        else:
+                            raise Exception("当前订单已确认，不可重复确认")
+                    elif key in express_update_list and current_user.role == CustomerRoles.query.filter_by(name="CUSTOMER_SERVICE").first():
+                        if getattr(order_obj, key) is None:
+                            setattr(order_obj, key, value)
+                            setattr(order_obj, "express_company", "安能物流")
+                            setattr(order_obj, "is_sent", 1)
+                            setattr(order_obj, "send_at", datetime.datetime.now())
+                        else:
+                            raise Exception("当前订单已发货，不可重复发货")
+                    else:
+                        raise Exception("当前用户不可修改此订单")
+                else:
+                    logger.error(f"{key} attribute not exist")
+
+            if apply_update_flag:
+                # 需要重新确认
+                setattr(order_obj, "confirm_id", None)
+                setattr(order_obj, "confirm_at", None)
+            return submit_return("修改成功", "修改失败")
+        except Exception as e:
+            return false_return(message=str(e))
+
+    @express_ns.marshal_with(return_json)
+    @permission_required([Permission.USER, "app.express_orders.per_express_order_api.ExpressOrderAPI.delete"])
+    def delete(self, **kwargs):
+        try:
+
+            order_obj = CloudWineExpressOrders.query.get(kwargs['express_id'])
+            if not order_obj:
+                raise Exception("快递订单不存在")
+            if order_obj.is_sent != 0:
+                raise Exception('已发货，不可删除')
+
+            if kwargs['current_user'].id != order_obj.apply_id:
+                raise Exception('当前用户无权删除此订单')
+
+            db.session.delete(order_obj)
+            return submit_return("删除成功", "删除失败")
+
         except Exception as e:
             return false_return(message=str(e))
