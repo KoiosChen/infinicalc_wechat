@@ -1,6 +1,7 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
-from ..models import Permission, CloudWineExpressAddress, CloudWineExpressOrders, SKU, make_uuid, FranchiseeInventory, CustomerRoles
+from ..models import Permission, CloudWineExpressAddress, CloudWineExpressOrders, SKU, make_uuid, FranchiseeInventory, \
+    CustomerRoles
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, session_commit, sort_by_order, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
@@ -17,7 +18,8 @@ express_order_page_parser = page_parser.copy()
 new_express_order_parser = reqparse.RequestParser()
 new_express_order_parser.add_argument("recipient_id", required=True, help='收件人地址的id，cloudwine_express_address表的id')
 new_express_order_parser.add_argument("sku_id", required=True, help='发货的sku id')
-new_express_order_parser.add_argument("quantity", required=True, help='发货数量')
+new_express_order_parser.add_argument("quantity", required=True, type=int, help='发货数量')
+new_express_order_parser.add_argument("is_purchase", required=True, type=int, help='0 否，1 是')
 
 update_express_order_parser = reqparse.RequestParser()
 update_express_order_parser.add_argument("recipient_id", help='收件人地址的id，cloudwine_express_address表的id')
@@ -55,6 +57,7 @@ class ExpressOrderAPI(Resource):
             recipient_id = args['recipient_id']
             sku_id = args['sku_id']
             quantity = args['quantity']
+            is_purchase = args['is_purchase']
             franchisee_manager_role = CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first()
             current_user = kwargs.get("current_user")
             current_user_belong_bu = current_user.business_unit_employee
@@ -95,6 +98,7 @@ class ExpressOrderAPI(Resource):
                                                                   "send_unit_id": unit_id,
                                                                   "recipient_id": recipient_id,
                                                                   "franchisee_id": franchisee_id,
+                                                                  "is_purchase": is_purchase,
                                                                   "apply_at": datetime.datetime.now(),
                                                                   })
 
@@ -119,7 +123,8 @@ class PerExpressOrderAPI(Resource):
     @permission_required([Permission.USER, "app.express_orders.per_express_order_api.ExpressOrderAPI.put"])
     def get(self, **kwargs):
         """获取指定订单详情"""
-        return success_return(data=get_table_data_by_id(CloudWineExpressOrders, kwargs['express_id'], appends=['express_address']))
+        return success_return(
+            data=get_table_data_by_id(CloudWineExpressOrders, kwargs['express_id'], appends=['express_address']))
 
     @express_ns.marshal_with(return_json)
     @express_ns.doc(body=update_express_order_parser)
@@ -132,13 +137,22 @@ class PerExpressOrderAPI(Resource):
             current_user = kwargs['current_user']
 
             apply_update_list = ("recipient_id", "sku_id", "quantity")
-            confirm_update_list = ("confirm_action")
-            express_update_list = ("express_num")
+            confirm_update_list = ("confirm_action",)
+            express_update_list = ("express_num",)
 
             if not order_obj:
                 raise Exception("快递订单不存在")
             if order_obj.is_sent != 0:
                 raise Exception('已发货，不可修改')
+
+            inventory_obj = db.session.query(FranchiseeInventory).with_for_update().filter(
+                FranchiseeInventory.franchisee_id.__eq__(order_obj.franchisee_id),
+                FranchiseeInventory.sku_id.__eq__(order_obj.sku_id),
+                FranchiseeInventory.amount.__ge__(order_obj.quantity)
+            ).first()
+
+            if not inventory_obj:
+                raise Exception("加盟商无库存")
 
             apply_update_flag = False
 
@@ -151,14 +165,77 @@ class PerExpressOrderAPI(Resource):
                         if getattr(order_obj, "confirm_id") is None and getattr(order_obj, "confirm_at") is None:
                             setattr(order_obj, "confirm_id", current_user.id)
                             setattr(order_obj, "confirm_at", datetime.datetime.now())
+                            setattr(inventory_obj, "amount", inventory_obj.amount - order_obj.quantity)
+                            if order_obj.is_purchase and order_obj.send_unit_type == 'BusinessUnit':
+                                new_purchase_order = new_data_obj("FranchiseePurchaseOrders",
+                                                                  **{"franchisee_id": order_obj.franchisee_id,
+                                                                     "sku_id": order_obj.sku_id,
+                                                                     "amount": -order_obj.quantity,
+                                                                     "status": 3,
+                                                                     "purchase_from": None,
+                                                                     "express_order": order_obj.id,
+                                                                     "operate_at": datetime.datetime.now(),
+                                                                     "operator": current_user.id})
+
+                                if not new_purchase_order or (new_purchase_order and not new_purchase_order['status']):
+                                    raise Exception("创建加盟商出库单失败")
+
+                                new_bu_purchase_order = new_data_obj("BusinessPurchaseOrders",
+                                                                     **{"bu_id": order_obj.send_unit_id,
+                                                                        "amount": order_obj.quantity,
+                                                                        "status": 3,
+                                                                        "purchase_from": order_obj.franchisee_id,
+                                                                        "original_order_id": new_purchase_order['obj'].id})
+
+                                if not new_bu_purchase_order or (new_bu_purchase_order and not new_bu_purchase_order['status']):
+                                    raise Exception("创建店铺入库单失败")
+
+                            elif order_obj.is_purchase and order_obj.send_unit_type == 'Franchisee':
+                                # 如果是加盟商进货，需要扣减总库对应SKU的库存
+                                sku_obj = db.session.query(SKU).with_for_update().filter(SKU.id == order_obj.sku_id,
+                                                                                         SKU.quantity.__ge__(
+                                                                                             order_obj.quantity)).first()
+                                if not sku_obj:
+                                    return false_return(message=f"{order_obj.sku_id}不存在或者库存不足")
+
+                                sku_obj.quantity -= order_obj.quantity
+                                new_purchase_order = new_data_obj("PurchaseInfo", **{"sku_id": order_obj.sku_id,
+                                                                                     "amount": -order_obj.quantity,
+                                                                                     "operator": kwargs['current_user'].id,
+                                                                                     "dispatch_status": 3,
+                                                                                     "express_order": order_obj.id,
+                                                                                     "operator_at": datetime.datetime.now(),
+                                                                                     "express_to_id": order_obj.franchisee_id})
+                                if not new_purchase_order:
+                                    return false_return(message="新建出库单失败")
+
+                                new_franchisee_purchase_order = new_data_obj("FranchiseePurchaseOrders",
+                                                                             **{"sku_id": order_obj.sku_id,
+                                                                                "amount": order_obj.quantity,
+                                                                                "status": 3,
+                                                                                "franchisee_id": order_obj.franchisee_id,
+                                                                                "original_order_id": new_purchase_order[
+                                                                                    'obj'].id
+                                                                                })
+
+                                if not new_franchisee_purchase_order:
+                                    return false_return(message='加盟商新建入库单失败')
                         else:
                             raise Exception("当前订单已确认，不可重复确认")
-                    elif key in express_update_list and current_user.role == CustomerRoles.query.filter_by(name="CUSTOMER_SERVICE").first():
+                    elif key in express_update_list and current_user.role == CustomerRoles.query.filter_by(
+                            name="CUSTOMER_SERVICE").first():
                         if getattr(order_obj, key) is None:
                             setattr(order_obj, key, value)
                             setattr(order_obj, "express_company", "安能物流")
                             setattr(order_obj, "is_sent", 1)
                             setattr(order_obj, "send_at", datetime.datetime.now())
+
+                            purchase_obj = getattr(order_obj, "purchase_order")
+                            f_purchase_obj = getattr(order_obj, "franchisee_purchase_order")
+                            if purchase_obj:
+                                purchase_obj.dispatch_status = 1
+                            if f_purchase_obj:
+                                f_purchase_obj.status = 1
                         else:
                             raise Exception("当前订单已发货，不可重复发货")
                     else:

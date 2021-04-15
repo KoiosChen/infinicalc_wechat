@@ -358,9 +358,10 @@ class FranchiseePurchaseOrders(db.Model):
     original_order_id = db.Column(db.String(64), db.ForeignKey('purchase_info.id'))
     purchase_from = db.Column(db.String(64), default="ShengZhuanJiuYe", comment="购入方，默认为盛馔酒业，代表总部")
     sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
+    express_order = db.Column(db.String(64), db.ForeignKey('cloudwine_express_orders.id'))
     operate_at = db.Column(db.DateTime, comment='进出货日期')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
-    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到, 3 未发货')
     bu_purchase_order = db.relationship("BusinessPurchaseOrders", backref="original_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
@@ -375,7 +376,7 @@ class BusinessPurchaseOrders(db.Model):
     amount = db.Column(db.SmallInteger, comment="进货或者出货量")
     original_order_id = db.Column(db.String(64), db.ForeignKey('franchisee_purchase_orders.id'))
     sell_to = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到')
+    status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到, 3:未发货')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
     operate_at = db.Column(db.DateTime)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
@@ -408,8 +409,7 @@ class BusinessUnits(db.Model):
     )
     longitude = db.Column(db.String(20), comment='经度', index=True)
     latitude = db.Column(db.String(20), comment='纬度', index=True)
-    inventory = db.Column(db.SmallInteger, default=0, comment='库存量')
-    deposit = db.Column(db.SmallInteger, default=0, comment='寄存量')
+    bu_inventories = db.relationship("BusinessUnitInventory", backref='bu', lazy='dynamic')
     employees = db.relationship("BusinessUnitEmployees", backref='business_unit', lazy='dynamic')
     consumers = db.relationship("Customers", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
@@ -781,8 +781,10 @@ class Customers(db.Model):
 
     def can(self, permissions):
         a = self.role is not None and (self.role.permissions & permissions) == permissions
-        b = self.business_unit_employee is not None and (self.business_unit_employee.role.permissions & permissions) == permissions
-        c = self.franchisee_operator is not None and (self.franchisee_operator.role.permissions & permissions) == permissions
+        b = self.business_unit_employee is not None and (
+                    self.business_unit_employee.role.permissions & permissions) == permissions
+        c = self.franchisee_operator is not None and (
+                    self.franchisee_operator.role.permissions & permissions) == permissions
         return a or b or c
 
     @property
@@ -1004,11 +1006,12 @@ class PurchaseInfo(db.Model):
     amount = db.Column(db.Integer, comment='进货，出货数量')
     operator = db.Column(db.String(64))
     operator_at = db.Column(db.DateTime, comment="进货或者出货时间")
+    express_order_id = db.Column(db.String(64), db.ForeignKey("cloudwine_express_order.id"))
     express_to_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
     franchisee_purchase_order = db.relationship("FranchiseePurchaseOrders", backref="original_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     status = db.Column(db.SmallInteger, default=1, comment="1 正常 0 作废")
-    dispatch_status = db.Column(db.SmallInteger, default=0, comment="0 已发货未确认，1已发货并确认 ")
+    dispatch_status = db.Column(db.SmallInteger, default=0, comment="0 已发货未确认，1已发货并确认， 3 未发货")
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     memo = db.Column(db.String(200), comment="备忘，例如作废原因")
 
@@ -1360,6 +1363,7 @@ class CloudWineExpressOrders(db.Model):
     send_unit_type = db.Column(db.String(20), index=True, comment='Franchisee, BusinessUnit')
     send_unit_id = db.Column(db.String(64), index=True, comment='商业单位的id，Franchisees表、BusinessUnits表的id')
     recipient_id = db.Column(db.String(64), db.ForeignKey('cloudwine_express_address.id'))
+    is_purchase = db.Column(db.SmallInteger, comment='0 不是进货，1 进货')
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     quantity = db.Column(db.Integer, comment='发货数量')
     apply_at = db.Column(db.DateTime, comment="申请发货时间")
@@ -1373,6 +1377,8 @@ class CloudWineExpressOrders(db.Model):
     send_at = db.Column(db.DateTime, comment='发货日期')
     is_received = db.Column(db.SmallInteger, default=0, comment="0: 未收到，1:已收到")
     received_at = db.Column(db.DateTime, comment="收到日期")
+    purchase_order = db.relationship("PurchaseInfo", backref='express_order', uselist=False)
+    franchisee_purchase_order = db.relationship("FranchiseePurchaseOrders", backref='express_order', uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1811,3 +1817,7 @@ SHARE_AWARD = 0
 
 RETRY_ERR_CODE = ["NOTENOUGH", "SYSTEMERROR", "NAME_MISMATCH", "SIGN_ERROR", "FREQ_LIMIT", "MONEY_LIMIT", "CA_ERROR",
                   "PARAM_IS_NOT_UTF8", "SENDNUM_LIMIT"]
+
+CUSTOMER_L1_CONSUMPTION = Decimal("1197000000.00")
+
+CUSTOMER_L2_CONSUMPTION = Decimal("2000000000.00")
