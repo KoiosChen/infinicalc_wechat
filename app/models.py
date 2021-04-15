@@ -358,7 +358,7 @@ class FranchiseePurchaseOrders(db.Model):
     original_order_id = db.Column(db.String(64), db.ForeignKey('purchase_info.id'))
     purchase_from = db.Column(db.String(64), default="ShengZhuanJiuYe", comment="购入方，默认为盛馔酒业，代表总部")
     sell_to = db.Column(db.String(64), db.ForeignKey('business_units.id'))
-    express_order = db.Column(db.String(64), db.ForeignKey('cloudwine_express_orders.id'))
+    express_order_id = db.Column(db.String(64), db.ForeignKey('cloudwine_express_orders.id'))
     operate_at = db.Column(db.DateTime, comment='进出货日期')
     operator = db.Column(db.String(64), db.ForeignKey('customers.id'), comment="操作员")
     status = db.Column(db.SmallInteger, default=0, comment='0: 已发货未确认，1：已发货已确认, 2:已发货未收到, 3 未发货')
