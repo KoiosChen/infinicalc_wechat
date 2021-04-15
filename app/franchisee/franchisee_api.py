@@ -60,8 +60,7 @@ franchisee_operator_page_parser = page_parser.copy()
 new_operator = reqparse.RequestParser()
 new_operator.add_argument('name', required=True, type=str, help='运营人员姓名')
 new_operator.add_argument('age', required=False, type=int, help='年龄')
-new_operator.add_argument('job_desc', required=True, type=int, default=1, choices=[1, 2, 3],
-                          help='1: boss, 2: leader, 3: waiter')
+new_operator.add_argument('job_desc', required=True, type=int, help='1: 老板, 2: 二级代理')
 
 update_operator_parser = reqparse.RequestParser()
 update_operator_parser.add_argument('name', required=False, help='员工姓名')
@@ -111,6 +110,7 @@ class FranchiseesAPI(Resource):
             args['search'] = {}
         if args.get('name'):
             args['search'] = {"name": args['name']}
+        args['search']['delete_at'] = None
         return success_return(get_table_data(Franchisees, args), "请求成功")
 
     @franchisee_ns.doc(body=create_franchisee_parser)
@@ -170,7 +170,7 @@ class FranchiseesAPI(Resource):
                 else:
                     raise Exception('添加加盟商失败')
             else:
-                return false_return(data=occupied_scopes, message='部分运营范围不可用'), 400
+                raise Exception(occupied_scopes)
         except Exception as e:
             return false_return(message=str(e)), 400
 
@@ -294,9 +294,11 @@ class FranchiseeOperatorsApi(Resource):
     def post(self, **kwargs):
         args = new_operator.parse_args()
         franchisee_id = kwargs['current_user'].franchisee_operator.franchisee_id
+        job_dict = {1: "FRANCHISEE_MANAGER", 2: "FRANCHISEE_OPERATOR"}
+        fid = CustomerRoles.query.filter_by(name=job_dict[args['job_desc']]).first().id
         new_employee = new_data_obj("FranchiseeOperators", **{"name": args['name'],
                                                               "age": args['age'],
-                                                              "job_desc": args['job_desc'],
+                                                              "job_desc": fid,
                                                               "franchisee_id": franchisee_id})
         if not new_employee or (new_employee and not new_employee['status']):
             return false_return(message=f"create user {args['name']} fail")
@@ -334,7 +336,7 @@ class FranchiseeOperator(Resource):
         bu_employee = FranchiseeOperator.query.filter(FranchiseeOperator.id.__eq__(kwargs['operator_id']),
                                                       FranchiseeOperator.business_unit_id.__eq__(bu_id)).first()
         for k, v in args.items():
-            if k == 'job_desc' and v in ('FRANCHISEE_MANAGER', 'FRANCHISEE_MANAGER'):
+            if k == 'job_desc' and v in ('FRANCHISEE_OPERATOR', 'FRANCHISEE_MANAGER'):
                 role_obj = CustomerRoles.query.filter_by(name=v).first()
                 if not role_obj:
                     return false_return(message="角色不存在"), 400
@@ -471,7 +473,7 @@ class FranchiseeBU(Resource):
         else:
             args = defaultdict(dict)
             args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
-            return success_return(data=get_table_data(BusinessUnits, args))
+            return success_return(data=get_table_data(BusinessUnits, args, appends=['bu_inventory']))
 
 
 @franchisee_ns.route('/purchase_orders/<string:franchisee_purchase_order_id>/confirm')
@@ -525,7 +527,8 @@ class FranchiseePurchaseOrdersAPI(Resource):
         args['search']['delete_at'] = None
         return success_return(
             data=get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
-                                removes=['franchisee_id', 'sku_id', 'purchase_from']))
+                                removes=['franchisee_id', 'sku_id', 'purchase_from'],
+                                advance_search={"key": "status", "operator": "__lt__", "value": 3}))
 
 
 @franchisee_ns.route('/purchase_orders/dispatch')

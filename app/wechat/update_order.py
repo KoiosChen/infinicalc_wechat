@@ -1,5 +1,6 @@
 from app import db, logger
-from app.models import ShopOrders, make_order_id, MemberPolicies, MemberRechargeRecords, make_uuid, Customers
+from app.models import ShopOrders, make_order_id, MemberPolicies, MemberRechargeRecords, make_uuid, Customers, \
+    CUSTOMER_L1_CONSUMPTION, CUSTOMER_L2_CONSUMPTION
 import datetime
 from app.common import submit_return, session_commit
 from app.public_method import new_data_obj, query_coupon, create_member_card_num
@@ -133,9 +134,9 @@ def update_order(data):
                     customer.total_consumption += Decimal(str(cash_fee))
 
                     # 根据累计消费，提升用户等级。若退款降低总消费金额，同样会降低等级
-                    if customer.total_consumption >= Decimal("2000.00"):
+                    if customer.total_consumption >= CUSTOMER_L2_CONSUMPTION:
                         customer.level = 3
-                    elif Decimal("1197.00") <= customer.total_consumption < Decimal("2000.00"):
+                    elif CUSTOMER_L1_CONSUMPTION <= customer.total_consumption < CUSTOMER_L2_CONSUMPTION:
                         customer.level = 2
                     else:
                         customer.level = 1
@@ -197,7 +198,6 @@ def update_order(data):
                     # if calc_result.get('code') != 'success':
                     #     res = calc_result.get('message')
                     #     logger.error(f"订单<{order.id}>返佣结果{res}")
-
 
                     if res == 'success':
                         if session_commit().get("code") != 'success':
