@@ -1006,7 +1006,7 @@ class PurchaseInfo(db.Model):
     amount = db.Column(db.Integer, comment='进货，出货数量')
     operator = db.Column(db.String(64))
     operator_at = db.Column(db.DateTime, comment="进货或者出货时间")
-    express_order_id = db.Column(db.String(64), db.ForeignKey("cloudwine_express_order.id"))
+    express_order_id = db.Column(db.String(64), db.ForeignKey("cloudwine_express_orders.id"))
     express_to_id = db.Column(db.String(64), db.ForeignKey("franchisees.id"))
     franchisee_purchase_order = db.relationship("FranchiseePurchaseOrders", backref="original_order", uselist=False)
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
