@@ -1,5 +1,6 @@
 from flask_restplus import Resource, reqparse, cors
 from flask import request
+from . import express_orders
 from ..models import Permission, CloudWineExpressAddress, CloudWineExpressOrders, SKU, make_uuid, FranchiseeInventory, \
     CustomerRoles
 from .. import db, redis_db, default_api, logger

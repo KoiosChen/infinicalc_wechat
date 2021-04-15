@@ -195,4 +195,7 @@ def create_app(config_name):
     from .deposit import deposit as deposit_blueprint
     app.register_blueprint(deposit_blueprint)
 
+    from .express_orders import express_orders as express_orders_blueprint
+    app.register_blueprint(express_orders_blueprint)
+
     return app
