@@ -112,6 +112,7 @@ def authenticate(login_ip, **kwargs):
                         # 创建manager
                         job_role = CustomerRoles.query.filter_by(name="FRANCHISEE_MANAGER").first()
                         new_employee = new_data_obj("FranchiseeOperators", **{"customer_id": customer.id,
+                                                                              "name": "老板（本人）",
                                                                               "job_desc": job_role.id,
                                                                               "franchisee_id": obj_id})
                         if not new_employee or (new_employee and not new_employee['status']):
@@ -120,6 +121,7 @@ def authenticate(login_ip, **kwargs):
                         # bind to the bu
                         job_role = CustomerRoles.query.filter_by(name="BU_MANAGER").first()
                         new_employee = new_data_obj("BusinessUnitEmployees", **{"customer_id": customer.id,
+                                                                                "name": "老板（本人）",
                                                                                 "job_desc": job_role.id,
                                                                                 "business_unit_id": obj_id})
                         if not new_employee or (new_employee and not new_employee['status']):

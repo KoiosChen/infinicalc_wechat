@@ -50,7 +50,7 @@ bu_employees_page_parser = page_parser.copy()
 
 new_bu_employee = reqparse.RequestParser()
 new_bu_employee.add_argument('name', required=True, help='员工姓名')
-new_bu_employee.add_argument('job_desc', required=True, help='1: boss, 2: leader, 3: waiter')
+new_bu_employee.add_argument('job_desc', required=True, help='BU_WAITER, BU_OPERATOR')
 
 update_employee_parser = reqparse.RequestParser()
 update_employee_parser.add_argument('name', required=False, help='员工姓名')
@@ -383,15 +383,16 @@ class BUEmployeesApi(Resource):
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
 
         # 店铺经理和店长在一个店铺中唯一
-        role_name = CustomerRoles.query.get(args['job_desc']).name
+        role_name = args.get('job_desc')
+        job_id = CustomerRoles.query.filter_by(name=role_name).first().id
         if role_name in ("BU_OPERATOR", "BU_MANAGER"):
             tmp_obj = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.business_unit_id.__eq__(bu_id),
-                                                         BusinessUnitEmployees.job_desc.__eq__(args['job_desc'])).all()
+                                                         BusinessUnitEmployees.job_desc.__eq__(job_id)).all()
             if tmp_obj:
                 return false_return(message="当前角色唯一，不可添加"), 400
 
         new_employee = new_data_obj("BusinessUnitEmployees", **{"name": args['name'],
-                                                                "job_desc": args['job_desc'],
+                                                                "job_desc": job_id,
                                                                 "business_unit_id": bu_id})
         if not new_employee or (new_employee and not new_employee['status']):
             return false_return(message=f"create user {args['name']} fail")
@@ -458,7 +459,7 @@ class BUNearby(Resource):
         try:
             import math
             args = bu_nearby.parse_args()
-            distance = args['distance']
+            distance = args.get('distance')
             longitude = eval(args['longitude'])
             latitude = eval(args['latitude'])
 

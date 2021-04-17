@@ -60,7 +60,7 @@ franchisee_operator_page_parser = page_parser.copy()
 new_operator = reqparse.RequestParser()
 new_operator.add_argument('name', required=True, type=str, help='运营人员姓名')
 new_operator.add_argument('age', required=False, type=int, help='年龄')
-new_operator.add_argument('job_desc', required=True, type=int, help='1: 老板, 2: 二级代理')
+new_operator.add_argument('job_desc', required=True, help='FRANCHISEE_OPERATOR')
 
 update_operator_parser = reqparse.RequestParser()
 update_operator_parser.add_argument('name', required=False, help='员工姓名')
@@ -294,8 +294,8 @@ class FranchiseeOperatorsApi(Resource):
     def post(self, **kwargs):
         args = new_operator.parse_args()
         franchisee_id = kwargs['current_user'].franchisee_operator.franchisee_id
-        job_dict = {1: "FRANCHISEE_MANAGER", 2: "FRANCHISEE_OPERATOR"}
-        fid = CustomerRoles.query.filter_by(name=job_dict[args['job_desc']]).first().id
+        job_name = args['job_desc']
+        fid = CustomerRoles.query.filter_by(name=job_name).first().id
         new_employee = new_data_obj("FranchiseeOperators", **{"name": args['name'],
                                                               "age": args['age'],
                                                               "job_desc": fid,
@@ -304,10 +304,6 @@ class FranchiseeOperatorsApi(Resource):
             return false_return(message=f"create user {args['name']} fail")
         else:
             if session_commit().get('code') == 'success':
-                # scene_invitation = generate_code(12)
-                # redis_db.set(scene_invitation, new_employee['obj'].id)
-                # redis_db.expire(scene_invitation, 600)
-                # return success_return(data={'scene': 'new_franchisee_employee', 'scene_invitation': scene_invitation})
                 return success_return(data={'new_franchisee_employee': new_employee['obj'].id})
             else:
                 return false_return("create employee fail")
