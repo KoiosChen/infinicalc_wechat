@@ -271,16 +271,12 @@ def __make_table(fields, table, strainer=None):
         elif f == 'scopes':
             tmp[f] = _make_data(table.scopes, table_fields(FranchiseeScopes, removes=['franchisee_id', 'street']))
         elif f == 'job_role':
-            role_admin_id = CustomerRoles.query.filter_by(name="ADMINISTRATOR").first().id
-            role_operator_id = CustomerRoles.query.filter_by(name='CUSTOMER_SERVICE').first().id
-            if table.role_id == role_admin_id:
-                tmp[f] = "ADMINISTRATOR"
-            if table.role_id == role_operator_id:
-                tmp[f] = "CUSTOMER_SERVICE"
             if table.business_unit_employee:
                 tmp[f] = table.business_unit_employee.role.name
-            if table.franchisee_operator:
+            elif table.franchisee_operator:
                 tmp[f] = table.franchisee_operator.role.name
+            else:
+                tmp[f] = CustomerRoles.query.get(table.role_id)
         elif f == 'franchisee_name':
             tmp[f] = table.franchisee.name
         elif f == 'job_name':
@@ -300,6 +296,8 @@ def __make_table(fields, table, strainer=None):
                     tmp[f] = get_table_data_by_id(BusinessUnits, table.sell_to)
         elif f == 'bu_inventory':
             tmp[f] = _make_data(table.bu_inventories, table_fields(BusinessUnitInventory))
+        elif f == 'increased_bu':
+            tmp[f] = []
         else:
             r = getattr(table, f)
             if isinstance(r, int) or isinstance(r, float):

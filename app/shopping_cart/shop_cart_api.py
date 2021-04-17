@@ -16,7 +16,7 @@ from app.wechat import pay
 from app.shopping_cart.check_out import check_promotions_base_police
 import traceback
 
-shopping_cart_ns = default_api.namespace('Shopping Cart', path='/shopping_cart', description='购物车API')
+shopping_cart_ns = default_api.namespace('shopping cart', path='/shopping_cart', description='购物车API')
 
 return_json = shopping_cart_ns.model('ReturnRegister', return_dict)
 

@@ -348,6 +348,8 @@ class FranchiseeOperators(db.Model):
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
+    bus = db.relationship("BusinessUnits", backref='operator', lazy='dynamic')
+
 
 class FranchiseePurchaseOrders(db.Model):
     __tablename__ = "franchisee_purchase_orders"
@@ -414,9 +416,10 @@ class BusinessUnits(db.Model):
     consumers = db.relationship("Customers", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='bu', uselist=False)
-    purchase_orders = db.relationship("BusinessPurchaseOrders", backref='bu', uselist=False)
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    franchisee_operator_id = db.Column(db.String(64), db.ForeignKey('franchisee_operators.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
+    purchase_orders = db.relationship("BusinessPurchaseOrders", backref='bu', uselist=False)
     verify_orders = db.relationship('ItemVerification', backref='bu', lazy='dynamic')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)

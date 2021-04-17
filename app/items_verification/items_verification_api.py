@@ -10,7 +10,7 @@ from app.scene_invitation.scene_invitation_api import generate_code
 from app.rebate_calc import *
 import datetime
 
-item_verification_ns = default_api.namespace('Items Verification', path='/items_verification', description='物品核销接口')
+item_verification_ns = default_api.namespace('items verification', path='/items_verification', description='物品核销接口')
 
 return_json = item_verification_ns.model('ReturnRegister', return_dict)
 

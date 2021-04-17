@@ -13,7 +13,7 @@ import datetime
 import traceback
 from sqlalchemy import and_
 
-orders_ns = default_api.namespace('Orders', path='/shop_orders', description='定单相关API')
+orders_ns = default_api.namespace('orders', path='/shop_orders', description='定单相关API')
 
 return_json = orders_ns.model('ReturnRegister', return_dict)
 

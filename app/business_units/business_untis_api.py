@@ -12,7 +12,7 @@ from ..swagger import return_dict, head_parser, page_parser
 import datetime
 from sqlalchemy import and_
 
-bu_ns = default_api.namespace('Business Units', path='/business_units', description='店铺接口')
+bu_ns = default_api.namespace('business units', path='/business_units', description='店铺接口')
 
 return_json = bu_ns.model('ReturnRegister', return_dict)
 

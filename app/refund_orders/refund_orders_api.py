@@ -9,7 +9,7 @@ from app.type_validation import checkout_sku_type
 from ..wechat.refund import weixin_refund
 import datetime
 
-refund_ns = default_api.namespace('Refund', path='/refund', description='退货定单相关API')
+refund_ns = default_api.namespace('refund', path='/refund', description='退货定单相关API')
 
 refund_page_parser = page_parser.copy()
 
