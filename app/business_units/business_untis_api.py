@@ -151,6 +151,7 @@ class BusinessUnitsAPI(Resource):
                                      "unit_type": args.get('unit_type'),
                                      "latitude": args['latitude'],
                                      "franchisee_id": franchisee_id,
+                                     "franchisee_operator_id": current_user.franchisee_operator.id,
                                      "longitude": args['longitude']})
 
             if not new_bu or (new_bu and not new_bu['status']):
@@ -162,16 +163,13 @@ class BusinessUnitsAPI(Resource):
                     append_image = {'code': 'success'}
 
                 if append_image.get("code") == 'success' and session_commit().get('code') == 'success':
-                    # invitation_code = generate_code(12)
-                    # redis_db.set(invitation_code, new_bu['obj'].id)
-                    # redis_db.expire(invitation_code, 600)
-                    # return success_return(data={'scene': 'new_bu', 'scene_invitation': invitation_code})
                     return success_return(data={'new_bu': new_bu['obj'].id})
                 elif append_image.get("code") == 'false':
                     raise Exception("图片添加失败")
                 else:
                     raise Exception("新增店铺失败")
         except Exception as e:
+            logger.error(str(e))
             return false_return(message=str(e)), 400
 
 
