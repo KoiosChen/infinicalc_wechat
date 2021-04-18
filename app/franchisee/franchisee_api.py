@@ -512,7 +512,7 @@ class FranchiseePurchaseOrdersAPI(Resource):
 class FranchiseePurchaseOrdersAPI(Resource):
     @franchisee_ns.doc(body=purchase_parser)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required(Permission.BU_OPERATOR)
+    @permission_required(Permission.FRANCHISEE_MANAGER)
     def get(self, **kwargs):
         """获取所有出入库单"""
         args = purchase_parser.parse_args()
@@ -532,7 +532,7 @@ class FranchiseePurchaseOrdersAPI(Resource):
 class FranchiseeDispatch(Resource):
     @franchisee_ns.doc(body=dispatch_parser)
     @franchisee_ns.marshal_with(return_json)
-    @permission_required(Permission.FRANCHISEE_MANAGER, )
+    @permission_required(Permission.FRANCHISEE_MANAGER)
     def post(self, **kwargs):
         """加盟商发货给店铺"""
         args = dispatch_parser.parse_args()
