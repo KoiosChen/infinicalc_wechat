@@ -276,7 +276,7 @@ def __make_table(fields, table, strainer=None):
             elif table.franchisee_operator:
                 tmp[f] = table.franchisee_operator.role.name
             else:
-                tmp[f] = CustomerRoles.query.get(table.role_id)
+                tmp[f] = CustomerRoles.query.get(table.role_id).name
         elif f == 'franchisee_name':
             tmp[f] = table.franchisee.name
         elif f == 'job_name':
