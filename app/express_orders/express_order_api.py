@@ -147,9 +147,9 @@ class ExpressOrderAPI(Resource):
                                                                 "amount": order_obj.quantity,
                                                                 "status": 3,
                                                                 "franchisee_id": order_obj.franchisee_id,
+                                                                "express_order_id": order_obj.id,
                                                                 "original_order_id":
-                                                                    new_purchase_order[
-                                                                        'obj'].id
+                                                                    new_purchase_order['obj'].id
                                                                 })
 
                 if not new_franchisee_purchase_order:
@@ -268,9 +268,9 @@ class PerExpressOrderAPI(Resource):
                                                                                     "amount": order_obj.quantity,
                                                                                     "status": 3,
                                                                                     "franchisee_id": order_obj.franchisee_id,
+                                                                                    "express_order_id": order_obj.id,
                                                                                     "original_order_id":
-                                                                                        new_purchase_order[
-                                                                                            'obj'].id
+                                                                                        new_purchase_order['obj'].id
                                                                                     })
 
                                     if not new_franchisee_purchase_order:
@@ -295,7 +295,7 @@ class PerExpressOrderAPI(Resource):
                             if purchase_obj:
                                 purchase_obj.dispatch_status = 1
                             if f_purchase_obj:
-                                f_purchase_obj.status = 1
+                                f_purchase_obj.status = 0
                         else:
                             raise Exception("当前订单已发货，不可重复发货")
                     else:
