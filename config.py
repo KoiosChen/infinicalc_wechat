@@ -25,7 +25,7 @@ class DevelopmentConfig(Config):
     DB_USERNAME = os.environ.get('DEV_DATABASE_USERNAME') or 'peter'
     DB_PASSWORD = os.environ.get('DEV_DATABASE_PASSWORD') or 'Gwbnsh@408'
     DB_HOST = os.environ.get('DEV_DATABASE_HOST') or '42.194.141.250'
-    DB_DATABASE = os.environ.get('DEV_DATABASE_DATABASE') or 'shengzhuan_dev'
+    DB_DATABASE = os.environ.get('DEV_DATABASE_DATABASE') or 'shengzhuanv2'
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://' + DB_USERNAME + ':' + DB_PASSWORD + '@' + DB_HOST + '/' + DB_DATABASE
 
 

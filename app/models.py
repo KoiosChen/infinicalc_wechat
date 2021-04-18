@@ -1404,7 +1404,6 @@ class CloudWineExpressAddress(db.Model):
     recipient = db.Column(db.String(50), index=True, comment="收件人")
     recipient_phone = db.Column(db.String(20), index=True, comment="收件人电话")
     status = db.Column(db.SmallInteger, default=1, index=True, comment="1：正常 0：删除")
-    express_orders = db.relationship("CloudWineExpressOrders", backref='express_address', lazy="dynamic")
 
 
 class Evaluates(db.Model):
