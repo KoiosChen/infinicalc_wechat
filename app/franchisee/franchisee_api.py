@@ -524,7 +524,7 @@ class FranchiseePurchaseOrdersAPI(Resource):
         return success_return(
             data=get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
                                 removes=['franchisee_id', 'sku_id', 'purchase_from'],
-                                advance_search={"key": "status", "operator": "__lt__", "value": 3}))
+                                advance_search=[{"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}]))
 
 
 @franchisee_ns.route('/purchase_orders/dispatch')
