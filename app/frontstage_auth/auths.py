@@ -142,9 +142,16 @@ def authenticate(login_ip, **kwargs):
                 if redis_db.exists(scene_invitation):
                     obj_id = redis_db.get(scene_invitation)
                     redis_db.delete(scene_invitation)
+                    bu_customer_obj = Customers.query.get(obj_id)
+                    if not bu_customer_obj:
+                        logger.error(f"customer {obj_id} is not available")
+
+                    employee_obj = bu_customer_obj.business_unit_employee
+                    if not employee_obj:
+                        logger.error(f"customer {obj_id} is not an employee of business unit")
                     if scene == 'new_customer':
-                        customer.bu_employee_id = obj_id
-                        customer.bu_id = BusinessUnitEmployees.query.get(obj_id).business_unit_id
+                        customer.bu_employee_id = employee_obj.id
+                        customer.bu_id = employee_obj.business_unit_id
                 else:
                     logger.error('二维码过期')
 

@@ -348,6 +348,8 @@ class FranchiseeOperators(db.Model):
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
 
+    bus = db.relationship("BusinessUnits", backref='operator', lazy='dynamic')
+
 
 class FranchiseePurchaseOrders(db.Model):
     __tablename__ = "franchisee_purchase_orders"
@@ -414,9 +416,10 @@ class BusinessUnits(db.Model):
     consumers = db.relationship("Customers", backref='business_unit', lazy='dynamic')
     products = db.relationship("BusinessUnitProducts", backref='producer', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='bu', uselist=False)
-    purchase_orders = db.relationship("BusinessPurchaseOrders", backref='bu', uselist=False)
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
+    franchisee_operator_id = db.Column(db.String(64), db.ForeignKey('franchisee_operators.id'))
     status = db.Column(db.SmallInteger, default=0, comment='1: 上架， 2: 下架。 若需要删除，写入delete_at时间')
+    purchase_orders = db.relationship("BusinessPurchaseOrders", backref='bu', uselist=False)
     verify_orders = db.relationship('ItemVerification', backref='bu', lazy='dynamic')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
@@ -1362,13 +1365,17 @@ class CloudWineExpressOrders(db.Model):
     apply_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='发货申请人id')
     send_unit_type = db.Column(db.String(20), index=True, comment='Franchisee, BusinessUnit')
     send_unit_id = db.Column(db.String(64), index=True, comment='商业单位的id，Franchisees表、BusinessUnits表的id')
-    recipient_id = db.Column(db.String(64), db.ForeignKey('cloudwine_express_address.id'))
+    recipient = db.Column(db.String(50), index=True, comment="收件人")
+    recipient_phone = db.Column(db.String(20), index=True, comment="收件人电话")
+    recipient_addr = db.Column(db.String(200), comment='收货人地址')
     is_purchase = db.Column(db.SmallInteger, comment='0 不是进货，1 进货')
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     quantity = db.Column(db.Integer, comment='发货数量')
     apply_at = db.Column(db.DateTime, comment="申请发货时间")
     # 是否要公司二次确认？目前不需要
     franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'), comment='此快递订单归属的加盟商ID')
+    confirm_status = db.Column(db.SmallInteger, default=0, index=True, comment='2 拒绝，1 同意, 0 未确认')
+    confirm_reason = db.Column(db.String(128), comment='审核的原因')
     confirm_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='当申请人是BU，或者是加盟商运营人员时，需要加盟商老板确认')
     confirm_at = db.Column(db.DateTime, comment='确认可发货日期')
     express_company = db.Column(db.String(50), index=True, comment='快递公司，例如安能物流，顺丰快递')

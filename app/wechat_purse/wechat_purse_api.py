@@ -7,7 +7,7 @@ from ..swagger import return_dict, head_parser, page_parser
 from app.common import success_return, false_return, submit_return
 from app.public_method import get_table_data
 
-purse_ns = default_api.namespace('Wechat Purse', path='/wechat_purse', description='用户钱包相关接口')
+purse_ns = default_api.namespace('wechat purse', path='/wechat_purse', description='用户钱包相关接口')
 
 return_json = purse_ns.model('ReturnRegister', return_dict)
 

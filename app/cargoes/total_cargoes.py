@@ -12,7 +12,7 @@ from ..swagger import return_dict, head_parser, page_parser
 from ..public_user_func import modify_user_profile
 import requests
 
-cargoes_ns = default_api.namespace('Total Cargoes', path='/cargoes',
+cargoes_ns = default_api.namespace('total cargoes', path='/cargoes',
                                    description='指仓储货物，例如窖藏酒，整箱货物等；都可以进行分装操作')
 
 return_json = cargoes_ns.model('ReturnResult', return_dict)

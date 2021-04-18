@@ -10,7 +10,7 @@ import random
 import string
 import datetime
 
-invite_ns = default_api.namespace('Invitation Code', path='/invitation_code', description='邀请码，可邀请成为代理商或者会员用户')
+invite_ns = default_api.namespace('invitation code', path='/invitation_code', description='邀请码，可邀请成为代理商或者会员用户')
 
 return_json = invite_ns.model('ReturnRegister', return_dict)
 

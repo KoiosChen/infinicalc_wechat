@@ -10,7 +10,7 @@ from app.scene_invitation.scene_invitation_api import generate_code
 from app.rebate_calc import *
 import datetime
 
-item_verification_ns = default_api.namespace('Items Verification', path='/items_verification', description='物品核销接口')
+item_verification_ns = default_api.namespace('items verification', path='/items_verification', description='物品核销接口')
 
 return_json = item_verification_ns.model('ReturnRegister', return_dict)
 
@@ -21,6 +21,7 @@ all_verification_orders.add_argument("bu_id", required=False, help='店铺ID，�
 verify_quantity_parser = reqparse.RequestParser()
 verify_quantity_parser.add_argument("sku_id", required=True, type=str, help='需要核销的sku id', location='args')
 verify_quantity_parser.add_argument("quantity", required=True, help='核销数量', location='args')
+verify_quantity_parser.add_argument("bu_id", required=True, type=str, help='进入取酒的这个店铺的id')
 
 verification_parser = reqparse.RequestParser()
 verification_parser.add_argument("qrcode", required=True, type=str, help='get_verify_qrcode 返回的值')
@@ -66,12 +67,18 @@ class ItemPreVerification(Resource):
 class ItemVerifyQRCode(Resource):
     @item_verification_ns.marshal_with(return_json)
     @item_verification_ns.doc(body=verify_quantity_parser)
-    @permission_required(Permission.BU_WAITER)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """获取核销验证码"""
         args = verify_quantity_parser.parse_args()
         sku_id = args['sku_id']
         quantity = eval(args['quantity'])
+        bu_inventory_obj = BusinessUnitInventory.query.filter(BusinessUnitInventory.bu_id.__eq__(args['bu_id']),
+                                                              BusinessUnitInventory.sku_id.__eq__(sku_id)).first()
+
+        if bu_inventory_obj.amount < quantity:
+            return false_return(message='店铺库存不足'), 400
+
         sum_item_quantity = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in
                                 db.session.query(ItemsOrders).with_for_update().filter(
                                     ItemsOrders.delete_at.__eq__(None),

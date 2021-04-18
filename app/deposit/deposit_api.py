@@ -10,7 +10,7 @@ from ..wechat.pay import weixin_pay
 from app.scene_invitation.scene_invitation_api import generate_code
 import datetime
 
-deposit_ns = default_api.namespace('Deposit', path='/deposit', description='存酒接口')
+deposit_ns = default_api.namespace('deposit', path='/deposit', description='存酒接口')
 
 return_json = deposit_ns.model('ReturnRegister', return_dict)
 

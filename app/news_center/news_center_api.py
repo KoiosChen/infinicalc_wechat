@@ -9,7 +9,7 @@ from ..models import Banners, Permission, ObjStorage, NewsCenter, NewsSections
 from app.wechat.qqcos import QcloudCOS, delete_object
 import datetime
 
-news_center_ns = default_api.namespace('NEWS CENTER', path='/news_center', description='资讯中心')
+news_center_ns = default_api.namespace('news center', path='/news_center', description='资讯中心')
 
 return_json = news_center_ns.model('ReturnRegister', return_dict)
 

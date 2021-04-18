@@ -14,7 +14,7 @@ import traceback
 import datetime
 from collections import defaultdict
 
-scene_invite_ns = default_api.namespace('Scene Invitation', path='/scene_invitation', description='场景邀请码自助生成')
+scene_invite_ns = default_api.namespace('scene invitation', path='/scene_invitation', description='场景邀请码自助生成')
 
 return_json = scene_invite_ns.model('ReturnRegister', return_dict)
 

@@ -286,7 +286,7 @@ class FranchiseeOperatorsApi(Resource):
         args = franchisee_operator_page_parser.parse_args()
         args['search'] = {'franchisee_id': kwargs['current_user'].franchisee_operator.franchisee_id,
                           'delete_at': None}
-        return success_return(data=get_table_data(FranchiseeOperators, args))
+        return success_return(data=get_table_data(FranchiseeOperators, args, appends=['increased_bu']))
 
     @franchisee_ns.doc(body=new_operator)
     @franchisee_ns.marshal_with(return_json)

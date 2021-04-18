@@ -8,7 +8,7 @@ from ..swagger import return_dict, page_parser
 import json
 from decimal import Decimal
 
-packing_ns = default_api.namespace('Packing Orders', path='/packing_orders', description='分装接口')
+packing_ns = default_api.namespace('packing orders', path='/packing_orders', description='分装接口')
 
 return_json = packing_ns.model('ReturnResult', return_dict)
 
