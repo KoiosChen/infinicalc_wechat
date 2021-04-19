@@ -470,7 +470,8 @@ class BUNearby(Resource):
                  "distance": math.ceil(geo_distance((latitude, longitude), (obj.latitude, obj.longitude)))} for
                 obj in BusinessUnits.query.filter(
                     BusinessUnits.latitude.between(nearby_range['south'].latitude, nearby_range['north'].latitude),
-                    BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude)
+                    BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude),
+                    BusinessUnits.delete_at.__eq__(None)
                 ).all()]
 
             # 按照距离排序

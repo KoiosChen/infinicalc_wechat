@@ -224,8 +224,8 @@ class CustomerRoles(db.Model):
     @staticmethod
     def insert_roles():
         roles = {
-            'User': (Permission.USER, True),
-            'Member': (Permission.USER |
+            'USER': (Permission.USER, True),
+            'MEMBER': (Permission.USER |
                        Permission.MEMBER, False),
             'BU_WAITER': (Permission.USER |
                           Permission.MEMBER |
