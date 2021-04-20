@@ -202,7 +202,7 @@ class PerExpressOrderAPI(Resource):
 
             if not inventory_obj and order_obj.is_purchase == 1 and order_obj.send_unit_type == "Franchisee":
                 pass
-            else:
+            elif not inventory_obj:
                 raise Exception("加盟商无库存")
 
             # apply_update_flag = False

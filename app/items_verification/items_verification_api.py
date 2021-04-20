@@ -21,7 +21,7 @@ all_verification_orders.add_argument("bu_id", required=False, help='店铺ID，�
 verify_quantity_parser = reqparse.RequestParser()
 verify_quantity_parser.add_argument("sku_id", required=True, type=str, help='需要核销的sku id', location='args')
 verify_quantity_parser.add_argument("quantity", required=True, help='核销数量', location='args')
-verify_quantity_parser.add_argument("bu_id", required=True, type=str, help='进入取酒的这个店铺的id')
+verify_quantity_parser.add_argument("bu_id", required=True, type=str, help='进入取酒的这个店铺的id', location='args')
 
 verification_parser = reqparse.RequestParser()
 verification_parser.add_argument("qrcode", required=True, type=str, help='get_verify_qrcode 返回的值')
