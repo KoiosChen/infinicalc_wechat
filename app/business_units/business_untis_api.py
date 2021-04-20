@@ -522,8 +522,8 @@ class BUPurchaseOrdersAPI(Resource):
         args = dispatch_confirm_parser.parse_args()
         status = args['status']
         current_user = kwargs.get('current_user')
-        if not current_user.franchisee_operator:
-            return false_return(message="当前用户无加盟商角色")
+        if not current_user.business_unit_employee:
+            return false_return(message="当前用户无店铺商角色")
 
         bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         bpo_obj = BusinessPurchaseOrders.query.get(kwargs['bu_purchase_order_id'])
