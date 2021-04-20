@@ -30,8 +30,8 @@ update_express_order_parser.add_argument("recipient", help='收件人')
 update_express_order_parser.add_argument("recipient_phone", help='收件人电话')
 update_express_order_parser.add_argument("recipient_addr", help='收件人地址')
 update_express_order_parser.add_argument("sku_id", help='发货的SKU ID')
-update_express_order_parser.add_argument("quantity", help='发货数量')
-update_express_order_parser.add_argument("confirm_status", help='1：同意，2：拒绝')
+update_express_order_parser.add_argument("quantity", type=int, help='发货数量')
+update_express_order_parser.add_argument("confirm_status", type=int, help='1：同意，2：拒绝')
 update_express_order_parser.add_argument("express_num", help='快递号')
 update_express_order_parser.add_argument("is_purchase", type=int, help='0 否，1 是')
 
@@ -118,7 +118,7 @@ class ExpressOrderAPI(Resource):
 
             order_obj = new_order['obj']
 
-            if current_user.franchisee_operator.job_desc == franchisee_manager_role.id:
+            if current_user.franchisee_operator and current_user.franchisee_operator.job_desc == franchisee_manager_role.id:
                 # 如果当前用户是加盟商manager， 则直接完成确认步骤
                 order_obj.confirm_id = current_user.id
                 order_obj.confirm_at = datetime.datetime.now()
@@ -200,18 +200,20 @@ class PerExpressOrderAPI(Resource):
                 FranchiseeInventory.amount.__ge__(order_obj.quantity)
             ).first()
 
-            if not inventory_obj and order_obj.is_purchase != 1 and order_obj.send_unit_type != "Franchisee":
+            if not inventory_obj and order_obj.is_purchase == 1 and order_obj.send_unit_type == "Franchisee":
+                pass
+            else:
                 raise Exception("加盟商无库存")
 
             # apply_update_flag = False
 
             for key, value in args.items():
                 if hasattr(order_obj, key) and value:
-                    if key in apply_update_list and current_user.id == order_obj.apply_id and order_obj.confirm_stauts == 0:
+                    if key in apply_update_list and current_user.id == order_obj.apply_id and order_obj.confirm_status == 0:
                         # apply_update_flag = True
                         setattr(order_obj, key, value)
                     elif key in confirm_update_list and current_user.franchisee_operator and current_user.franchisee_operator.franchisee_id == order_obj.franchisee_id:
-                        if order_obj.confirm_id is None and order_obj.confirm_at is None and order_obj.confirm_stauts == 0:
+                        if order_obj.confirm_id is None and order_obj.confirm_at is None and order_obj.confirm_status == 0:
                             if value == 1:
                                 if not inventory_obj and order_obj.is_purchase != 1 and order_obj.send_unit_type != "Franchisee":
                                     raise Exception("加盟商库存不足，不可确认")
@@ -235,7 +237,7 @@ class PerExpressOrderAPI(Resource):
                                                                          **{"bu_id": order_obj.send_unit_id,
                                                                             "amount": order_obj.quantity,
                                                                             "status": 3,
-                                                                            "purchase_from": order_obj.franchisee_id,
+                                                                            "sku_id": order_obj.sku_id,
                                                                             "original_order_id": new_purchase_order[
                                                                                 'obj'].id})
 
@@ -292,10 +294,13 @@ class PerExpressOrderAPI(Resource):
 
                             purchase_obj = getattr(order_obj, "purchase_order")
                             f_purchase_obj = getattr(order_obj, "franchisee_purchase_order")
+                            bu_purchase_obj = getattr(order_obj, "bu_purchase_order")
                             if purchase_obj:
                                 purchase_obj.dispatch_status = 1
                             if f_purchase_obj:
                                 f_purchase_obj.status = 0
+                            if bu_purchase_obj:
+                                bu_purchase_obj.status = 0
                         else:
                             raise Exception("当前订单已发货，不可重复发货")
                     else:
@@ -323,7 +328,7 @@ class PerExpressOrderAPI(Resource):
             if not order_obj:
                 raise Exception("快递订单不存在")
 
-            if order_obj.confirm_stauts != 0:
+            if order_obj.confirm_status != 0:
                 raise Exception("订单已确认，不可删除")
 
             if order_obj.is_sent != 0:
