@@ -200,7 +200,9 @@ class PerExpressOrderAPI(Resource):
                 FranchiseeInventory.amount.__ge__(order_obj.quantity)
             ).first()
 
-            if not inventory_obj and order_obj.is_purchase != 1 and order_obj.send_unit_type != "Franchisee":
+            if not inventory_obj and order_obj.is_purchase == 1 and order_obj.send_unit_type == "Franchisee":
+                pass
+            else:
                 raise Exception("加盟商无库存")
 
             # apply_update_flag = False
