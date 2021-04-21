@@ -71,8 +71,11 @@ class ItemVerifyQRCode(Resource):
     def get(self, **kwargs):
         """获取核销验证码"""
         args = verify_quantity_parser.parse_args()
+        current_user = kwargs['current_user']
+
         sku_id = args['sku_id']
         quantity = eval(args['quantity'])
+
         bu_inventory_obj = BusinessUnitInventory.query.filter(BusinessUnitInventory.bu_id.__eq__(args['bu_id']),
                                                               BusinessUnitInventory.sku_id.__eq__(sku_id)).first()
 
@@ -83,14 +86,16 @@ class ItemVerifyQRCode(Resource):
                                 db.session.query(ItemsOrders).with_for_update().filter(
                                     ItemsOrders.delete_at.__eq__(None),
                                     ItemsOrders.item_id.__eq__(sku_id),
-                                    ItemsOrders.status.__eq__(1)).all())
+                                    ItemsOrders.status.__eq__(1),
+                                    ItemsOrders.customer_id.__eq__(current_user.id)).all())
         if sum_item_quantity < quantity:
             return false_return(message=f"取酒数量不可大于{sum_item_quantity}")
         else:
             qrcode = generate_code(16)
             args['present_quantity'] = sum_item_quantity
             redis_db.set(qrcode,
-                         json.dumps({"sku_id": sku_id, "quantity": quantity, "present_quantity": sum_item_quantity}))
+                         json.dumps({"sku_id": sku_id, "customer_id": current_user.id, "quantity": quantity,
+                                     "present_quantity": sum_item_quantity}))
             redis_db.expire(qrcode, 120)
             return success_return(data=qrcode)
 
@@ -140,7 +145,8 @@ class ItemVerificationAPI(Resource):
         all_objs = db.session.query(ItemsOrders).with_for_update().filter(
             ItemsOrders.delete_at.__eq__(None),
             ItemsOrders.item_id.__eq__(verify_info['sku_id']),
-            ItemsOrders.status.__eq__(1)).order_by(ItemsOrders.create_at).all()
+            ItemsOrders.status.__eq__(1),
+            ItemsOrders.customer_id.__eq__(verify_info['customer_id'])).order_by(ItemsOrders.create_at).all()
         sum_item_quantity = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in all_objs)
         if sum_item_quantity != verify_info['present_quantity']:
             return false_return(message='用户库存有变化，请重新生成核销码')
@@ -164,14 +170,16 @@ class ItemVerificationAPI(Resource):
             if diff >= 0:
                 # 表示核销完了
                 vid = __verify(verify_quantity, item_order_obj)
-                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id, item_order_obj.shop_orders.customer_id)
+                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id,
+                                              item_order_obj.shop_orders.customer_id)
                 logger.error(rebate_result)
                 break
             elif diff < 0:
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)
                 vid = __verify(left_quantity, item_order_obj)
-                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id, item_order_obj.shop_orders.customer_id)
+                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id,
+                                              item_order_obj.shop_orders.customer_id)
                 logger.error(rebate_result)
 
         return submit_return("核销成功", "核销失败")
