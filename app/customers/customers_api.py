@@ -6,7 +6,7 @@ from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger, redis_db
 from ..common import success_return, false_return, submit_return
-from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj, _make_data
+from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj, _make_table
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
@@ -413,7 +413,7 @@ class CustomerBoughtItems(Resource):
         current_user = kwargs['current_user']
         if current_user is None:
             return false_return(message="用户未登陆"), 400
-        sku_objs = SKU.query.filter(SKU.delete_at.__ne__(None)).all()
+        sku_objs = SKU.query.filter(SKU.delete_at.__eq__(None)).all()
         return_data = list()
         for sku in sku_objs:
             all_items_objs = db.session.query(ItemsOrders).with_for_update().filter(
@@ -423,6 +423,6 @@ class CustomerBoughtItems(Resource):
                 ItemsOrders.customer_id.__eq__(current_user.id)).all()
 
             could_pickup = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in all_items_objs)
-            return_data.append({"sku": _make_data(sku, table_fields(SKU, removes=['contents'])),
+            return_data.append({"sku": _make_table(table_fields(SKU, removes=['contents']), sku),
                                 "cloud_pickup": could_pickup})
         return success_return(data=return_data)

@@ -102,7 +102,7 @@ def find_id(elements_list):
             return [el['id']]
 
 
-def __make_table(fields, table, strainer=None):
+def _make_table(fields, table, strainer=None):
     tmp = dict()
     for f in fields:
         if f == 'elements':
@@ -313,7 +313,7 @@ def __make_table(fields, table, strainer=None):
 def _make_data(data, fields, strainer=None):
     rr = list()
     for t in data:
-        rr.append(__make_table(fields, t, strainer))
+        rr.append(_make_table(fields, t, strainer))
     return rr
 
 
@@ -418,7 +418,7 @@ def get_table_data_by_id(table, key_id, appends=[], removes=[], strainer=None, s
         filter_args.append(getattr(getattr(table, 'id'), '__eq__')(key_id))
         t = base_sql.filter(and_(*filter_args)).first()
     if t:
-        return __make_table(fields, t, strainer)
+        return _make_table(fields, t, strainer)
     else:
         return {}
 
