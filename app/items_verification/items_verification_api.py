@@ -82,12 +82,13 @@ class ItemVerifyQRCode(Resource):
         if bu_inventory_obj.amount < quantity:
             return false_return(message='店铺库存不足'), 400
 
-        sum_item_quantity = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in
-                                db.session.query(ItemsOrders).with_for_update().filter(
+        all_items_objs = db.session.query(ItemsOrders).with_for_update().filter(
                                     ItemsOrders.delete_at.__eq__(None),
                                     ItemsOrders.item_id.__eq__(sku_id),
                                     ItemsOrders.status.__eq__(1),
-                                    ItemsOrders.customer_id.__eq__(current_user.id)).all())
+                                    ItemsOrders.customer_id.__eq__(current_user.id)).all()
+
+        sum_item_quantity = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in all_items_objs)
         if sum_item_quantity < quantity:
             return false_return(message=f"取酒数量不可大于{sum_item_quantity}")
         else:
@@ -171,7 +172,7 @@ class ItemVerificationAPI(Resource):
                 # 表示核销完了
                 vid = __verify(verify_quantity, item_order_obj)
                 rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id,
-                                              item_order_obj.shop_orders.customer_id)
+                                              item_order_obj.customer_id)
                 logger.error(rebate_result)
                 break
             elif diff < 0:

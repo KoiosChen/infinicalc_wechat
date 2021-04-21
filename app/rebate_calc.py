@@ -127,16 +127,16 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
         item_obj = ItemsOrders.query.get(item_order_id)
 
         consumer_obj = Customers.query.get(consumer_id)
-        bu_obj = consumer_obj.business_unit_employee.business_unit
+        pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
+        bu_obj = pickup_employee.business_unit
         franchisee_obj = bu_obj.franchisee
         franchisee_manager = franchisee_obj.operators.filter(
             FranchiseeOperators.job_desc.__eq__(
                 CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first().id)).first()
 
         # 卖酒返佣，包括躺赚
-        purchase_rebate(consumer_id, item_verification_id)
+        # purchase_rebate(consumer_id, item_verification_id)
 
-        pickup_employee = BusinessUnitEmployees.query.get(pickup_employee_id)
         bu_employees = pickup_employee.business_unit.employees
         operator_role_id = CustomerRoles.query.filter_by(name="BU_OPERATOR").first().id
         employee_operator = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(operator_role_id)).first()
