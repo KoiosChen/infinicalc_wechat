@@ -1,11 +1,12 @@
 from flask import request
 from flask_restplus import Resource, reqparse
-from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders, CouponReady
+from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders, CouponReady, SKU, \
+    ItemsOrders
 from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger, redis_db
 from ..common import success_return, false_return, submit_return
-from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj
+from ..public_method import table_fields, get_table_data, get_table_data_by_id, new_data_obj, _make_data
 import datetime
 from ..decorators import permission_required
 from ..swagger import return_dict, head_parser, page_parser
@@ -16,6 +17,7 @@ from app.wechat.qq_lbs import lbs_get_by_coordinate
 import traceback
 from decimal import Decimal
 from app.public_method import format_decimal
+from collections import defaultdict
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -399,3 +401,28 @@ class BindMe(Resource):
         #     return success_return(data={'franchisee_bind_me': current_user.id})
         else:
             return false_return(f'绑定对象非店铺员工')
+
+
+@customers_ns.route('/items_group_by_sku')
+@customers_ns.expect(head_parser)
+class CustomerBoughtItems(Resource):
+    @customers_ns.marshal_with(return_json)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """当前用户所购买的"""
+        current_user = kwargs['current_user']
+        if current_user is None:
+            return false_return(message="用户未登陆"), 400
+        sku_objs = SKU.query.filter(SKU.delete_at.__ne__(None)).all()
+        return_data = list()
+        for sku in sku_objs:
+            all_items_objs = db.session.query(ItemsOrders).with_for_update().filter(
+                ItemsOrders.delete_at.__eq__(None),
+                ItemsOrders.item_id.__eq__(sku.id),
+                ItemsOrders.status.__eq__(1),
+                ItemsOrders.customer_id.__eq__(current_user.id)).all()
+
+            could_pickup = sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in all_items_objs)
+            return_data.append({"sku": _make_data(sku, table_fields(SKU, removes=['contents'])),
+                                "cloud_pickup": could_pickup})
+        return success_return(data=return_data)
