@@ -15,6 +15,7 @@ from app.wechat.wx_login import WxLogin
 from app.wechat.qq_lbs import lbs_get_by_coordinate
 import traceback
 from decimal import Decimal
+from app.public_method import format_decimal
 
 customers_ns = default_api.namespace('customers', path='/customers',
                                      description='前端用户接口，包括注册、登陆、登出、获取用户信息、用户与角色操作等')
@@ -373,7 +374,7 @@ class CustomerPointsResource(Resource):
                 raise ExpressAddress("当前用户不存在")
             else:
                 total_points = current_user.total_points if current_user.total_points else 0
-                purse = current_user.purse if current_user.purse else 0
+                purse = format_decimal(current_user.purse, to_str=True) if current_user.purse else "0"
             return success_return({"id": current_user.id, "total_points": total_points, "purse": purse})
         except Exception as e:
             traceback.print_exc()
