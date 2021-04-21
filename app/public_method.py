@@ -127,13 +127,13 @@ def __make_table(fields, table, strainer=None):
                         get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
-            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__ or "BusinessPurchaseOrders" in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'])
+            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__ or "BusinessPurchaseOrders" in table.__class__.__name__ or 'Express' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'], removes=['contents'])
             elif 'ItemsOrders' in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id,
-                                              appends=['value', 'objects', 'real_price'])
+                                              appends=['value', 'objects', 'real_price'], removes=['contents'])
             elif 'FranchiseePurchaseOrders' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects', 'real_price'])
+                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects', 'real_price'], removes=['contents'])
             else:
                 tmp[f] = [
                     get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects', 'real_price'])

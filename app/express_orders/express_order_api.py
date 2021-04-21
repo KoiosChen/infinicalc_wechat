@@ -51,13 +51,13 @@ class ExpressOrderAPI(Resource):
         self_args = args
         self_args['search'] = dict()
         self_args['search']['customer_id'] = current_user.id
-        self_orders = get_table_data(CloudWineExpressOrders, self_args, order_by="create_at")
+        self_orders = get_table_data(CloudWineExpressOrders, self_args, appends=['sku'], order_by="create_at")
         confirm_orders = dict()
         if current_user.franchisee_operator and current_user.franchisee_operator.role.name == "FRANCHISEE_MANAGER":
             confirm_args = args
             confirm_args['search'] = dict()
             confirm_args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
-            confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, order_by="create_at")
+            confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, appends=['sku'], order_by="create_at")
         return success_return({"self_orders": self_orders, "confirm_orders": confirm_orders}, "请求成功")
 
     @express_ns.marshal_with(return_json)
@@ -172,7 +172,7 @@ class PerExpressOrderAPI(Resource):
     def get(self, **kwargs):
         """获取指定订单详情"""
         return success_return(
-            data=get_table_data_by_id(CloudWineExpressOrders, kwargs['express_id']))
+            data=get_table_data_by_id(CloudWineExpressOrders, kwargs['express_id'], appends=['sku']))
 
     @express_ns.marshal_with(return_json)
     @express_ns.doc(body=update_express_order_parser)
