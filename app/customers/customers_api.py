@@ -373,7 +373,8 @@ class CustomerPointsResource(Resource):
                 raise ExpressAddress("当前用户不存在")
             else:
                 total_points = current_user.total_points if current_user.total_points else 0
-            return success_return({"id": current_user.id, "total_points": total_points})
+                purse = current_user.purse if current_user.purse else 0
+            return success_return({"id": current_user.id, "total_points": total_points, "purse": purse})
         except Exception as e:
             traceback.print_exc()
             return false_return(message=str(e))
