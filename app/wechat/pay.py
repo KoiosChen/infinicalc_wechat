@@ -136,6 +136,7 @@ def create_order(**kwargs):
                     item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
                                   "item_quantity": item_obj.quantity,
                                   "item_price": item_price, "special": sku.special,
+                                  "customer_id": order_info.get('customer_id'),
                                   "transaction_price": transaction_price}
                     new_item_order = new_data_obj("ItemsOrders", **item_order)
 
