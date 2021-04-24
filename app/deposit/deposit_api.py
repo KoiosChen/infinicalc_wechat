@@ -19,7 +19,8 @@ get_deposit_order.add_argument('deposit_person', required=False, type=str, help=
                                location='args')
 get_deposit_order.add_argument('deposit_status', required=False, help='0,查询开瓶的； 1查询未开瓶的', location='args')
 get_deposit_order.add_argument('deposit_confirm_waiter', required=False, help='操作寄存的服务员ID', location='args')
-get_deposit_order.add_argument('deposit_bu_id', required=False, help='寄存的店铺', location='args')
+get_deposit_order.add_argument('deposit_bu_id', required=False, type=int,
+                               help='寄存的店铺, 由于不好获取传递，这里如果传1， 表示是店铺查询，后台根据查询用户对应的店铺返回这个店铺的存酒', location='args')
 get_deposit_order.add_argument('deposit_confirm_at', required=False,
                                type=lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'),
                                help="寄存确认时间，格式'%Y-%m-%d", location='args')
@@ -53,7 +54,6 @@ class GetAllDepositOrders(Resource):
             "deposit_person",
             "deposit_status",
             "deposit_confirm_waiter",
-            "deposit_bu_id",
             "deposit_confirm_at",
             "pickup_waiter",
             "pickup_at"
@@ -62,8 +62,13 @@ class GetAllDepositOrders(Resource):
             if key in args.keys() and args.get(key):
                 args['search'][key] = args[key]
         current_user = kwargs['current_user']
-        if not args['search'].get("deposit_person"):
+        if not args['search'].get("deposit_person") and not args['deposit_bu_id']:
             args['search']['deposit_person'] = current_user.id
+        elif not args['search'].get("deposit_person") and args['deposit_bu_id'] == 1:
+            if current_user.business_unit_employee:
+                args['search']['deposit_bu_id'] = current_user.business_unit_employee.business_unit_id
+            else:
+                return false_return(message="当前用户不可查询店铺存酒记录"), 400
         args['search']['delete_at'] = None
 
         return success_return(data=get_table_data(Deposit, args, appends=['objects', 'sku', 'bu'], advance_search=[

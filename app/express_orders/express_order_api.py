@@ -18,12 +18,13 @@ return_json = express_ns.model('ReturnRegister', return_dict)
 express_order_page_parser = page_parser.copy()
 
 new_express_order_parser = reqparse.RequestParser()
-new_express_order_parser.add_argument("recipient", required=True, help='收件人')
-new_express_order_parser.add_argument("recipient_phone", required=True, help='收件人电话')
-new_express_order_parser.add_argument("recipient_addr", required=True, help='收件人地址')
+new_express_order_parser.add_argument("recipient", required=False, help='收件人')
+new_express_order_parser.add_argument("recipient_phone", required=False, help='收件人电话')
+new_express_order_parser.add_argument("recipient_addr", required=False, help='收件人地址')
 new_express_order_parser.add_argument("sku_id", required=True, help='发货的sku id')
 new_express_order_parser.add_argument("quantity", required=True, type=int, help='发货数量')
-new_express_order_parser.add_argument("is_purchase", required=True, type=int, help='0 否，1 是')
+new_express_order_parser.add_argument("is_purchase", required=True, type=int,
+                                      help='0 否，1 是. 如果是加盟商进货，则不需要填写收件人，收件地址和收件人电话（不显示）, 其它情况都是必填')
 
 update_express_order_parser = reqparse.RequestParser()
 update_express_order_parser.add_argument("recipient", help='收件人')
@@ -50,13 +51,19 @@ class ExpressOrderAPI(Resource):
         current_user = kwargs['current_user']
         self_args = args
         self_args['search'] = dict()
-        self_args['search']['customer_id'] = current_user.id
+        self_args['search']['apply_id'] = current_user.id
         self_orders = get_table_data(CloudWineExpressOrders, self_args, appends=['sku'], order_by="create_at")
         confirm_orders = dict()
         if current_user.franchisee_operator and current_user.franchisee_operator.role.name == "FRANCHISEE_MANAGER":
             confirm_args = args
             confirm_args['search'] = dict()
             confirm_args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
+            confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, appends=['sku'], order_by="create_at")
+        elif current_user.role.name in ("CUSTOMER_SERVICE", "ADMINISTRATOR"):
+            confirm_args = args
+            confirm_args['search'] = dict()
+            confirm_args['search']['confirm_status'] = 1
+            confirm_args['search']['is_sent'] = None
             confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, appends=['sku'], order_by="create_at")
         return success_return({"self_orders": self_orders, "confirm_orders": confirm_orders}, "请求成功")
 

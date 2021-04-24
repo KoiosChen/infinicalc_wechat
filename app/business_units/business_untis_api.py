@@ -11,6 +11,7 @@ from ..decorators import permission_required, allow_cross_domain
 from ..swagger import return_dict, head_parser, page_parser
 import datetime
 from sqlalchemy import and_
+from app.wechat.qq_lbs import lbs_get_by_coordinate
 
 bu_ns = default_api.namespace('business units', path='/business_units', description='店铺接口')
 
@@ -135,12 +136,23 @@ class BusinessUnitsAPI(Resource):
             args = create_bu_parser.parse_args()
             current_user = kwargs['current_user']
             franchisee_id = current_user.franchisee_operator.franchisee_id
+            franchisee_scopes = current_user.franchisee_operator.franchisee.scopes.all()
             check_name = BusinessUnits.query.filter(BusinessUnits.name.__eq__(args['name']),
                                                     BusinessUnits.status.__eq__(1),
                                                     BusinessUnits.delete_at.__eq__(None)).first()
             if check_name and not check_name.delete_at and geo_distance((check_name.latitude, check_name.longitude),
                                                                         (args['latitude'], args['longitude'])) <= 100:
                 raise Exception("100米内商铺名字重复")
+
+            addr_result = lbs_get_by_coordinate(args['latitude'], args['longitude'], detail=True)
+            in_scope = False
+            for scope in franchisee_scopes:
+                if addr_result['province'] == scope.province and addr_result['city'] == scope.city and addr_result['district'] == scope.district:
+                    in_scope = True
+
+            if not in_scope:
+                raise Exception("添加的店铺地址不在加盟商运营范围内")
+
             new_bu = new_data_obj("BusinessUnits",
                                   **{"name": args['name'],
                                      "desc": args['desc'],
@@ -499,7 +511,7 @@ class BUPurchaseOrdersAPI(Resource):
                 args['search'][k] = v
         args['search']['delete_at'] = None
         return success_return(data=get_table_data(BusinessPurchaseOrders, args, appends=['original_order', 'bu', 'sku'],
-                                                  advance_search={"key": "status", "operator": "__lt__", "value": 3}))
+                                                  advance_search=[{"key": "status", "operator": "__lt__", "value": 3}]))
 
 
 @bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>')

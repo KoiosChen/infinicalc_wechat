@@ -6,7 +6,7 @@ from app.public_method import new_data_obj
 from app import db
 
 
-def get_rebate(role_name, sku_id, level, scene):
+def get_rebate(role_name, sku_id, level, scene, amount):
     role_id = CustomerRoles.query.filter_by(name=role_name).first().id
     rebates = CloudWineRebates.query.filter(CloudWineRebates.role_id.__eq__(role_id),
                                             CloudWineRebates.sku_id.__eq__(sku_id),
@@ -14,7 +14,7 @@ def get_rebate(role_name, sku_id, level, scene):
                                             CloudWineRebates.scene.__eq__(scene),
                                             CloudWineRebates.status.__eq__(1),
                                             CloudWineRebates.delete_at.__eq__(None)).all()
-    return Decimal("0.00") if rebates is None else sum(v.rebate for v in rebates)
+    return Decimal("0.00") if rebates is None else sum(v.rebate for v in rebates) * Decimal(str(amount))
 
 
 def bu_rebate(employee, waiter_rebate, operator_rebate, manager_rebate):
@@ -144,7 +144,8 @@ def pickup_rebate(item_verification_id, pickup_employee_id, consumer_id):
         employee_manager = bu_employees.filter(BusinessUnitEmployees.job_desc.__eq__(manger_role_id)).first()
 
         # 获取rebate
-        kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP"}
+        kwargs = {"sku_id": item_obj.item_id, "level": consumer_obj.level, "scene": "PICKUP",
+                  "amount": item_verification_obj.verification_quantity}
         f_manager_rebate = get_rebate("FRANCHISEE_MANAGER", **kwargs)
         waiter_rebate = get_rebate("BU_WAITER", **kwargs)
         operator_rebate = get_rebate("BU_OPERATOR", **kwargs)
