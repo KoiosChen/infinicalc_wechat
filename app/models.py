@@ -767,6 +767,11 @@ class Customers(db.Model):
     applied_express_orders = db.relationship('CloudWineExpressOrders', backref='express_applicant', lazy='dynamic',
                                              foreign_keys='CloudWineExpressOrders.apply_id')
 
+    self_item_verification_orders = db.relationship('ItemVerification', backref='verify_applier', uselist=False,
+                                                    foreign_keys='ItemVerification.customer_id')
+    item_verification_bu_orders = db.relationship('ItemVerification', backref='item_verifier', uselist=False,
+                                                  foreign_keys='ItemVerification.verification_customer_id')
+
     def __init__(self, **kwargs):
         super(Customers, self).__init__(**kwargs)
         if self.role is None:
@@ -787,9 +792,9 @@ class Customers(db.Model):
     def can(self, permissions):
         a = self.role is not None and (self.role.permissions & permissions) == permissions
         b = self.business_unit_employee is not None and (
-                    self.business_unit_employee.role.permissions & permissions) == permissions
+                self.business_unit_employee.role.permissions & permissions) == permissions
         c = self.franchisee_operator is not None and (
-                    self.franchisee_operator.role.permissions & permissions) == permissions
+                self.franchisee_operator.role.permissions & permissions) == permissions
         return a or b or c
 
     @property
@@ -1088,6 +1093,10 @@ class SkuMemberPrice(db.Model):
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
     customer_level = db.Column(db.SmallInteger, comment='Customers.level')
+    start_price = db.Column(db.DECIMAL(11, 2), commet='区间开始价格')
+    end_price = db.Column(db.DECIMAL(11, 2), comment='区间结束价格')
+    start_bottle = db.Column(db.Integer, comment='购买瓶数区间开始')
+    end_bottle = db.Column(db.Integer, comment='购买瓶数区间结束')
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1336,6 +1345,7 @@ class ItemVerification(db.Model):
     __tablename__ = "item_verification"
     id = db.Column(db.String(64), primary_key=True, default=make_uuid)
     item_order_id = db.Column(db.String(64), db.ForeignKey('items_orders.id'))
+    customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     verification_quantity = db.Column(db.Integer, default=1, index=True, comment="核销的数量")
     verification_customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
     bu_id = db.Column(db.String(64), db.ForeignKey('business_units.id'))

@@ -55,7 +55,7 @@ def new_data_obj(table, **kwargs):
     return {'obj': __obj, 'status': new_one}
 
 
-def calc_sku_price(customer, table):
+def calc_sku_price(customer, table, bottle=None):
     """
     member_card = customer.member_card.filter_by(status=1).first()
     if member_card:
@@ -71,13 +71,14 @@ def calc_sku_price(customer, table):
         total_price = table.price * discount
         return total_price.quantize(Decimal("0.00"))
     """
-    if not customer.level:
-        if customer.total_consumption >= Decimal("2000.00"):
-            customer.level = 3
-        elif Decimal("1197.00") <= customer.total_consumption < Decimal("2000.00"):
-            customer.level = 2
-        else:
-            customer.level = 1
+    if customer.total_consumption >= Decimal("2000.00"):
+        level = 3
+    elif Decimal("1197.00") <= customer.total_consumption < Decimal("2000.00"):
+        level = 2
+    else:
+        level = 1
+    if not customer.level or customer.level < level:
+        customer.level = level
     return str(table.member_price(customer.level))
 
 
