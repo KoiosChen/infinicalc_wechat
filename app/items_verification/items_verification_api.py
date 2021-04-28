@@ -33,9 +33,9 @@ verification_parser.add_argument('bu_id', required=True, type=str, help='用户�
 class ItemVerificationOrders(Resource):
     @item_verification_ns.marshal_with(return_json)
     @item_verification_ns.doc(body=all_verification_orders)
-    @permission_required(Permission.USER)
+    @permission_required(Permission.BU_WAITER)
     def get(self, **kwargs):
-        """获取用户所有核销单，可通过状态查询"""
+        """店铺员工获取自己核销的所有核销单，可通过状态查询"""
         current_user = kwargs['current_user']
         args = all_verification_orders.parse_args()
         args['search'] = dict()
@@ -44,6 +44,27 @@ class ItemVerificationOrders(Resource):
                 args['search'][k] = v
         args['search']['delete_at'] = None
         args['search']['verification_customer_id'] = current_user.id
+        return success_return(data=get_table_data(ItemVerification, args,
+                                                  appends=['items_orders', 'bu'],
+                                                  removes=['item_order_id', 'bu_id']))
+
+
+@item_verification_ns.route('/self_item_verification_orders')
+@item_verification_ns.expect(head_parser)
+class SelfItemVerificationOrders(Resource):
+    @item_verification_ns.marshal_with(return_json)
+    @item_verification_ns.doc(body=all_verification_orders)
+    @permission_required(Permission.USER)
+    def get(self, **kwargs):
+        """获取用自己的核销记录"""
+        current_user = kwargs['current_user']
+        args = all_verification_orders.parse_args()
+        args['search'] = dict()
+        for k, v in args.items():
+            if v:
+                args['search'][k] = v
+        args['search']['delete_at'] = None
+        args['search']['customer_id'] = current_user.id
         return success_return(data=get_table_data(ItemVerification, args,
                                                   appends=['items_orders', 'bu'],
                                                   removes=['item_order_id', 'bu_id']))
@@ -58,7 +79,8 @@ class ItemPreVerification(Resource):
         """获取对应SKU Item订单"""
         item_objs = ItemsOrders.query.filter(ItemsOrders.delete_at.__eq__(None),
                                              ItemsOrders.item_id.__eq__(kwargs['sku_id']),
-                                             ItemsOrders.status.__eq__(1)).all()
+                                             ItemsOrders.status.__eq__(1),
+                                             ItemsOrders.customer_id.__eq__(kwargs['current_user'].id)).all()
         return success_return(data=sum(item_obj.item_quantity - item_obj.verified_quantity for item_obj in item_objs))
 
 
