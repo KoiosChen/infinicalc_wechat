@@ -1093,7 +1093,7 @@ class SkuMemberPrice(db.Model):
     sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'))
     member_price = db.Column(db.DECIMAL(10, 2), default=0.00)
     customer_level = db.Column(db.SmallInteger, comment='Customers.level')
-    start_price = db.Column(db.DECIMAL(11, 2), commet='区间开始价格')
+    start_price = db.Column(db.DECIMAL(11, 2), comment='区间开始价格')
     end_price = db.Column(db.DECIMAL(11, 2), comment='区间结束价格')
     start_bottle = db.Column(db.Integer, comment='购买瓶数区间开始')
     end_bottle = db.Column(db.Integer, comment='购买瓶数区间结束')
