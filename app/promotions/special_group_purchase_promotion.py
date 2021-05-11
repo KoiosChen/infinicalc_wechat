@@ -12,7 +12,7 @@ new_order_parser = reqparse.RequestParser()
 new_order_parser.add_argument("id", required=True, type=str, help='团购ID')
 
 
-@promotions_ns.route('')
+@promotions_ns.route('/fgp')
 @promotions_ns.expect(head_parser)
 class GetFranchiseeGroupPurchase(Resource):
     @promotions_ns.marshal_with(return_json)
@@ -29,7 +29,7 @@ class GetFranchiseeGroupPurchase(Resource):
         return success_return(get_table_data(FranchiseeGroupPurchase, args, appends=['sku']), "请求成功")
 
 
-@promotions_ns.route('/<string:gp_id>')
+@promotions_ns.route('/fgp/<string:gp_id>')
 @promotions_ns.expect(head_parser)
 class NewFranchiseeGroupPurchaseOrder(Resource):
     @promotions_ns.marshal_with(return_json)
