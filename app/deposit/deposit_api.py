@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import ShopOrders, Permission, ItemsOrders, Refund, make_uuid, Deposit
+from ..models import ShopOrders, Permission, ItemsOrders, Refund, make_uuid, Deposit, REDIS_SHORT_EXPIRE, REDIS_LONG_EXPIRE
 from .. import db, redis_db, default_api, logger, image_operate
 from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, table_fields, get_table_data, get_table_data_by_id
@@ -95,7 +95,7 @@ class GetAllDepositOrders(Resource):
         if session_commit().get("code") == "success":
             qrcode = generate_code(12)
             redis_db.set(qrcode, deposit_id)
-            redis_db.expire(qrcode, 120)
+            redis_db.expire(qrcode, REDIS_SHORT_EXPIRE)
             return success_return(data=qrcode)
         else:
             return false_return(message='寄存失败'), 400
@@ -139,7 +139,7 @@ class PickupDeposit(Resource):
         args = pickup_parser.parse_args()
         qrcode = generate_code(12)
         redis_db.set(qrcode, args['deposit_id'])
-        redis_db.expire(qrcode, 60)
+        redis_db.expire(qrcode, REDIS_SHORT_EXPIRE)
         return success_return(data=qrcode)
 
     @deposit_ns.marshal_with(return_json)

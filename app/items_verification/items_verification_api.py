@@ -1,5 +1,5 @@
 from flask_restplus import Resource, reqparse
-from ..models import Permission, ItemsOrders, make_uuid, ItemVerification, BusinessUnitInventory
+from ..models import Permission, ItemsOrders, make_uuid, ItemVerification, BusinessUnitInventory, REDIS_SHORT_EXPIRE, REDIS_LONG_EXPIRE
 from .. import db, redis_db, default_api, logger
 from ..common import success_return, false_return, submit_return
 from ..public_method import new_data_obj, get_table_data
@@ -119,7 +119,7 @@ class ItemVerifyQRCode(Resource):
             redis_db.set(qrcode,
                          json.dumps({"sku_id": sku_id, "customer_id": current_user.id, "quantity": quantity,
                                      "present_quantity": sum_item_quantity}))
-            redis_db.expire(qrcode, 120)
+            redis_db.expire(qrcode, REDIS_SHORT_EXPIRE)
             return success_return(data=qrcode)
 
 
@@ -145,7 +145,7 @@ class ItemVerificationAPI(Resource):
 
             new_sell_order = new_data_obj("BusinessPurchaseOrders",
                                           **{"amount": -to_verify_quantity,
-                                             "sell_to": item_order_obj.shop_orders.customer_id,
+                                             "sell_to": apply_customer_id,
                                              "status": 1,
                                              "sku_id": item_order_obj.item_id,
                                              "bu_id": args['bu_id'],
@@ -202,8 +202,7 @@ class ItemVerificationAPI(Resource):
                 # 说明核销不够，继续核销下一个订单
                 verify_quantity = abs(diff)
                 vid = __verify(left_quantity, item_order_obj, verify_info['customer_id'])
-                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id,
-                                              item_order_obj.shop_orders.customer_id)
+                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id, verify_info['customer_id'])
                 logger.error(rebate_result)
 
         return submit_return("核销成功", "核销失败")

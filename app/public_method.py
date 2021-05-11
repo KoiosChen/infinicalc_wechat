@@ -55,7 +55,7 @@ def new_data_obj(table, **kwargs):
     return {'obj': __obj, 'status': new_one}
 
 
-def calc_sku_price(customer, table, bottle=None):
+def calc_sku_price(customer, table, shop_cart_id=None):
     """
     member_card = customer.member_card.filter_by(status=1).first()
     if member_card:
@@ -79,7 +79,14 @@ def calc_sku_price(customer, table, bottle=None):
         level = 1
     if not customer.level or customer.level < level:
         customer.level = level
-    return str(table.member_price(customer.level))
+    if shop_cart_id is None:
+        return str(table.member_price(customer.level))
+    else:
+        shop_cart_obj = ShoppingCart.query.get(shop_cart_id)
+        if not shop_cart_obj.fgp_id:
+            return str(table.member_price(customer.level))
+        else:
+            return str(shop_cart_obj.fgp.price)
 
 
 def table_fields(table, appends=[], removes=[]):

@@ -131,7 +131,7 @@ def create_order(**kwargs):
 
                     item_price = sku.show_price if sku.show_price else sku.price
                     customer = Customers.query.get(order_info['customer_id'])
-                    transaction_price = calc_sku_price(customer, sku)
+                    transaction_price = calc_sku_price(customer, sku, shop_cart_id=item)
 
                     item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
                                   "item_quantity": item_obj.quantity,
@@ -151,6 +151,10 @@ def create_order(**kwargs):
                         # 如果这个sku有相关的促销活动，则记录
                         if item_obj.combo:
                             new_item_order['obj'].benefits.append(Benefits.query.get(item_obj.combo))
+
+                        if item.fgp_id and item.fgp.upgrade_level > 0:
+                            if new_order['obj'].upgrade_level and item.fgp.upgrade_level > new_order['obj'].upgrade_level:
+                                new_order['obj'].upgrade_level = item.fgp.upgrade_level
 
                     else:
                         raise Exception("订单创建失败")

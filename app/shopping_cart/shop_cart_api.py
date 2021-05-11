@@ -275,9 +275,10 @@ class UpdateShoppingCart(Resource):
             shopping_cart_item = ShoppingCart.query.filter(ShoppingCart.customer_id.__eq__(customer.id),
                                                            ShoppingCart.status.__eq__(1),
                                                            ShoppingCart.id.__eq__(kwargs['shopping_cart_id']),
+                                                           ShoppingCart.can_change.__eq__(1),
                                                            ShoppingCart.delete_at.__eq__(None)).first()
             if not shopping_cart_item:
-                raise Exception(f"{kwargs['shopping_cart_id']} 不存在")
+                raise Exception(f"{kwargs['shopping_cart_id']} 不存在或不可修改")
             sku = SKU.query.get(shopping_cart_item.sku_id)
 
             if not sku or sku.delete_at or not sku.status:
@@ -407,7 +408,8 @@ class ShoppingCartApi(Resource):
             customer = kwargs['current_user']
             params = shopping_cart_parser.parse_args()
             packing_order = params.get("packing_order") if params.get("packing_order") else None
-            args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo} for c in
+            args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo,
+                     'can_change': c.can_change} for c in
                     customer.shopping_cart.filter(ShoppingCart.delete_at.__eq__(None),
                                                   ShoppingCart.status.__eq__(1),
                                                   ShoppingCart.packing_item_order.__eq__(packing_order)).all()]

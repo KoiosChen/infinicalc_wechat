@@ -18,6 +18,9 @@ return_json = express_ns.model('ReturnRegister', return_dict)
 express_order_page_parser = page_parser.copy()
 
 new_express_order_parser = reqparse.RequestParser()
+new_express_order_parser.add_argument("sender", required=False, help='发件人姓名，若不是加盟商进货，则必填')
+new_express_order_parser.add_argument("sender_phone", required=False, help='发件人电话，若不是加盟商进货，则必填')
+new_express_order_parser.add_argument("sender_memo", required=False, help='发件人留言。用于发件人描述发件需求，帮助审核人知晓此发货单申请原因.50个字符内')
 new_express_order_parser.add_argument("recipient", required=False, help='收件人')
 new_express_order_parser.add_argument("recipient_phone", required=False, help='收件人电话')
 new_express_order_parser.add_argument("recipient_addr", required=False, help='收件人地址')
@@ -27,6 +30,9 @@ new_express_order_parser.add_argument("is_purchase", required=True, type=int,
                                       help='0 否，1 是. 如果是加盟商进货，则不需要填写收件人，收件地址和收件人电话（不显示）, 其它情况都是必填')
 
 update_express_order_parser = reqparse.RequestParser()
+update_express_order_parser.add_argument("sender", required=False, help='发件人姓名，若不是加盟商进货，则必填')
+update_express_order_parser.add_argument("sender_phone", required=False, help='发件人电话，若不是加盟商进货，则必填')
+update_express_order_parser.add_argument("sender_memo", required=False, help='发件人留言。用于发件人描述发件需求，帮助审核人知晓此发货单申请原因')
 update_express_order_parser.add_argument("recipient", help='收件人')
 update_express_order_parser.add_argument("recipient_phone", help='收件人电话')
 update_express_order_parser.add_argument("recipient_addr", help='收件人地址')
@@ -74,9 +80,12 @@ class ExpressOrderAPI(Resource):
         """新建快递订单"""
         try:
             args = new_express_order_parser.parse_args()
-            recipient = args['recipient']
-            recipient_phone = args['recipient']
-            recipient_addr = args['recipient_addr']
+            sender = args.get('sender')
+            sender_phone = args.get('sender_phone')
+            sender_memo = args.get('sender_memo')
+            recipient = args.get('recipient')
+            recipient_phone = args.get('recipient')
+            recipient_addr = args.get('recipient_addr')
             sku_id = args['sku_id']
             quantity = args['quantity']
             is_purchase = args['is_purchase']
@@ -116,6 +125,9 @@ class ExpressOrderAPI(Resource):
                                                                   "recipient": recipient,
                                                                   "sku_id": sku_id,
                                                                   "quantity": quantity,
+                                                                  "sender": sender,
+                                                                  "sender_phone": sender_phone,
+                                                                  "sender_memo": sender_memo,
                                                                   "recipient_phone": recipient_phone,
                                                                   "recipient_addr": recipient_addr,
                                                                   "franchisee_id": franchisee_id,
@@ -192,7 +204,9 @@ class PerExpressOrderAPI(Resource):
                 CloudWineExpressOrders.id.__eq__(kwargs['express_id'])).first()
             current_user = kwargs['current_user']
 
-            apply_update_list = ("recipient", "recipient_phone", "recipient_addr", "sku_id", "quantity")
+            apply_update_list = (
+            "sender", "sender_phone", "sender_memo", "recipient", "recipient_phone", "recipient_addr", "sku_id",
+            "quantity")
             confirm_update_list = ("confirm_status",)
             express_update_list = ("express_num",)
 

@@ -65,6 +65,10 @@ def update_order(data):
                 customer.first_order_table = data['device_info']
                 customer.first_order_id = order.id
 
+            # 2021-0509 这个if用于目前加盟商直营团购付款成功之后升级用户等级
+            if hasattr(order, "upgrade_level") and customer.level < order.upgrade_level:
+                customer.level = order.upgrade_level
+
             if data['device_info'] == 'MemberRecharge':
                 wechat_pay_result = order.wechat_pay_result
                 order.is_pay = 1
