@@ -1,7 +1,7 @@
 from flask import request
 from flask_restplus import Resource, reqparse
 from ..models import Customers, Permission, ExpressAddress, InvitationCode, MemberCards, ShopOrders, CouponReady, SKU, \
-    ItemsOrders
+    ItemsOrders, REDIS_LONG_EXPIRE, REDIS_SHORT_EXPIRE
 from . import customers
 from app.frontstage_auth import auths
 from .. import db, default_api, logger, redis_db
@@ -395,7 +395,7 @@ class BindMe(Resource):
         # franchisee_operator = current_user.franchisee_operator
         if bu_employee and bu_employee.delete_at is not None:
             redis_db.set(current_user.id, bu_employee.id)
-            redis_db.expire(current_user.id, 600)
+            redis_db.expire(current_user.id, REDIS_LONG_EXPIRE)
             return success_return(data={'new_customer': current_user.id})
         # elif franchisee_operator and franchisee_operator.delete_at is not None:
         #     return success_return(data={'franchisee_bind_me': current_user.id})
@@ -409,7 +409,7 @@ class CustomerBoughtItems(Resource):
     @customers_ns.marshal_with(return_json)
     @permission_required(Permission.USER)
     def get(self, **kwargs):
-        """当前用户所购买的"""
+        """当前用户所购买SKU可提取数量"""
         current_user = kwargs['current_user']
         if current_user is None:
             return false_return(message="用户未登陆"), 400

@@ -318,6 +318,8 @@ class Franchisees(db.Model):
     parent_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'))
     parent = db.relationship('Franchisees', backref="children", remote_side=[id])
 
+    fgps = db.relationship('FranchiseeGroupPurchase', backref='franchisee', lazy='dynamic')
+
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1156,6 +1158,7 @@ class SKU(db.Model):
     bu_purchase_skus = db.relationship("BusinessPurchaseOrders", backref='sku', lazy='dynamic')
     deposits = db.relationship("Deposit", backref='sku', lazy='dynamic')
     cloudwine_express_orders = db.relationship("CloudWineExpressOrders", backref='sku', lazy='dynamic')
+    fgps = db.relationship("FranchiseeGroupPurchase", backref='sku', lazy='dynamic')
 
     def member_price(self, customer_level):
         return SkuMemberPrice.query.filter(SkuMemberPrice.sku_id.__eq__(self.id),
@@ -1284,8 +1287,7 @@ class ShopOrders(db.Model):
     express_postcode = db.Column(db.String(7), comment='邮编')
     express_recipient = db.Column(db.String(20), comment='收件人')
     express_recipient_phone = db.Column(db.String(13), comment='收件人手机号')
-    status = db.Column(db.SmallInteger, default=1,
-                       comment="1：正常 2：禁用 0：订单取消(delete_at 写入时间)")
+    status = db.Column(db.SmallInteger, default=1, comment="1：正常 2：禁用 0：订单取消(delete_at 写入时间)")
     items_orders_id = db.relationship("ItemsOrders", backref='shop_orders', lazy='dynamic')
     total_cargoes = db.relationship("TotalCargoes", backref='cargo_order', lazy='dynamic')
     packing_order = db.relationship("PackingItemOrders", backref='packing_item_order', lazy='dynamic')
@@ -1296,6 +1298,7 @@ class ShopOrders(db.Model):
     invoice_title = db.Column(db.String(100), comment='发票抬头，如果type是0，则此处为个人')
     invoice_tax_no = db.Column(db.String(20), comment='企业税号')
     inovice_email = db.Column(db.String(50), comment='发票发送邮箱')
+    upgrade_level = db.Column(db.SmallInteger, comment='此订单若付款成功升级用户等级的数值')
     rebate_records = db.relationship('PersonalRebates', backref='related_order', lazy='dynamic')
     wechat_pay_result = db.relationship("WechatPay", backref='payed_order', uselist=False)
     card_consumption = db.relationship("MemberCardConsumption", backref='payed_by_card_order', uselist=False)
@@ -1378,6 +1381,9 @@ class CloudWineExpressOrders(db.Model):
     apply_id = db.Column(db.String(64), db.ForeignKey('customers.id'), comment='发货申请人id')
     send_unit_type = db.Column(db.String(20), index=True, comment='Franchisee, BusinessUnit')
     send_unit_id = db.Column(db.String(64), index=True, comment='商业单位的id，Franchisees表、BusinessUnits表的id')
+    sender = db.Column(db.String(50), index=True, comment='发货申请人姓名')
+    sender_phone = db.Column(db.String(15), index=True, comment='发货申请人电话')
+    sender_memo = db.Column(db.String(100), comment='发货人留言')
     recipient = db.Column(db.String(50), index=True, comment="收件人")
     recipient_phone = db.Column(db.String(20), index=True, comment="收件人电话")
     recipient_addr = db.Column(db.String(200), comment='收货人地址')
@@ -1620,7 +1626,9 @@ class ShoppingCart(db.Model):
     combo = db.Column(db.String(64), db.ForeignKey('benefits.id'),
                       comment='前端页面选择的combo，实质为这个套餐中的一种，为benefits表的id')
     status = db.Column(db.SmallInteger, default=1, comment='预留，默认为1，则显示在购物车中，如果为0， 则作为想买货物，不在购物车内')
+    can_change = db.Column(db.SmallInteger, default=1, comment='1: 默认可改变；2: 不可改变')
     packing_item_order = db.Column(db.String(64), db.ForeignKey('packing_item_orders.id'))
+    fgp_id = db.Column(db.String(64), db.ForeignKey('franchisee_group_purchase.id'))
     create_at = db.Column(db.DateTime, default=datetime.datetime.now)
     update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
     delete_at = db.Column(db.DateTime)
@@ -1792,6 +1800,25 @@ class CloudWineRebates(db.Model):
     delete_at = db.Column(db.DateTime)
 
 
+class FranchiseeGroupPurchase(db.Model):
+    """加盟商直营团购表"""
+    __tablename__ = "franchisee_group_purchase"
+    id = db.Column(db.String(64), primary_key=True, default=make_uuid)
+    name = db.Column(db.String(50), index=True, comment="团购名称")
+    desc = db.Column(db.String(200), comment="描述")
+    franchisee_id = db.Column(db.String(64), db.ForeignKey('franchisees.id'), comment='加盟商ID，可为空，如果不为空则该条团购为指定加盟商可用')
+    sku_id = db.Column(db.String(64), db.ForeignKey('sku.id'), comment='sku_id')
+    price = db.Column(db.DECIMAL(11, 2), index=True, comment="团购价")
+    upgrade_level = db.Column(db.SmallInteger, default=0, comment='团购后升级到的级别，默认为0，不升级')
+    amount = db.Column(db.Integer, comment="团购数量")
+    status = db.Column(db.SmallInteger, default=1, comment='0, 无效；1，有效')
+    create_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_at = db.Column(db.DateTime, onupdate=datetime.datetime.now)
+    delete_at = db.Column(db.DateTime)
+
+    shopping_cart_records = db.relationship('ShoppingCart', backref='fgp', uselist=False)
+
+
 aes_key = 'koiosr2d2c3p0000'
 
 RECHARGE_REBATE_POLICY = 3
@@ -1841,3 +1868,6 @@ RETRY_ERR_CODE = ["NOTENOUGH", "SYSTEMERROR", "NAME_MISMATCH", "SIGN_ERROR", "FR
 CUSTOMER_L1_CONSUMPTION = Decimal("1197000000.00")
 
 CUSTOMER_L2_CONSUMPTION = Decimal("2000000000.00")
+
+REDIS_LONG_EXPIRE = 1800
+REDIS_SHORT_EXPIRE = 300
