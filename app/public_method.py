@@ -79,6 +79,8 @@ def calc_sku_price(customer, table, shop_cart_id=None):
         level = 1
     if not customer.level or customer.level < level:
         customer.level = level
+
+    # 如果传入购物车ID，表示这个查询是获取购物车列表式查询价格，
     if shop_cart_id is None:
         return str(table.member_price(customer.level))
     else:
@@ -86,6 +88,7 @@ def calc_sku_price(customer, table, shop_cart_id=None):
         if not shop_cart_obj.fgp_id:
             return str(table.member_price(customer.level))
         else:
+            # 如果购物车清单中，有团购id，则使用团购记录中的price来替换目前SKU价格，包括最终结算也按此价格
             return str(shop_cart_obj.fgp.price)
 
 
@@ -135,13 +138,15 @@ def _make_table(fields, table, strainer=None):
                         get_table_data_by_id(Elements, e.id, appends=['children'], strainer=['menu', elements_list_id]))
                     exist_elements.extend(find_id([tmp[f][-1]]))
         elif f == 'sku':
-            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__ or "BusinessPurchaseOrders" in table.__class__.__name__ or 'Express' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'], removes=['contents'])
+            if 'Inventory' in table.__class__.__name__ or 'Deposit' in table.__class__.__name__ or "BusinessPurchaseOrders" in table.__class__.__name__ or 'Express' in table.__class__.__name__ or 'FranchiseeGroupPurchase' in table.__class__.__name__:
+                tmp[f] = get_table_data_by_id(table.sku, table.sku.id, appends=['objects', 'real_price'],
+                                              removes=['contents'])
             elif 'ItemsOrders' in table.__class__.__name__:
                 tmp[f] = get_table_data_by_id(table.bought_sku, table.bought_sku.id,
                                               appends=['value', 'objects', 'real_price'], removes=['contents'])
             elif 'FranchiseePurchaseOrders' in table.__class__.__name__:
-                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects', 'real_price'], removes=['contents'])
+                tmp[f] = get_table_data_by_id(SKU, table.sku_id, appends=['values', 'objects', 'real_price'],
+                                              removes=['contents'])
             else:
                 tmp[f] = [
                     get_table_data_by_id(eval(e.__class__.__name__), e.id, appends=['values', 'objects', 'real_price'])
