@@ -79,6 +79,8 @@ def calc_sku_price(customer, table, shop_cart_id=None):
         level = 1
     if not customer.level or customer.level < level:
         customer.level = level
+
+    # 如果传入购物车ID，表示这个查询是获取购物车列表式查询价格，
     if shop_cart_id is None:
         return str(table.member_price(customer.level))
     else:
@@ -86,6 +88,7 @@ def calc_sku_price(customer, table, shop_cart_id=None):
         if not shop_cart_obj.fgp_id:
             return str(table.member_price(customer.level))
         else:
+            # 如果购物车清单中，有团购id，则使用团购记录中的price来替换目前SKU价格，包括最终结算也按此价格
             return str(shop_cart_obj.fgp.price)
 
 
