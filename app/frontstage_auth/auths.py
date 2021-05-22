@@ -2,9 +2,9 @@ import jwt
 import datetime
 import time
 from ..models import NewCustomerAwards, LoginInfo, Customers, SceneInvitation, NEW_ONE_SCORES, SHARE_AWARD, make_uuid, \
-    Franchisees, CustomerRoles, FranchiseeOperators, BusinessUnitEmployees
+    Franchisees, CustomerRoles, FranchiseeOperators, BusinessUnitEmployees, SKU, FranchiseeGroupPurchase
 from .. import db, logger, SECRET_KEY, redis_db
-from ..common import success_return, false_return, session_commit
+from ..common import success_return, false_return, session_commit, submit_return
 from ..public_method import new_data_obj, create_member_card_by_invitation, get_table_data_by_id, query_coupon
 import json
 import traceback
@@ -154,6 +154,29 @@ def authenticate(login_ip, **kwargs):
                         customer.bu_id = employee_obj.business_unit_id
                 else:
                     logger.error('二维码过期')
+            elif scene == 'new_fgp':
+                if redis_db.exists(scene_invitation):
+                    obj_id = redis_db.get(scene_invitation)
+                    redis_db.delete(scene_invitation)
+                    gp_obj = FranchiseeGroupPurchase.query.get(obj_id)
+                    sku_id = gp_obj.sku_id
+                    sku = SKU.query.get(sku_id)
+                    if sku and sku.status == 1 and sku.delete_at is None:
+                        cart_item = new_data_obj("ShoppingCart",
+                                                 **{"customer_id": customer.id, "sku_id": sku_id, "delete_at": None,
+                                                    "fgp_id": obj_id})
+
+                        if cart_item:
+                            if cart_item['status']:
+                                cart_item['obj'].quantity = gp_obj.amount
+                            else:
+                                cart_item['obj'].quantity += gp_obj.amount
+
+                            return submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败")
+                        else:
+                            return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400
+                    else:
+                        return false_return(message=f"<{sku_id}>已下架"), 400
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在

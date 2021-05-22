@@ -5,6 +5,8 @@ from app.swagger import head_parser, page_parser
 from ..decorators import permission_required
 from flask_restplus import Resource, reqparse
 from ..models import FranchiseeGroupPurchase, Permission, SKU
+from app.scene_invitation.scene_invitation_api import generate_code
+from app import redis_db
 
 get_order_parser = page_parser.copy()
 
@@ -33,27 +35,13 @@ class GetFranchiseeGroupPurchase(Resource):
 @promotions_ns.expect(head_parser)
 class NewFranchiseeGroupPurchaseOrder(Resource):
     @promotions_ns.marshal_with(return_json)
-    @promotions_ns.doc(body=new_order_parser)
+    @promotions_ns.doc(body=get_order_parser)
     @permission_required(Permission.USER)
-    def post(self, **kwargs):
-        args = new_order_parser.parse_args()
-        current_user = kwargs.get('current_user')
-        gp_obj = FranchiseeGroupPurchase.query.get(kwargs['gp_id'])
-        sku_id = gp_obj.sku_id
-        sku = SKU.query.get(sku_id)
-        if sku and sku.status == 1 and sku.delete_at is None:
-            cart_item = new_data_obj("ShoppingCart",
-                                     **{"customer_id": current_user.id, "sku_id": sku_id, "delete_at": None,
-                                        "fgp_id": kwargs['gp_id']})
-
-            if cart_item:
-                if cart_item['status']:
-                    cart_item['obj'].quantity = gp_obj.amount
-                else:
-                    cart_item['obj'].quantity += gp_obj.amount
-
-                return submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败")
-            else:
-                return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400
-        else:
-            return false_return(message=f"<{sku_id}>已下架"), 400
+    def get(self, **kwargs):
+        """
+        传入团购活动的id， /fgp get方法中获取
+        """
+        scene_invitation = generate_code(12)
+        redis_db.set(scene_invitation, kwargs['gp_id'])
+        redis_db.expire(scene_invitation, 600)
+        return success_return(data={'scene': "new_fgp", 'scene_invitation': scene_invitation})
