@@ -363,7 +363,7 @@ class ShoppingCartApi(Resource):
 
             # 如果没有会员折扣，按照原价计算
             else:
-                price = calc_sku_price(customer, sku_)
+                price = calc_sku_price(customer, sku_, arg['shopping_cart_id'])
 
             tmp = {"sku": sku_, "shopping_cart_id": arg['shopping_cart_id'], "quantity": arg['quantity'],
                    "price": price, "combo": arg.get('combo')}
@@ -544,15 +544,16 @@ class ShoppingCartApi(Resource):
             for skus in sku_promotions.values():
                 for sku in skus['skus']:
                     total_price = Decimal(sku['price']) * sku['quantity']
-                    return_result.append(
-                        {"sku": get_table_data_by_id(SKU, sku['sku'].id,
-                                                     appends=['values', 'objects', 'sku_promotions'],
-                                                     removes=['price', 'seckill_price', 'member_price', 'discount']),
-                         "shopping_cart_id": sku['shopping_cart_id'],
-                         "quantity": sku['quantity'],
-                         'price': str(sku['price']),
-                         'total_price': str(total_price.quantize(Decimal("0.00"))),
-                         'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])})
+                    return_info = {"sku": get_table_data_by_id(SKU, sku['sku'].id,
+                                                               appends=['values', 'objects', 'sku_promotions'],
+                                                               removes=['price', 'seckill_price', 'member_price',
+                                                                        'discount']),
+                                   "shopping_cart_id": sku['shopping_cart_id'],
+                                   "quantity": sku['quantity'],
+                                   'price': str(sku['price']),
+                                   'total_price': str(total_price.quantize(Decimal("0.00"))),
+                                   'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])}
+                    return_result.append(return_info)
             return success_return(data=return_result)
         except Exception as e:
             return false_return(message=str(e)), 400
