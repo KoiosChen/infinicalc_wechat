@@ -151,9 +151,9 @@ def create_order(**kwargs):
                 # 如果这个sku有相关的促销活动，则记录
                 if item_obj.combo:
                     new_item_order['obj'].benefits.append(Benefits.query.get(item_obj.combo))
-                if item.fgp_id and item.fgp.upgrade_level > 0:
-                    if new_order['obj'].upgrade_level and item.fgp.upgrade_level > new_order['obj'].upgrade_level:
-                        new_order['obj'].upgrade_level = item.fgp.upgrade_level
+                # if item.fgp_id and item.fgp.upgrade_level > 0:
+                #     if new_order['obj'].upgrade_level and item.fgp.upgrade_level > new_order['obj'].upgrade_level:
+                #         new_order['obj'].upgrade_level = item.fgp.upgrade_level
             else:
                 raise Exception("订单创建失败")
         if session_commit().get("code") == 'false':
