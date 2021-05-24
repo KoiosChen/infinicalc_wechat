@@ -164,7 +164,7 @@ def authenticate(login_ip, **kwargs):
                     if sku and sku.status == 1 and sku.delete_at is None:
                         cart_item = new_data_obj("ShoppingCart",
                                                  **{"customer_id": customer.id, "sku_id": sku_id, "delete_at": None,
-                                                    "fgp_id": obj_id})
+                                                    "can_change": 0, "fgp_id": obj_id})
 
                         if cart_item:
                             if cart_item['status']:

@@ -105,8 +105,10 @@ def check_out(args, kwargs):
 
             # desire_sku_promotions = sku_.sku_promotions
             # 获取购物车中sku的详情
-            the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects', 'real_price'],
+            the_sku = get_table_data_by_id(SKU, cart.sku_id, ['values', 'objects'],
                                            ['price', 'member_price', 'discount', 'content', 'seckill_price'])
+
+            the_sku["real_price"] = calc_sku_price(customer, cart.desire_sku, cart_id)
 
             # 检索sku对应的促销活动，查找使用其中的优惠券
             sku_ = cart.desire_sku
