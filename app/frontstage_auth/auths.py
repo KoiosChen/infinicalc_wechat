@@ -172,11 +172,11 @@ def authenticate(login_ip, **kwargs):
                             else:
                                 cart_item['obj'].quantity += gp_obj.amount
 
-                            return submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败")
+                            logger.info(submit_return(f"购物车添加成功<{cart_item['obj'].id}>", "购物出添加失败"))
                         else:
-                            return false_return(message=f"将<{sku_id}>添加规到购物车失败"), 400
+                            logger.error(f"将<{sku_id}>添加规到购物车失败")
                     else:
-                        return false_return(message=f"<{sku_id}>已下架"), 400
+                        logger.error(f"<{sku_id}>已下架")
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
