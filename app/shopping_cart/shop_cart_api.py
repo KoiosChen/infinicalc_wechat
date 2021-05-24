@@ -365,7 +365,7 @@ class ShoppingCartApi(Resource):
             else:
                 price = calc_sku_price(customer, sku_, arg['shopping_cart_id'])
 
-            tmp = {"sku": sku_, "shopping_cart_id": arg['shopping_cart_id'], "quantity": arg['quantity'],
+            tmp = {"sku": sku_, "shopping_cart_id": arg['shopping_cart_id'], "quantity": arg['quantity'], "can_change": arg['can_change'],
                    "price": price, "combo": arg.get('combo')}
             # 判断促销活动是否是秒杀
             if sku_.seckill_price:
@@ -408,8 +408,7 @@ class ShoppingCartApi(Resource):
             customer = kwargs['current_user']
             params = shopping_cart_parser.parse_args()
             packing_order = params.get("packing_order") if params.get("packing_order") else None
-            args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo,
-                     'can_change': c.can_change} for c in
+            args = [{'id': c.sku_id, 'shopping_cart_id': c.id, 'quantity': c.quantity, 'combo': c.combo, 'can_change': c.can_change} for c in
                     customer.shopping_cart.filter(ShoppingCart.delete_at.__eq__(None),
                                                   ShoppingCart.status.__eq__(1),
                                                   ShoppingCart.packing_item_order.__eq__(packing_order)).all()]
@@ -550,6 +549,7 @@ class ShoppingCartApi(Resource):
                                                                         'discount']),
                                    "shopping_cart_id": sku['shopping_cart_id'],
                                    "quantity": sku['quantity'],
+                                   "can_change": sku['can_change'],
                                    'price': str(sku['price']),
                                    'total_price': str(total_price.quantize(Decimal("0.00"))),
                                    'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])}
