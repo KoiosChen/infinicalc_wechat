@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from app import db, redis_db, sku_lock
-from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, make_uuid
+from app.models import ShopOrders, Benefits, ShoppingCart, PackingItemOrders, Customers, MemberRechargeRecords, \
+    make_uuid
 from app.wechat.wechat_config import WEIXIN_SPBILL_CREATE_IP, WEIXIN_BODY, WEIXIN_UNIFIED_ORDER_URL, WEIXIN_CALLBACK_API
 import traceback
 import requests
@@ -97,97 +98,77 @@ def create_order(**kwargs):
     :return:
     """
 
-    def __do_create(create_info, op_key, lock):
-        if lock.acquire():
-            try:
-                order_info = create_info.get('order_info')
-                packing_order = create_info.pop('packing_order')
-                packing_obj = None
-                if packing_order:
-                    packing_obj = PackingItemOrders.query.get(packing_order)
-                else:
-                    order_info.pop('packing_order')
-
-                if not order_info.get('score_used'):
-                    order_info.pop('score_used')
-
-                new_order = new_data_obj("ShopOrders", **order_info)
-                if not new_order:
-                    raise Exception("订单创建失败，订单号创建失败")
-                if not new_order['status']:
-                    return success_return(data=new_order['obj'].id, message='订单已存在')
-
-                if packing_obj:
-                    # packing_obj.shop_order_id = new_order['obj'].id
-                    packing_obj.packing_item_order = new_order['obj']
-
-                for item in create_info.get('select_items'):
-                    item_obj = ShoppingCart.query.get(item)
-                    if not item_obj:
-                        raise Exception(f"购物车中{item}不存在")
-                    sku = item_obj.desire_sku
-                    if not sku or not sku.status or sku.delete_at:
-                        raise Exception(f"购物车对应商品不存在")
-
-                    item_price = sku.show_price if sku.show_price else sku.price
-                    customer = Customers.query.get(order_info['customer_id'])
-                    transaction_price = calc_sku_price(customer, sku, shop_cart_id=item)
-
-                    item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
-                                  "item_quantity": item_obj.quantity,
-                                  "item_price": item_price, "special": sku.special,
-                                  "customer_id": order_info.get('customer_id'),
-                                  "transaction_price": transaction_price}
-                    new_item_order = new_data_obj("ItemsOrders", **item_order)
-
-                    if new_item_order and new_item_order.get('status'):
-                        # 此处调用修改sku数量方法，数量传递为负数，因为这里一定是减少
-                        change_result = compute_quantity(sku, -item_obj.quantity)
-
-                        # 如果change_result是false， 那么表明出货失败
-                        if change_result.get("code") == "false":
-                            raise Exception(json.dumps(change_result))
-
-                        # 如果这个sku有相关的促销活动，则记录
-                        if item_obj.combo:
-                            new_item_order['obj'].benefits.append(Benefits.query.get(item_obj.combo))
-
-                        if item.fgp_id and item.fgp.upgrade_level > 0:
-                            if new_order['obj'].upgrade_level and item.fgp.upgrade_level > new_order['obj'].upgrade_level:
-                                new_order['obj'].upgrade_level = item.fgp.upgrade_level
-
-                    else:
-                        raise Exception("订单创建失败")
-                if session_commit().get("code") == 'false':
-                    raise Exception("订单创建失败，因为事务提交失败")
-                else:
-                    redis_db.set(f"create_order::{create_info['order_info']['customer_id']}::{op_key}",
-                                 json.dumps(success_return(data=new_order['obj'].id)), ex=6000)
-            except Exception as e:
-                redis_db.set(f"create_order::{create_info['order_info']['customer_id']}::{op_key}",
-                             json.dumps(false_return(message=str(e))),
-                             ex=6000)
-            finally:
-                lock.release()
-
-    operate_key = str(uuid.uuid4())
-    create_thread = threading.Thread(target=__do_create, args=(kwargs, operate_key, sku_lock))
-    create_thread.start()
-    create_thread.join()
-    k = f"create_order::{kwargs['order_info']['customer_id']}::{operate_key}"
-    if redis_db.exists(k):
-        result = json.loads(redis_db.get(k))
-        redis_db.delete(k)
-        if result.get("code") == "false":
-            return result
+    try:
+        upgrade_level = 0
+        order_info = kwargs.get('order_info')
+        packing_order = kwargs.pop('packing_order')
+        packing_obj = None
+        if packing_order:
+            packing_obj = PackingItemOrders.query.get(packing_order)
         else:
-            order_no = result['data']
+            order_info.pop('packing_order')
+
+        if not order_info.get('score_used'):
+            order_info.pop('score_used')
+
+        new_order = new_data_obj("ShopOrders", **order_info)
+        if not new_order:
+            raise Exception("订单创建失败，订单号创建失败")
+        if not new_order['status']:
+            return success_return(data=new_order['obj'].id, message='订单已存在')
+
+        if packing_obj:
+            # packing_obj.shop_order_id = new_order['obj'].id
+            packing_obj.packing_item_order = new_order['obj']
+
+        for item in kwargs.get('select_items'):
+            item_obj = ShoppingCart.query.get(item)
+            if not item_obj:
+                raise Exception(f"购物车中{item}不存在")
+            sku = item_obj.desire_sku
+            if not sku or not sku.status or sku.delete_at:
+                raise Exception(f"购物车对应商品不存在")
+
+            item_price = sku.show_price if sku.show_price else sku.price
+            customer = Customers.query.get(order_info['customer_id'])
+            transaction_price = calc_sku_price(customer, sku, item)
+
+            item_order = {"order_id": new_order['obj'].id, "item_id": sku.id,
+                          "item_quantity": item_obj.quantity,
+                          "item_price": item_price, "special": sku.special,
+                          "customer_id": order_info.get('customer_id'),
+                          "transaction_price": transaction_price}
+            new_item_order = new_data_obj("ItemsOrders", **item_order)
+
+            if new_item_order and new_item_order.get('status'):
+                # 此处调用修改sku数量方法，数量传递为负数，因为这里一定是减少
+                change_result = compute_quantity(sku, -item_obj.quantity)
+
+                # 如果change_result是false， 那么表明出货失败
+                if change_result.get("code") == "false":
+                    raise Exception(json.dumps(change_result))
+
+                # 如果这个sku有相关的促销活动，则记录
+                # if item_obj.combo:
+                #     new_item_order['obj'].benefits.append(Benefits.query.get(item_obj.combo))
+            else:
+                raise Exception("订单创建失败")
+        if session_commit().get("code") == 'false':
+            raise Exception("订单创建失败，因为事务提交失败")
+        else:
+            if upgrade_level > 0:
+                new_order['obj'].upgrade_level = upgrade_level
+                db.session.add(new_order['obj'])
+                db.session.commit()
             for i in kwargs['select_items']:
                 cart = ShoppingCart.query.get(i)
                 cart.delete_at = datetime.datetime.now()
                 db.session.add(cart)
             db.session.commit()
-            return success_return(data=order_no, message="创建订单成功")
+            return success_return(data=new_order['obj'].id, message="创建订单成功")
+
+    except Exception as e:
+        return false_return(str(e))
 
 
 def weixin_pay(out_trade_no, price, openid, device_info="ShopOrder"):
