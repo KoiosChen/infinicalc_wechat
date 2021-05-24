@@ -30,7 +30,7 @@ def checkout_cart(**args):
             express_addr = 1
 
         # 若可以使用积分，则取整sku价格，目前没有促销活动，只有price和member_price两种
-        sku_price = calc_sku_price(customer, sku)
+        sku_price = calc_sku_price(customer, sku, cart_id)
         if sku.score_type:
             total_score += int(sku.max_score) * cart_obj.quantity
 
