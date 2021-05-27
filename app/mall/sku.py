@@ -242,11 +242,12 @@ class SKUAddToShoppingCart(Resource):
         sku = SKU.query.get(sku_id)
         if sku and sku.status == 1 and sku.delete_at is None:
             if args.get("combo"):
-                cart_item = new_data_obj("ShoppingCart", **{"customer_id": current_user.id, "sku_id": sku_id,
-                                                            "combo": args.get('combo'), "delete_at": None})
+                cart_item = new_data_obj("ShoppingCart",
+                                         **{"customer_id": current_user.id, "sku_id": sku_id, "fgp_id": None,
+                                            "combo": args.get('combo'), "delete_at": None})
             else:
                 cart_item = new_data_obj("ShoppingCart",
-                                         **{"customer_id": current_user.id, "sku_id": sku_id, "fpg_id": None,
+                                         **{"customer_id": current_user.id, "sku_id": sku_id, "fgp_id": None,
                                             "delete_at": None})
 
             if cart_item:
