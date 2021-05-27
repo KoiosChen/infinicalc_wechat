@@ -154,7 +154,10 @@ def authenticate(login_ip, **kwargs):
                         customer.bu_id = employee_obj.business_unit_id
                 else:
                     logger.error('二维码过期')
-            elif scene == 'new_fgp':
+        elif kwargs.get('scene_invitation') and kwargs.get('scene'):
+            scene = kwargs.get('scene')
+            scene_invitation = kwargs.get('scene_invitation')
+            if scene == 'new_fgp':
                 if redis_db.exists(scene_invitation):
                     logger.debug("new_fgp action")
                     obj_id = redis_db.get(scene_invitation)
