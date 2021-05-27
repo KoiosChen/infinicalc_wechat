@@ -246,7 +246,8 @@ class SKUAddToShoppingCart(Resource):
                                                             "combo": args.get('combo'), "delete_at": None})
             else:
                 cart_item = new_data_obj("ShoppingCart",
-                                         **{"customer_id": current_user.id, "sku_id": sku_id, "delete_at": None})
+                                         **{"customer_id": current_user.id, "sku_id": sku_id, "fpg_id": None,
+                                            "delete_at": None})
 
             if cart_item:
                 if cart_item['status']:
