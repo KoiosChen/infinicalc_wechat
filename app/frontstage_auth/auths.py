@@ -156,12 +156,14 @@ def authenticate(login_ip, **kwargs):
                     logger.error('二维码过期')
             elif scene == 'new_fgp':
                 if redis_db.exists(scene_invitation):
+                    logger.debug("new_fgp action")
                     obj_id = redis_db.get(scene_invitation)
                     redis_db.delete(scene_invitation)
                     gp_obj = FranchiseeGroupPurchase.query.get(obj_id)
                     sku_id = gp_obj.sku_id
                     sku = SKU.query.get(sku_id)
                     if sku and sku.status == 1 and sku.delete_at is None:
+                        logger.debug("create fgp shop cart order")
                         cart_item = new_data_obj("ShoppingCart",
                                                  **{"customer_id": customer.id, "sku_id": sku_id, "delete_at": None,
                                                     "can_change": 0, "fgp_id": obj_id})
@@ -177,6 +179,8 @@ def authenticate(login_ip, **kwargs):
                             logger.error(f"将<{sku_id}>添加规到购物车失败")
                     else:
                         logger.error(f"<{sku_id}>已下架")
+                else:
+                    logger.error("二维码失效")
 
         if kwargs.get('shared_id'):
             # 查找分享者是否存在
