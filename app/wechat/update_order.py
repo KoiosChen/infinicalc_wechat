@@ -66,7 +66,7 @@ def update_order(data):
                 customer.first_order_id = order.id
 
             # 2021-0509 这个if用于目前加盟商直营团购付款成功之后升级用户等级
-            logger.debug("order lvl: " + order.upgrade_level + "; c lvl: " + customer.level)
+            logger.debug("order lvl: " + str(order.upgrade_level) + "; c lvl: " + str(customer.level))
             logger.debug(str(customer))
             if order.upgrade_level and customer.level < order.upgrade_level:
                 customer.level = order.upgrade_level
