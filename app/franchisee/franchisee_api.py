@@ -369,7 +369,7 @@ class FranchiseeInventoryAPI(Resource):
             args['search'] = {'sku_id': args.pop('sku_id'), 'franchisee_id': franchisee_id}
         else:
             args['search'] = {'franchisee_id': franchisee_id}
-        return success_return(data=get_table_data(FranchiseeInventory, args))
+        return success_return(data=get_table_data(FranchiseeInventory, args, appends=['sku']))
 
     @franchisee_ns.doc(body=inventory_dispatch_parser)
     @franchisee_ns.marshal_with(return_json)
