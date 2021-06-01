@@ -509,7 +509,7 @@ class FranchiseePurchaseOrdersAPI(Resource):
 
 @franchisee_ns.route('/purchase_orders')
 @franchisee_ns.expect(head_parser)
-class FranchiseePurchaseOrdersAPI(Resource):
+class GetFranchiseePurchaseOrdersAPI(Resource):
     @franchisee_ns.doc(body=purchase_parser)
     @franchisee_ns.marshal_with(return_json)
     @permission_required(Permission.FRANCHISEE_MANAGER)
@@ -521,10 +521,11 @@ class FranchiseePurchaseOrdersAPI(Resource):
             if k in ('status', 'operator', 'operate_at') and v:
                 args['search'][k] = v
         args['search']['delete_at'] = None
-        return success_return(
-            data=get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
-                                removes=['franchisee_id', 'sku_id', 'purchase_from'],
-                                advance_search=[{"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}]))
+        data = get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
+                              removes=['franchisee_id', 'sku_id', 'purchase_from'],
+                              advance_search=[
+                                  {"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}])
+        return success_return(data=data)
 
 
 @franchisee_ns.route('/purchase_orders/dispatch')
