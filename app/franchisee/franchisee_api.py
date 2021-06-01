@@ -525,6 +525,7 @@ class GetFranchiseePurchaseOrdersAPI(Resource):
                               removes=['franchisee_id', 'sku_id', 'purchase_from'],
                               advance_search=[
                                   {"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}])
+        logger.debug(data)
         return success_return(data=data)
 
 
