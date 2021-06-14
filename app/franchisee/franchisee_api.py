@@ -294,7 +294,8 @@ class FranchiseeOperatorsApi(Resource):
     def post(self, **kwargs):
         args = new_operator.parse_args()
         franchisee_id = kwargs['current_user'].franchisee_operator.franchisee_id
-        job_name = args['job_desc']
+        # job_name = args['job_desc']
+        job_name = "FRANCHISEE_OPERATOR"
         fid = CustomerRoles.query.filter_by(name=job_name).first().id
         new_employee = new_data_obj("FranchiseeOperators", **{"name": args['name'],
                                                               "age": args['age'],
