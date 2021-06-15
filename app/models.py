@@ -275,7 +275,7 @@ class FranchiseeScopes(db.Model):
     delete_at = db.Column(db.DateTime)
 
     def __repr__(self):
-        return '<FranchiseeScopes: %r>' % self.name
+        return f"{self.province}, {self.city}, {self.district}"
 
 
 class ScopeDefinition(db.Model):
