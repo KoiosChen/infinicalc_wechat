@@ -147,6 +147,8 @@ class BusinessUnitsAPI(Resource):
             addr_result = lbs_get_by_coordinate(args['latitude'], args['longitude'], detail=True)
             in_scope = False
             logger.debug(addr_result)
+            logger.debug(f"franchisee scope: {franchisee_scopes}")
+            addr_result = addr_result['data']
             for scope in franchisee_scopes:
                 logger.debug(scope)
                 if addr_result['province'] == scope.province and addr_result['city'] == scope.city and addr_result['district'] == scope.district:
