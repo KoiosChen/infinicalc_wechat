@@ -70,6 +70,7 @@ def update_order(data):
             logger.debug(str(customer))
             if order.upgrade_level and customer.level < order.upgrade_level:
                 customer.level = order.upgrade_level
+                customer.role_id = 2
 
             if data['device_info'] == 'MemberRecharge':
                 wechat_pay_result = order.wechat_pay_result
