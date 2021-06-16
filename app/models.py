@@ -227,25 +227,35 @@ class CustomerRoles(db.Model):
             'USER': (Permission.USER, True),
             'MEMBER': (Permission.USER |
                        Permission.MEMBER, False),
+            'VIP_MEMBER': (Permission.USER |
+                           Permission.MEMBER |
+                           Permission.VIP_MEMBER, False),
             'BU_WAITER': (Permission.USER |
                           Permission.MEMBER |
+                          Permission.VIP_MEMBER |
                           Permission.BU_WAITER, False),
             'BU_OPERATOR': (Permission.USER |
                             Permission.MEMBER |
+                            Permission.VIP_MEMBER |
                             Permission.BU_WAITER |
                             Permission.BU_OPERATOR, False),
             'BU_MANAGER': (Permission.USER |
                            Permission.MEMBER |
+                           Permission.VIP_MEMBER |
                            Permission.BU_WAITER |
                            Permission.BU_OPERATOR |
                            Permission.BU_MANAGER, False),
             'FRANCHISEE_OPERATOR': (Permission.USER |
                                     Permission.MEMBER |
+                                    Permission.VIP_MEMBER |
                                     Permission.FRANCHISEE_OPERATOR, False),
             'FRANCHISEE_MANAGER': (Permission.USER |
+                                   Permission.MEMBER |
+                                   Permission.VIP_MEMBER |
                                    Permission.FRANCHISEE_OPERATOR |
                                    Permission.FRANCHISEE_MANAGER, False),
-            'CUSTOMER_SERVICE': (Permission.USER | Permission.MEMBER | Permission.CUSTOMER_SERVICE, False),
+            'CUSTOMER_SERVICE': (
+            Permission.USER | Permission.MEMBER | Permission.VIP_MEMBER | Permission.CUSTOMER_SERVICE, False),
             'ADMINISTRATOR': (0xfff, False)
         }
         for r in roles:
