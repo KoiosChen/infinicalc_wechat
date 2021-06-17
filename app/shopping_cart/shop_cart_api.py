@@ -549,8 +549,8 @@ class ShoppingCartApi(Resource):
                                                                         'discount']),
                                    "shopping_cart_id": sku['shopping_cart_id'],
                                    "quantity": sku['quantity'],
-                                   "can_change": sku['can_change'],
                                    'price': str(sku['price']),
+                                   "can_change": sku['can_change'],
                                    'total_price': str(total_price.quantize(Decimal("0.00"))),
                                    'combo': get_table_data_by_id(Benefits, sku['combo'], appends=['gifts'])}
                     return_result.append(return_info)
