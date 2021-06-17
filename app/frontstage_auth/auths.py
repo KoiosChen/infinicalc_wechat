@@ -97,7 +97,8 @@ def authenticate(login_ip, **kwargs):
                 if si_obj.max_invitees == 0 or now_invitees < si_obj.max_invitees:
                     create_member_card_by_invitation(new_customer['obj'], si_obj)
         elif kwargs.get('scene_invitation') and kwargs.get('scene') and (
-                not customer.business_unit_employee and not customer.franchisee_operator):
+                not customer.business_unit_employee and not customer.franchisee_operator) and kwargs.get(
+            'scene') != 'new_fgp':
             logger.debug(">>> scene invitation action")
             scene = kwargs.get('scene')
             scene_invitation = kwargs.get('scene_invitation')
