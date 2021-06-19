@@ -69,8 +69,10 @@ class ExpressOrderAPI(Resource):
             confirm_args = args
             confirm_args['search'] = dict()
             confirm_args['search']['confirm_status'] = 1
-            confirm_args['search']['is_sent'] = None
-            confirm_orders = get_table_data(CloudWineExpressOrders, confirm_args, appends=['sku'], order_by="create_at")
+            confirm_orders = get_table_data(CloudWineExpressOrders,
+                                            confirm_args,
+                                            advance_search=[{"key": "is_sent", "operator": "__eq__", "value": None}],
+                                            appends=['sku'], order_by="create_at")
         return success_return({"self_orders": self_orders, "confirm_orders": confirm_orders}, "请求成功")
 
     @express_ns.marshal_with(return_json)
@@ -205,8 +207,8 @@ class PerExpressOrderAPI(Resource):
             current_user = kwargs['current_user']
 
             apply_update_list = (
-            "sender", "sender_phone", "sender_memo", "recipient", "recipient_phone", "recipient_addr", "sku_id",
-            "quantity")
+                "sender", "sender_phone", "sender_memo", "recipient", "recipient_phone", "recipient_addr", "sku_id",
+                "quantity")
             confirm_update_list = ("confirm_status",)
             express_update_list = ("express_num",)
 
