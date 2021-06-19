@@ -509,7 +509,9 @@ class BUPurchaseOrdersAPI(Resource):
     def get(self, **kwargs):
         """获取所有入库单"""
         args = dispatch_parser.parse_args()
+        bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
         args['search'] = dict()
+        args['search']['bu_id'] = bu_id
         for k, v in args.items():
             if k in ('status', 'operator', 'operate_at') and v:
                 args['search'][k] = v

@@ -517,11 +517,16 @@ class GetFranchiseePurchaseOrdersAPI(Resource):
     def get(self, **kwargs):
         """获取所有出入库单"""
         args = purchase_parser.parse_args()
+        current_user = kwargs.get('current_user')
+        if not current_user.franchisee_operator:
+            return false_return(message="当前用户无加盟商角色")
+        franchisee_id = current_user.franchisee_operator.franchisee_id
         args['search'] = dict()
         for k, v in args.items():
             if k in ('status', 'operator', 'operate_at') and v:
                 args['search'][k] = v
         args['search']['delete_at'] = None
+        args['search']['franchisee_id'] = franchisee_id
         data = get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
                               removes=['franchisee_id', 'sku_id', 'purchase_from'],
                               advance_search=[
