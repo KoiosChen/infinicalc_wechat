@@ -260,6 +260,7 @@ class PerExpressOrderAPI(Resource):
                                                                          **{"bu_id": order_obj.send_unit_id,
                                                                             "amount": order_obj.quantity,
                                                                             "status": 3,
+                                                                            "express_order": order_obj.id,
                                                                             "sku_id": order_obj.sku_id,
                                                                             "original_order_id": new_purchase_order[
                                                                                 'obj'].id})
