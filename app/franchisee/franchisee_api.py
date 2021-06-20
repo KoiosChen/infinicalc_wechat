@@ -519,6 +519,7 @@ class GetFranchiseePurchaseOrdersAPI(Resource):
         args = purchase_parser.parse_args()
         current_user = kwargs.get('current_user')
         if not current_user.franchisee_operator:
+            logger.debug("not franchisee")
             return false_return(message="当前用户无加盟商角色")
         franchisee_id = current_user.franchisee_operator.franchisee_id
         args['search'] = dict()
