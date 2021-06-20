@@ -517,7 +517,7 @@ class BUPurchaseOrdersAPI(Resource):
                 args['search'][k] = v
         args['search']['delete_at'] = None
         return success_return(data=get_table_data(BusinessPurchaseOrders, args, appends=['original_order', 'bu', 'sku'],
-                                                  advance_search=[{"key": "status", "operator": "__lt__", "value": 4}]))
+                                                  advance_search=[{"key": "status", "operator": "__lt__", "value": 3}]))
 
 
 @bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>')
