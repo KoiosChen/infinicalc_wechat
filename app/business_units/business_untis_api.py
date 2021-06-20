@@ -151,7 +151,8 @@ class BusinessUnitsAPI(Resource):
             addr_result = addr_result['data']
             for scope in franchisee_scopes:
                 logger.debug(scope)
-                if addr_result['province'] == scope.province and addr_result['city'] == scope.city and addr_result['district'] == scope.district:
+                if addr_result['province'] == scope.province and addr_result['city'] == scope.city and addr_result[
+                    'district'] == scope.district:
                     in_scope = True
 
             if not in_scope:
@@ -532,6 +533,11 @@ class BUPurchaseOrdersAPI(Resource):
             data=get_table_data_by_id(BusinessPurchaseOrders, kwargs['bu_purchase_order_id'],
                                       search={'delete_at': None}, appends=['original_order']))
 
+
+@bu_ns.route('/purchase_orders/<string:bu_purchase_order_id>/confirm')
+@bu_ns.param('bu_purchase_order_id', '货单ID')
+@bu_ns.expect(head_parser)
+class BUPurchaseOrdersConfirmAPI(Resource):
     @bu_ns.doc(body=dispatch_confirm_parser)
     @bu_ns.marshal_with(return_json)
     @permission_required(Permission.BU_OPERATOR)
@@ -570,7 +576,7 @@ class BUPurchaseOrdersAPI(Resource):
 class BUStatistics(Resource):
     @bu_ns.marshal_with(return_json)
     @bu_ns.doc(body=sold_parser)
-    @permission_required(Permission.BU_WAITER)
+    @permission_required(Permission.USER)
     def get(self, **kwargs):
         """店铺卖掉的酒"""
         args = sold_parser.parse_args()

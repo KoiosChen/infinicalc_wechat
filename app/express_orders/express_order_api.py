@@ -117,8 +117,10 @@ class ExpressOrderAPI(Resource):
                 FranchiseeInventory.sku_id.__eq__(sku_id),
                 FranchiseeInventory.amount.__ge__(quantity)).first()
 
-            if not franchisee_obj:
+            if franchisee_obj is None and is_purchase and current_user_belong_franchisee:
                 logger.warn("加盟商库存不足需要进货")
+            elif franchisee_obj is None:
+                raise Exception("加盟商库存不足需要进货")
 
             new_order = new_data_obj("CloudWineExpressOrders", **{"id": make_uuid(),
                                                                   "apply_id": current_user.id,
@@ -139,7 +141,7 @@ class ExpressOrderAPI(Resource):
 
             order_obj = new_order['obj']
 
-            if current_user.franchisee_operator and current_user.franchisee_operator.job_desc == franchisee_manager_role.id:
+            if current_user.franchisee_operator and current_user.franchisee_operator.job_desc == franchisee_manager_role.id and is_purchase:
                 # 如果当前用户是加盟商manager， 则直接完成确认步骤
                 order_obj.confirm_id = current_user.id
                 order_obj.confirm_at = datetime.datetime.now()
