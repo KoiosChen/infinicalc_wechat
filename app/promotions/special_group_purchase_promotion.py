@@ -43,5 +43,5 @@ class NewFranchiseeGroupPurchaseOrder(Resource):
         """
         scene_invitation = generate_code(12)
         redis_db.set(scene_invitation, kwargs['gp_id'])
-        redis_db.expire(scene_invitation, 600)
+        redis_db.expire(scene_invitation, 86400)
         return success_return(data={'scene': "new_fgp", 'scene_invitation': scene_invitation})
