@@ -189,6 +189,8 @@ class ItemVerificationAPI(Resource):
 
         for item_order_obj in all_objs:
             left_quantity = item_order_obj.item_quantity - item_order_obj.verified_quantity
+            if left_quantity <= 0:
+                continue
             diff = left_quantity - verify_quantity
 
             if diff >= 0:
