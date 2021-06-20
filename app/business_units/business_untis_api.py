@@ -304,9 +304,9 @@ class BUInventoryApi(Resource):
             bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
 
         if args.get('sku_id'):
-            args['search'] = {'sku_id': args.pop('sku_id'), 'franchisee_id': bu_id}
+            args['search'] = {'sku_id': args.pop('sku_id'), 'bu_id': bu_id}
         else:
-            args['search'] = {'franchisee_id': bu_id}
+            args['search'] = {'bu_id': bu_id}
         return success_return(data=get_table_data(BusinessUnitInventory, args, appends=['sku']))
 
 
