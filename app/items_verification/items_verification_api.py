@@ -176,11 +176,13 @@ class ItemVerificationAPI(Resource):
             return false_return(message='用户库存有变化，请重新生成核销码')
 
         current_user = kwargs['current_user']
-        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != args['bu_id']:
+        if not current_user.business_unit_employee or current_user.business_unit_employee.business_unit_id != args[
+            'bu_id']:
             return false_return(message=f'此员工无权核销'), 400
 
         bu_inventory_obj = BusinessUnitInventory.query.filter(BusinessUnitInventory.bu_id.__eq__(args['bu_id']),
-                                                              BusinessUnitInventory.sku_id.__eq__(verify_info['sku_id'])).first()
+                                                              BusinessUnitInventory.sku_id.__eq__(
+                                                                  verify_info['sku_id'])).first()
 
         if bu_inventory_obj.amount < verify_quantity:
             return false_return(message='店铺库存不足'), 400
@@ -192,7 +194,8 @@ class ItemVerificationAPI(Resource):
             if diff >= 0:
                 # 表示核销完了
                 vid = __verify(verify_quantity, item_order_obj, verify_info['customer_id'])
-                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id, verify_info['customer_id'])
+                rebate_result = pickup_rebate(vid, current_user.business_unit_employee.id,
+                                              item_order_obj.customer_id)
                 logger.error(rebate_result)
                 break
             elif diff < 0:
