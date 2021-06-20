@@ -465,12 +465,14 @@ class FranchiseeBU(Resource):
     def get(self, **kwargs):
         """加盟商下店铺列表(查看通过自己注册的店铺的列表)"""
         current_user = kwargs.get('current_user')
+        manager_role_id = CustomerRoles.query.filter_by(name='FRANCHISEE_MANAGER').first().id
         if not current_user.franchisee_operator:
             return false_return(message="当前用户无加盟商角色")
         else:
             args = defaultdict(dict)
             args['search']['franchisee_id'] = current_user.franchisee_operator.franchisee_id
-            args['search']['franchisee_operator_id'] = current_user.franchisee_operator.id
+            if current_user.franchisee_operator.job_desc != manager_role_id:
+                args['search']['franchisee_operator_id'] = current_user.franchisee_operator.id
             return success_return(data=get_table_data(BusinessUnits, args, appends=['bu_inventory']))
 
 
