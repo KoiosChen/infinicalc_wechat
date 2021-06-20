@@ -169,35 +169,35 @@ def update_order(data):
                             order.is_receipt = 1
                             logger.info('pickup in store')
 
-                        if item_order.special == 31:
-                            # 封坛货物
-                            standard_value = item_order.bought_sku.values
-                            # 查找单位是‘斤’的数值
-                            unit = ""
-                            init_total = 0.00
-                            for s in standard_value:
-                                if s.standards.name == '斤':
-                                    init_total = s.value
-                                    unit = s.standards.name
-                                    break
-
-                            for _ in range(0, item_order.item_quantity):
-                                cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
-                                              "storage_date": datetime.datetime.now(),
-                                              "init_total": init_total,
-                                              "last_total": init_total,
-                                              "unit": unit,
-                                              "owner_name": order.consumer.true_name,
-                                              "owner_id": order.customer_id}
-                                new_cargo = new_data_obj("TotalCargoes", **cargo_data)
-                                if not new_cargo and not new_cargo.get('status'):
-                                    logger.error(f"{item_order.id}生成仓储记录失败，或者记录已存在")
-                                    res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
-                        elif item_order.special == 32:
-                            # 表示分装订单，此item为酒瓶
-                            packing_order = order.packing_order.first()
-                            packing_order.pay_at = pay_time
-                            packing_order.parent_cargo.last_total -= packing_order.consumption
+                        # if item_order.special == 31:
+                        #     # 封坛货物
+                        #     standard_value = item_order.bought_sku.values
+                        #     # 查找单位是‘斤’的数值
+                        #     unit = ""
+                        #     init_total = 0.00
+                        #     for s in standard_value:
+                        #         if s.standards.name == '斤':
+                        #             init_total = s.value
+                        #             unit = s.standards.name
+                        #             break
+                        #
+                        #     for _ in range(0, item_order.item_quantity):
+                        #         cargo_data = {"cargo_code": make_order_id('FT'), 'order_id': order.id,
+                        #                       "storage_date": datetime.datetime.now(),
+                        #                       "init_total": init_total,
+                        #                       "last_total": init_total,
+                        #                       "unit": unit,
+                        #                       "owner_name": order.consumer.true_name,
+                        #                       "owner_id": order.customer_id}
+                        #         new_cargo = new_data_obj("TotalCargoes", **cargo_data)
+                        #         if not new_cargo and not new_cargo.get('status'):
+                        #             logger.error(f"{item_order.id}生成仓储记录失败，或者记录已存在")
+                        #             res = f"{item_order.id}生成仓储记录失败，或者记录已存在"
+                        # elif item_order.special == 32:
+                        #     # 表示分装订单，此item为酒瓶
+                        #     packing_order = order.packing_order.first()
+                        #     packing_order.pay_at = pay_time
+                        #     packing_order.parent_cargo.last_total -= packing_order.consumption
 
                     if res == 'success':
                         if session_commit().get("code") != 'success':
