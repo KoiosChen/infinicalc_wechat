@@ -71,7 +71,7 @@ class ExpressOrderAPI(Resource):
             confirm_args['search']['confirm_status'] = 1
             confirm_orders = get_table_data(CloudWineExpressOrders,
                                             confirm_args,
-                                            advance_search=[{"key": "is_sent", "operator": "__eq__", "value": None}],
+                                            advance_search=[{"key": "is_sent", "operator": "__ne__", "value": 1}],
                                             appends=['sku'], order_by="create_at")
         return success_return({"self_orders": self_orders, "confirm_orders": confirm_orders}, "请求成功")
 
