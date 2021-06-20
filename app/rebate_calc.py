@@ -25,7 +25,6 @@ def bu_rebate(employee, waiter_rebate, operator_rebate, manager_rebate):
         pk_rebate = waiter_rebate + operator_rebate
     elif employee.role.name == "BU_MANAGER":
         pk_rebate = waiter_rebate + operator_rebate + manager_rebate
-
     return pk_rebate
 
 
