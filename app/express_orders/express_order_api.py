@@ -322,8 +322,10 @@ class PerExpressOrderAPI(Resource):
                                 purchase_obj.dispatch_status = 1
                             if f_purchase_obj:
                                 f_purchase_obj.status = 0
+                                db.session.add(f_purchase_obj)
                             if bu_purchase_obj:
                                 bu_purchase_obj.status = 0
+                                db.session.add(bu_purchase_obj)
                         else:
                             raise Exception("当前订单已发货，不可重复发货")
                     else:
