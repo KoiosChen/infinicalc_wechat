@@ -1,5 +1,5 @@
 from .scene_invitation_api import *
-from app.models import BusinessUnitEmployees
+from app.models import BusinessUnitEmployees, REDIS_LONG_EXPIRE, REDIS_24H
 
 qrcode_parser = reqparse.RequestParser()
 qrcode_parser.add_argument('obj_id', required=True, type=str, help='对象ID， 例如加盟商ID， 店铺ID，员工ID', location='args')
@@ -19,5 +19,5 @@ class TaobaoInvitationApi(Resource):
         args = qrcode_parser.parse_args()
         scene_invitation = generate_code(12)
         redis_db.set(scene_invitation, args['obj_id'])
-        redis_db.expire(scene_invitation, 600)
+        redis_db.expire(scene_invitation, REDIS_24H)
         return success_return(data={'scene': args['scene'], 'scene_invitation': scene_invitation})
