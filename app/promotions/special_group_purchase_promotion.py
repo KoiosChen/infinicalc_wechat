@@ -43,6 +43,7 @@ class NewFranchiseeGroupPurchaseOrder(Resource):
         传入团购活动的id， /fgp get方法中获取
         """
         scene_invitation = generate_code(12)
-        redis_db.set(scene_invitation, json.dumps({'gp_id': kwargs['gp_id'], 'salesman_id': kwargs['current_user'].id}))
+        json_str = json.dumps({'gp_id': kwargs['gp_id'], 'salesman_id': kwargs['current_user'].id})
+        redis_db.set(scene_invitation, json_str)
         redis_db.expire(scene_invitation, 86400)
         return success_return(data={'scene': "new_fgp", 'scene_invitation': scene_invitation})
