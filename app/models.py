@@ -1344,7 +1344,7 @@ class ItemsOrders(db.Model):
     item_price = db.Column(db.DECIMAL(10, 2), comment="下单时sku的价格，如果有show_price，记录show_price，否则记录price")
     transaction_price = db.Column(db.DECIMAL(10, 2), comment="实际交易的价格，未使用积分的价格，例如有会员价，有折扣（real_price）")
     customer_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
-    salesman_id = db.Column(db.String(64), db.ForeignKey('customers.id'))
+    salesman_id = db.Column(db.String(64), db.ForeignKey('customers.id'),)
     customer_level = db.Column(db.SmallInteger, comment='用户购买时的等级，1，普通，2 代言人，3 达人。对应customer的level 1，2，3')
     benefits = db.relationship('Benefits', secondary=itemsorders_benefits, backref=db.backref('item_orders'))
     status = db.Column(db.SmallInteger, default=0, comment='1：正常 2：禁用 0：订单未完成 3:退货中，4: 退货成功')
