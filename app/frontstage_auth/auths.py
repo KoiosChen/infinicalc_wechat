@@ -161,7 +161,9 @@ def authenticate(login_ip, **kwargs):
             if scene == 'new_fgp':
                 if redis_db.exists(scene_invitation):
                     logger.debug("new_fgp action")
-                    obj_id = redis_db.get(scene_invitation)
+                    obj_json = json.loads(redis_db.get(scene_invitation))
+                    obj_id = obj_json['gp_id']
+                    salesman_id = obj_json['salesman_id']
                     redis_db.delete(scene_invitation)
                     gp_obj = FranchiseeGroupPurchase.query.get(obj_id)
                     sku_id = gp_obj.sku_id
@@ -170,7 +172,7 @@ def authenticate(login_ip, **kwargs):
                         logger.debug("create fgp shop cart order")
                         cart_item = new_data_obj("ShoppingCart",
                                                  **{"customer_id": customer.id, "sku_id": sku_id, "delete_at": None,
-                                                    "can_change": 0, "fgp_id": obj_id})
+                                                    "can_change": 0, "fgp_id": obj_id, "salesman_id": salesman_id})
 
                         if cart_item:
                             if cart_item['status']:

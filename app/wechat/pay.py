@@ -138,6 +138,8 @@ def create_order(**kwargs):
                           "item_price": item_price, "special": sku.special,
                           "customer_id": order_info.get('customer_id'),
                           "transaction_price": transaction_price}
+            if item.salesman_id:
+                item_order['salesman_id'] = item.salesman_id
             new_item_order = new_data_obj("ItemsOrders", **item_order)
 
             if new_item_order and new_item_order.get('status'):
