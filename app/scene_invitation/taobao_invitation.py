@@ -19,5 +19,5 @@ class TaobaoInvitationApi(Resource):
         args = qrcode_parser.parse_args()
         scene_invitation = generate_code(12)
         redis_db.set(scene_invitation, args['obj_id'])
-        redis_db.expire(scene_invitation, REDIS_24H)
+        redis_db.expire(scene_invitation, REDIS_LONG_EXPIRE)
         return success_return(data={'scene': args['scene'], 'scene_invitation': scene_invitation})
