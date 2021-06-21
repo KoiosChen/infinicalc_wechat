@@ -534,7 +534,7 @@ class GetFranchiseePurchaseOrdersAPI(Resource):
         data = get_table_data(FranchiseePurchaseOrders, args, appends=['original_order', 'downstream', 'sku'],
                               removes=['franchisee_id', 'sku_id', 'purchase_from'],
                               advance_search=[
-                                  {"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}])
+                                  {"key": "FranchiseePurchaseOrders.status", "operator": "__lt__", "value": 3}], order_by='create_at')
         logger.debug(data)
         return success_return(data=data)
 
