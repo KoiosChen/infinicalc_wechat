@@ -67,7 +67,7 @@ class SelfItemVerificationOrders(Resource):
         args['search']['customer_id'] = current_user.id
         return success_return(data=get_table_data(ItemVerification, args,
                                                   appends=['items_orders', 'bu'],
-                                                  removes=['item_order_id', 'bu_id']))
+                                                  removes=['item_order_id', 'bu_id'], order_by='create_at'))
 
 
 @item_verification_ns.route('/pre_verification/<string:sku_id>')
