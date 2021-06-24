@@ -400,7 +400,7 @@ class BUEmployeesApi(Resource):
         # 店铺经理和店长在一个店铺中唯一
         role_id = args.get('job_desc')
         logger.debug(role_id)
-        job_id = CustomerRoles.query.get(role_id).first().id
+        job_id = CustomerRoles.query.get(role_id).id
         if role_id in (3, 4):
             tmp_obj = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.business_unit_id.__eq__(bu_id),
                                                          BusinessUnitEmployees.job_desc.__eq__(job_id)).all()
