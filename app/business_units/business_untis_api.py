@@ -581,6 +581,7 @@ class BUStatistics(Resource):
     def get(self, **kwargs):
         """店铺卖掉的酒"""
         args = sold_parser.parse_args()
+        current_user = kwargs['current_user']
 
         advance_search = list()
         args['search'] = dict()
@@ -588,16 +589,23 @@ class BUStatistics(Resource):
         if args.get('bu_id'):
             bu_id = args['bu_id']
         else:
-            bu_id = kwargs['current_user'].business_unit_employee.business_unit_id
+            bu_id = current_user.business_unit_employee.business_unit_id
+
+        if not current_user.franchisee_operator and not current_user.business_unit_employee:
+            return false_return(message="无权查看统计信息")
 
         if args.get('bu_employee_id'):
             bu_employee = BusinessUnitEmployees.query.get(args['bu_employee_id'])
         else:
-            bu_employee = kwargs['current_user'].business_unit_employee
+            bu_employee = current_user.business_unit_employee
 
-        waiter_role_id = CustomerRoles.query.filter(CustomerRoles.name.__eq__('BU_WAITER')).first().id
-        if bu_employee.job_desc == waiter_role_id:
-            args['search']['operator'] = bu_employee.id
+        bu_role_id = list()
+        bu_role_id.append(CustomerRoles.query.filter(CustomerRoles.name.__eq__('BU_WAITER')).first().id)
+        bu_role_id.append(CustomerRoles.query.filter(CustomerRoles.name.__eq__('BU_MANAGER')).first().id)
+        bu_role_id.append(CustomerRoles.query.filter(CustomerRoles.name.__eq__('BU_OPERATOR')).first().id)
+
+        if current_user.business_unit_employee and bu_employee.job_desc in bu_role_id:
+            args['search']['operator'] = current_user.id
 
         if args.get('start_date'):
             advance_search.append({"key": "create_at", "operator": "__ge__", "value": args.get('start_date')})
