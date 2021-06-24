@@ -242,7 +242,9 @@ class PerExpressOrderAPI(Resource):
                             if value == 1:
                                 if not inventory_obj and order_obj.is_purchase != 1 and order_obj.send_unit_type != "Franchisee":
                                     raise Exception("加盟商库存不足，不可确认")
+
                                 setattr(inventory_obj, "amount", inventory_obj.amount - order_obj.quantity)
+
                                 if order_obj.is_purchase and order_obj.send_unit_type == 'BusinessUnit':
                                     new_purchase_order = new_data_obj("FranchiseePurchaseOrders",
                                                                       **{"franchisee_id": order_obj.franchisee_id,
@@ -303,6 +305,21 @@ class PerExpressOrderAPI(Resource):
 
                                     if not new_franchisee_purchase_order:
                                         return false_return(message='加盟商新建入库单失败')
+
+                                elif not order_obj.is_purchase and order_obj.send_unit_type == 'Franchisee':
+                                    # 如果是加盟商发货，则扣除自己的库存
+                                    new_purchase_order = new_data_obj("FranchiseePurchaseOrders",
+                                                                      **{"franchisee_id": order_obj.franchisee_id,
+                                                                         "sku_id": order_obj.sku_id,
+                                                                         "amount": -order_obj.quantity,
+                                                                         "status": 3,
+                                                                         "purchase_from": None,
+                                                                         "express_order_id": order_obj.id,
+                                                                         "operate_at": datetime.datetime.now(),
+                                                                         "operator": current_user.id})
+
+                                    if not new_purchase_order:
+                                        return false_return(message='加盟商新建出库单失败')
 
                             setattr(order_obj, "confirm_id", current_user.id)
                             setattr(order_obj, "confirm_at", datetime.datetime.now())
