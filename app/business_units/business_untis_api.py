@@ -399,6 +399,7 @@ class BUEmployeesApi(Resource):
 
         # 店铺经理和店长在一个店铺中唯一
         role_name = args.get('job_desc')
+        logger.debug(role_name)
         job_id = CustomerRoles.query.filter_by(name=role_name).first().id
         if role_name in ("BU_OPERATOR", "BU_MANAGER"):
             tmp_obj = BusinessUnitEmployees.query.filter(BusinessUnitEmployees.business_unit_id.__eq__(bu_id),
