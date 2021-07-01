@@ -475,10 +475,11 @@ class BUNearby(Resource):
         try:
             import math
             args = bu_nearby.parse_args()
-            # distance = args.get('distance')
-            distance = 20000000
+            #distance = args.get('distance')
+            distance = 5000000
             longitude = eval(args['longitude'])
             latitude = eval(args['latitude'])
+            logger.debug(longitude + latitude)
 
             # 获取距离是distance内的坐标范围，用左上，左下，右上，右下四个坐标来圈定范围
             nearby_range = get_nearby(latitude, longitude, distance * 0.001)
