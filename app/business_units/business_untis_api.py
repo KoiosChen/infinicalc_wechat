@@ -475,7 +475,8 @@ class BUNearby(Resource):
         try:
             import math
             args = bu_nearby.parse_args()
-            distance = args.get('distance')
+            # distance = args.get('distance')
+            distance = 20000000
             longitude = eval(args['longitude'])
             latitude = eval(args['latitude'])
 
@@ -491,6 +492,7 @@ class BUNearby(Resource):
                     BusinessUnits.longitude.between(nearby_range['west'].longitude, nearby_range['east'].longitude),
                     BusinessUnits.delete_at.__eq__(None)
                 ).all()]
+            logger.debug(nearby_objs)
 
             # 按照距离排序
             nearby_objs.sort(key=lambda x: x['distance'])
